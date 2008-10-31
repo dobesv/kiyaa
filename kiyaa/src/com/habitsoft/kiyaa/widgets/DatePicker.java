@@ -2,8 +2,7 @@ package com.habitsoft.kiyaa.widgets;
 
 import java.util.Date;
 
-import com.datejs.client.DateJs;
-import com.datejs.client.DateJs.DateParseFailedException;
+import com.datejs.client.LocalizedParserWithDateJs;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.client.DOM;
@@ -24,9 +23,7 @@ import com.google.gwt.user.client.ui.SourcesClickEvents;
 import com.google.gwt.user.client.ui.SourcesFocusEvents;
 import com.google.gwt.user.client.ui.SourcesKeyboardEvents;
 import com.google.gwt.user.client.ui.Widget;
-import com.habitsoft.kiyaa.util.CurrencyParseException;
 import com.habitsoft.kiyaa.util.DateParseException;
-import com.habitsoft.kiyaa.util.DifferentCurrencyCodeProvided;
 import com.habitsoft.kiyaa.util.FocusGroup;
 import com.habitsoft.kiyaa.util.LocalizedParser;
 
@@ -161,25 +158,7 @@ public class DatePicker extends FlowPanel implements SourcesChangeEvents, Source
 				}
 			}
 		});
-		setDateParser(new LocalizedParser() {
-			public Date parse(String dateString) throws DateParseException {
-				DateJs dateJs;
-				try {
-					dateJs = new DateJs(dateString);
-				} catch (DateParseFailedException caught) {
-					throw new DateParseException();
-				}
-				return dateJs.toDate();
-			}
-            public String formatCurrency(long amount, String currencyCode, boolean international) { throw new UnsupportedOperationException(); }
-            public String formatDate(Date date, boolean shortFormat) { throw new UnsupportedOperationException(); }
-            public String formatDecimal(double val, boolean showSeperators) { throw new UnsupportedOperationException(); }
-            public long parseCurrency(String currencyString, String currencyCode) throws CurrencyParseException, DifferentCurrencyCodeProvided { throw new UnsupportedOperationException(); }
-            public Date parseDate(String dateString) throws DateParseException { throw new UnsupportedOperationException(); }
-            public double parseDecimal(String val) throws NumberFormatException { throw new UnsupportedOperationException(); }
-            public String formatPercentage(double value) { throw new UnsupportedOperationException(); }
-            public double parsePercentage(String val) { throw new UnsupportedOperationException(); }
-		});
+		setDateParser(new LocalizedParserWithDateJs());
 		add(textbox);
 		add(calendarIcon);
 	}
