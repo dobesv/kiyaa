@@ -1,0 +1,10 @@
+<module>
+	<inherits name='com.google.gwt.user.User'/>
+	
+    <inherits name='com.datejs.DateJs'/>
+    <inherits name='com.habitsoft.kiyaa.Util'/>
+    <inherits name='com.habitsoft.kiyaa.Metamodel'/>
+    
+    <source path='widgets'/>
+    
+</module>
