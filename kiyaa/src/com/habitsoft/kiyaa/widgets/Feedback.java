@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -14,6 +15,7 @@ public class Feedback extends FlowPanel {
 
 	boolean positive;
 	boolean negative;
+	boolean busy;
 	ArrayList<Hyperlink> actionLinks = new ArrayList<Hyperlink>();
 	Action[] actions;
 	Timer clearTimer = new Timer() {
@@ -42,7 +44,8 @@ public class Feedback extends FlowPanel {
     				actionLink.setStyleName("action");
     				actionLink.addClickListener(new ClickListener() {
     					public void onClick(Widget sender) {
-    						action.perform(AsyncCallbackFactory.defaultNewInstance());
+    						final AsyncCallback<Void> defaultNewInstance = AsyncCallbackFactory.defaultNewInstance();
+                            action.perform(defaultNewInstance);
     					}
     				});
     				add(actionLink);
@@ -89,6 +92,7 @@ public class Feedback extends FlowPanel {
 	public void positiveFeedback(String text, Collection<Action> actions, int timeout) {
 		setPositive(true);
 		setNegative(false);
+        setBusy(false);
 		setText(text, actions, null, timeout);
 	}
 	
@@ -99,6 +103,7 @@ public class Feedback extends FlowPanel {
 	public void positiveFeedback(String text, Collection<Action> actions, Collection<Widget> widgets, int timeout) {
 		setPositive(true);
 		setNegative(false);
+        setBusy(false);
 		setText(text, actions, widgets, timeout);
 	}
 	
@@ -109,6 +114,7 @@ public class Feedback extends FlowPanel {
 	public void negativeFeedback(String text, Collection<Action> actions, int timeout) {
 		setPositive(false);
 		setNegative(true);
+        setBusy(false);
 		setText(text, actions, null, timeout);
 	}
 	
@@ -119,6 +125,7 @@ public class Feedback extends FlowPanel {
 	public void neutralFeedback(String text, Collection<Action> actions, int timeout) {
 		setPositive(false);
 		setNegative(false);
+        setBusy(false);
 		setText(text, actions, null, timeout);
 	}
 
@@ -128,6 +135,27 @@ public class Feedback extends FlowPanel {
 	public void clearFeedback() {
 		setPositive(false);
 		setNegative(false);
+        setBusy(false);
 		setText(null, null, null, 0);
 	}
+
+    public boolean isBusy() {
+        return busy;
+    }
+
+    public void setBusy(boolean working) {
+        if(working != this.busy) {
+            this.busy = working;
+            if(working) addStyleDependentName("busy");
+            else removeStyleDependentName("busy");
+        }
+        this.busy = working;
+    }
+    
+    public void busy(String text) {
+        setPositive(false);
+        setNegative(false);
+        setBusy(true);
+        setText(text, null, null, 0);
+    }
 }

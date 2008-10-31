@@ -1,6 +1,10 @@
-package com.habitsoft.kiyaa.util;
+package com.habitsoft.kiyaa.test.util;
 
 import com.google.gwt.junit.client.GWTTestCase;
+import com.habitsoft.kiyaa.util.ClientLocalizedParser;
+import com.habitsoft.kiyaa.util.CurrencyParseException;
+import com.habitsoft.kiyaa.util.DifferentCurrencyCodeProvided;
+import com.habitsoft.kiyaa.util.LocalizedParser;
 
 public class TestLocalizedParser extends GWTTestCase {
 

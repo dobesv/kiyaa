@@ -1,10 +1,11 @@
-package com.habitsoft.kiyaa.server;
+package com.habitsoft.kiyaa.test.server;
 
 import java.util.Locale;
 
 import junit.framework.TestCase;
 
-import com.habitsoft.kiyaa.util.TestLocalizedParser;
+import com.habitsoft.kiyaa.server.ServerLocalizedParser;
+import com.habitsoft.kiyaa.test.util.TestLocalizedParser;
 
 public class TestServerLocalizedParser extends TestCase {
 
