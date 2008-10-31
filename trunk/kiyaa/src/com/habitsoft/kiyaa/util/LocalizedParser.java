@@ -59,8 +59,9 @@ public interface LocalizedParser {
 	 * divided by 100 and shown with 2 decimal places.  Other currencies have no
 	 * subdivisions (INR for example) and can be formatted with no decimal places and
 	 * do not have to be divided by anything.
+	 * @param showGroupings TODO
 	 */
-	public String formatCurrency(long amount, String currencyCode, boolean international);
+	public String formatCurrency(long amount, String currencyCode, boolean international, boolean showGroupings);
 	
 	/**
 	 * Parse a decimal number, supporting the locale-specific convention for decimal and
@@ -69,11 +70,11 @@ public interface LocalizedParser {
 	public double parseDecimal(String val) throws NumberFormatException;
 	
 	/**
-	 * Format a double number.  If showSeperators is true, locale-specific seperators
+	 * Format a double number.  If showGroupings is true, locale-specific seperators
 	 * will be added to the string, e.g. 1,234,567.89 in most places, or 1.234.567,89 in
-	 * some European locales.
+	 * European locales.
 	 */
-	public String formatDecimal(double val, boolean showSeperators);
+	public String formatDecimal(double val, boolean showGroupings);
 	
 	/**
 	 * Parse a percentage; any "%" suffix should be stripped and the

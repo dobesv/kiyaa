@@ -30,7 +30,7 @@ public class MathUtil {
      * 
      * Supports either 0, 1, 2, -1, -2, or -3 decimal places.
      */
-    public static long roundTo(double val, int decimalPlaces) {
+    public static long roundToFp(double val, int decimalPlaces) {
         switch(decimalPlaces) {
         case 0: return round(val);
         case 1: return round(val*10.0);
