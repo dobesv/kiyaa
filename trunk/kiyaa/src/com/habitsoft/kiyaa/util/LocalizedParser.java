@@ -6,11 +6,24 @@ package com.habitsoft.kiyaa.util;
 import java.util.Date;
 
 
-
+/**
+ * The purpose of this class is to allow some degree of code sharing
+ * between client and server code.  Unfortunately for us, GWT's
+ * parsing and formatting classes don't work on the server, and java's
+ * parsing and formatting classes don't work on the client.  This
+ * class allows client or server to produce an instance which can be
+ * used by widgets and classes which need to do some localized parsing or
+ * formatting and which are shared between client and server code.
+ * @author dobes
+ *
+ */
 public interface LocalizedParser {
     /**
-     * Parse a date in as felxible a format as possible using the locale
+     * Parse a date in as flexible a format as possible using the locale
      * of this parser.
+     * 
+     * On the client side, this is typically implemented using DateJs.
+     * 
      * @throws DateParseException If the date could not be recognized by the parser
      */
 	public Date parseDate(String dateString) throws DateParseException;
@@ -38,6 +51,14 @@ public interface LocalizedParser {
 	 * international currency symbol will be used; e.g. $5.25 becomes C$5.25 or US$5.25
 	 * depending on the currency.  This allows currency values to be distinguished among
 	 * countries using the same currency symbol.
+	 * 
+	 * The fixed-point representation of the currency value is the number of the smallest
+	 * denomination of currency; e.g. the number of cents.  The parser will have to know
+	 * how many subdivisions there are to a single unit.  For CAD, USD, and EUR (as well
+	 * as many other currencies) there are two decimal places, meaning the number is
+	 * divided by 100 and shown with 2 decimal places.  Other currencies have no
+	 * subdivisions (INR for example) and can be formatted with no decimal places and
+	 * do not have to be divided by anything.
 	 */
 	public String formatCurrency(long amount, String currencyCode, boolean international);
 	
