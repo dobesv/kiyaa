@@ -1,0 +1,8 @@
+<module>
+	<inherits name='com.google.gwt.user.User'/>
+	
+    <inherits name='com.habitsoft.kiyaa.Util'/>
+    
+    <source path='metamodel'/>
+    
+</module>

@@ -1,0 +1,16 @@
+<module>
+	<inherits name='com.google.gwt.user.User'/>
+	
+    <inherits name='com.habitsoft.kiyaa.Util'/>
+    <inherits name='com.habitsoft.kiyaa.Metamodel'/>
+    <inherits name='com.habitsoft.kiyaa.Widgets'/>
+    
+    <source path='views'/>
+    
+    <generate-with
+        class="com.habitsoft.kiyaa.rebind.GeneratedHTMLViewGenerator">
+     <when-type-assignable
+        class="com.habitsoft.kiyaa.views.GeneratedHTMLView"/>
+    </generate-with>
+    
+</module>

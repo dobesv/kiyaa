@@ -1,0 +1,12 @@
+<module>
+	<inherits name='com.google.gwt.user.User'/>
+	
+    <source path='util'/>
+    
+    <generate-with
+        class="com.habitsoft.kiyaa.rebind.ClonerGenerator">
+     <when-type-assignable
+        class="com.habitsoft.kiyaa.util.Cloner"/>
+    </generate-with>
+    
+</module>
