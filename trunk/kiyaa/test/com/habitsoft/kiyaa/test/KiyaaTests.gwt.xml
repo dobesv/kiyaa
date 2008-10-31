@@ -2,11 +2,13 @@
 
 	<!-- Inherit the core Web Toolkit stuff.                  -->
 	<inherits name='com.google.gwt.user.User'/>
+    <inherits name='com.google.gwt.junit.JUnit'/>
     <inherits name='com.habitsoft.kiyaa.Kiyaa'/>
     
 	<!-- Specify the app entry point class.                   -->
-	<entry-point class='com.habitsoft.kiyaa.client.KiyaaTests'/>
+	<entry-point class='com.habitsoft.kiyaa.test.client.KiyaaTests'/>
   
+    <source path="client"/>
     <source path="util"/>
     
 </module>

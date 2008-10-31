@@ -1,10 +1,9 @@
-package com.habitsoft.kiyaa.util;
+package com.habitsoft.kiyaa.test.util;
 
+import com.google.gwt.junit.client.GWTTestCase;
 import com.habitsoft.kiyaa.util.MathUtil;
 
-import junit.framework.TestCase;
-
-public class TestMathUtil extends TestCase {
+public class TestMathUtil extends GWTTestCase {
 
     public void testRounding() {
         assertEquals(5L, MathUtil.round(5.0));
@@ -29,5 +28,10 @@ public class TestMathUtil extends TestCase {
         assertEquals(-1.6, MathUtil.fixedPointToDouble(-16, 1));
         assertEquals(6.0, MathUtil.fixedPointToDouble(6, 0));
         assertEquals(-6.0, MathUtil.fixedPointToDouble(-6, 0));
+    }
+
+    @Override
+    public String getModuleName() {
+        return "com.habitsoft.kiyaa.KiyaaTests";
     }
 }

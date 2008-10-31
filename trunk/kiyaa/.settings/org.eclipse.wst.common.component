@@ -3,5 +3,6 @@
     <wb-module deploy-name="kiyaa">
         <wb-resource deploy-path="/" source-path="/src"/>
         <wb-resource deploy-path="/" source-path="/test"/>
+        <wb-resource deploy-path="/gwt/com.habitsoft.kiyaa.KiyaaTests" source-path="/bin.gwt/com.habitsoft.kiyaa.KiyaaTests"/>
     </wb-module>
 </project-modules>

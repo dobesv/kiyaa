@@ -1,4 +1,4 @@
-package com.habitsoft.kiyaa.client;
+package com.habitsoft.kiyaa.test.client;
 
 import com.google.gwt.core.client.EntryPoint;
 
