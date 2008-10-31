@@ -2,9 +2,11 @@ package com.habitsoft.kiyaa.util;
 
 import java.util.Date;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.i18n.client.NumberFormat;
+import com.google.gwt.i18n.client.constants.NumberConstants;
 import com.google.gwt.i18n.client.impl.CurrencyList;
 
 /**
@@ -13,9 +15,12 @@ import com.google.gwt.i18n.client.impl.CurrencyList;
  * @author dobes
  */
 public class ClientLocalizedParser implements LocalizedParser {
+    private static NumberConstants nc = GWT.create(NumberConstants.class);
+    private static String stripTrailingZeroesRegex = nc.decimalSeparator().replaceAll("\\.", "\\\\.")+"?0*([^0-9]*)$";
+
     public String formatCurrency(long amount, String currencyCode, boolean international, boolean showGroupings) {
         int decimalPlaces = getDecimalPlaces(currencyCode);
-        final double doubleValue = MathUtil.longToDouble(amount, decimalPlaces);
+        final double doubleValue = MathUtil.fixedPointToDouble(amount, decimalPlaces);
         final NumberFormat format = getNumberFormat(currencyCode, international, decimalPlaces);
         return format.format(doubleValue);
     }
@@ -46,13 +51,14 @@ public class ClientLocalizedParser implements LocalizedParser {
     }
 
     public String formatPercentage(double value) {
-        return NumberFormat.getPercentFormat().format(value);
+        final String str = NumberFormat.getFormat("#0.0000%").format(value);
+        return str.replaceFirst(stripTrailingZeroesRegex, "$1"); 
     }
 
     public long parseCurrency(String text, String currencyCode) throws CurrencyParseException, DifferentCurrencyCodeProvided {
         double val = NumberFormat.getCurrencyFormat(currencyCode).parse(text);
         int decimalPlaces = getDecimalPlaces(currencyCode);
-        return MathUtil.roundToFp(val, decimalPlaces);
+        return MathUtil.roundToFixedPoint(val, decimalPlaces);
     }
 
     public Date parseDate(String dateString) throws DateParseException {
@@ -64,7 +70,11 @@ public class ClientLocalizedParser implements LocalizedParser {
     }
 
     public double parsePercentage(String val) throws NumberFormatException {
-        return NumberFormat.getPercentFormat().parse(val);
+        try {
+            return NumberFormat.getPercentFormat().parse(val)/100.0;
+        } catch(NumberFormatException nfe) {
+            return parseDecimal(val)/100.0;
+        }
     }
 
 }

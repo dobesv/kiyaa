@@ -31,7 +31,7 @@ public class ServerLocalizedParser implements LocalizedParser {
         final Currency currency = Currency.getInstance(currencyCode);
         final int decimalPlaces = getDecimalPlaces(currency);
         final NumberFormat numberFormat = getNumberFormat(currency, international, showGroupings);
-        return numberFormat.format(MathUtil.longToDouble(amount, decimalPlaces));
+        return numberFormat.format(MathUtil.fixedPointToDouble(amount, decimalPlaces));
     }
 
     protected int getDecimalPlaces(final Currency currency) {
@@ -65,7 +65,11 @@ public class ServerLocalizedParser implements LocalizedParser {
 
     @Override
     public String formatPercentage(double value) {
-        return DecimalFormat.getPercentInstance(locale).format(value);
+        final DecimalFormat df = new DecimalFormat("#0.0000%");
+        df.setMinimumFractionDigits(0);
+        df.setMaximumFractionDigits(4);
+        df.setDecimalSeparatorAlwaysShown(false);
+        return df.format(value);
     }
 
     @Override
@@ -80,7 +84,7 @@ public class ServerLocalizedParser implements LocalizedParser {
         } catch (ParseException e) {
             throw new CurrencyParseException(e);
         }
-        return MathUtil.roundToFp(val, getDecimalPlaces(currency));
+        return MathUtil.roundToFixedPoint(val, getDecimalPlaces(currency));
     }
 
     @Override
@@ -94,12 +98,20 @@ public class ServerLocalizedParser implements LocalizedParser {
 
     @Override
     public double parseDecimal(String val) throws NumberFormatException {
-        return 0;
+        try {
+            return NumberFormat.getNumberInstance(locale).parse(val).doubleValue();
+        } catch (ParseException e) {
+            // TODO This error should be localized based on our own locale instead of the default locale
+            throw new NumberFormatException(e.getLocalizedMessage());
+        }
     }
 
     @Override
     public double parsePercentage(String val) throws NumberFormatException {
-        return 0;
+        try {
+            return NumberFormat.getPercentInstance(locale).parse(val).doubleValue();
+        } catch (ParseException e) {
+            return parseDecimal(val)/100.0;
+        }
     }
-
 }

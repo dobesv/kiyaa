@@ -14,20 +14,20 @@ public class TestMathUtil extends TestCase {
         assertEquals(-4L, MathUtil.round(-3.51));
         assertEquals(-3L, MathUtil.round(-3.49));
         
-        assertEquals(-3L, MathUtil.roundToFp(-3.49, 0));
-        assertEquals(40L, MathUtil.roundToFp(4.0, 1));
-        assertEquals(45L, MathUtil.roundToFp(4.45, 1));
-        assertEquals(-45L, MathUtil.roundToFp(-4.45, 1));
-        assertEquals(-446L, MathUtil.roundToFp(-4.455, 2));
-        assertEquals(446L, MathUtil.roundToFp(4.455, 2));
+        assertEquals(-3L, MathUtil.roundToFixedPoint(-3.49, 0));
+        assertEquals(40L, MathUtil.roundToFixedPoint(4.0, 1));
+        assertEquals(45L, MathUtil.roundToFixedPoint(4.45, 1));
+        assertEquals(-45L, MathUtil.roundToFixedPoint(-4.45, 1));
+        assertEquals(-446L, MathUtil.roundToFixedPoint(-4.455, 2));
+        assertEquals(446L, MathUtil.roundToFixedPoint(4.455, 2));
     }
     
     public void testLongToDouble() {
-        assertEquals(1.23, MathUtil.longToDouble(123, 2));
-        assertEquals(-1.23, MathUtil.longToDouble(-123, 2));
-        assertEquals(1.6, MathUtil.longToDouble(16, 1));
-        assertEquals(-1.6, MathUtil.longToDouble(-16, 1));
-        assertEquals(6.0, MathUtil.longToDouble(6, 0));
-        assertEquals(-6.0, MathUtil.longToDouble(-6, 0));
+        assertEquals(1.23, MathUtil.fixedPointToDouble(123, 2));
+        assertEquals(-1.23, MathUtil.fixedPointToDouble(-123, 2));
+        assertEquals(1.6, MathUtil.fixedPointToDouble(16, 1));
+        assertEquals(-1.6, MathUtil.fixedPointToDouble(-16, 1));
+        assertEquals(6.0, MathUtil.fixedPointToDouble(6, 0));
+        assertEquals(-6.0, MathUtil.fixedPointToDouble(-6, 0));
     }
 }
