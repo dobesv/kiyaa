@@ -28,13 +28,16 @@ public class MathUtil {
      * roundTo(-4.455, 2) == -446L
      * roundTo(4.455, 2) == 446L
      * 
-     * Supports either 0, 1, 2, -1, -2, or -3 decimal places.
+     * Supports either 0, 1, 2, 3, -1, -2, or -3 decimal places.
+     * 
+     * Half-integers will be rounded up.
      */
-    public static long roundToFp(double val, int decimalPlaces) {
+    public static long roundToFixedPoint(double val, int decimalPlaces) {
         switch(decimalPlaces) {
         case 0: return round(val);
         case 1: return round(val*10.0);
         case 2: return round(val*100.0);
+        case 3: return round(val*1000.0);
         case -1: return round(val*0.1);
         case -2: return round(val*0.01);
         case -3: return round(val*0.001);
@@ -43,11 +46,16 @@ public class MathUtil {
         }
     }
     
-    public static double longToDouble(long val, int decimalPlaces) {
+    /**
+     * Convert a fixed-point value as returned by roundToFixedPoint()
+     * back to a double floating-point value.
+     */
+    public static double fixedPointToDouble(long val, int decimalPlaces) {
         switch(decimalPlaces) {
         case 0: return (double)val;
         case 1: return (double)val/10.0;
         case 2: return (double)val/100.0;
+        case 3: return (double)val/1000.0;
         case -1: return (double)val/0.1;
         case -2: return (double)val/0.01;
         case -3: return (double)val/0.001;

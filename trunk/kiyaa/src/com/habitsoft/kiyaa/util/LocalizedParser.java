@@ -43,6 +43,10 @@ public interface LocalizedParser {
 	 * parser.  The input may be using the international or non-international
 	 * currency code; the parser should allow both, if it is capable of
 	 * outputting the international code.
+	 * 
+	 * @throws DifferentCurrencyCodeProvided If the algorithm is smart enough to detect that the currency string given
+	 *         is indicating a different currency than the one given, it'll throw this exception and you can do with
+	 *         it as you please (you might use it to adjust the currency selection in the UI automatically).
 	 */
 	public long parseCurrency(String currencyString, String currencyCode) throws CurrencyParseException, DifferentCurrencyCodeProvided;
 	
@@ -78,8 +82,8 @@ public interface LocalizedParser {
 	
 	/**
 	 * Parse a percentage; any "%" suffix should be stripped and the
-	 * number divided by 100.0.  Like parseDecimal this will honor
-	 * the locale-specific separators.
+	 * number divided by 100.0.  Like parseDecimal this should honor
+	 * the locale-specific separators if they are present.
 	 */
 	public double parsePercentage(String val) throws NumberFormatException;
 	
@@ -89,6 +93,10 @@ public interface LocalizedParser {
 	 * a reasonable number of decimal places, and ideally strip
 	 * off any trailing zeroes and even the decimal point if 
 	 * possible.
+	 * 
+	 * The algorithm should keep up to 4 decimal places, but should
+	 * strip any trailings zeroes and remove the decimal seperator
+	 * it it is unnecessary.
 	 */
 	public String formatPercentage(double value);
 }
