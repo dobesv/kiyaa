@@ -5,9 +5,6 @@
     <inherits name='com.google.gwt.junit.JUnit'/>
     <inherits name='com.habitsoft.kiyaa.Kiyaa'/>
     
-	<!-- Specify the app entry point class.                   -->
-	<entry-point class='com.habitsoft.kiyaa.test.client.KiyaaTests'/>
-  
     <source path="client"/>
     <source path="util"/>
     
