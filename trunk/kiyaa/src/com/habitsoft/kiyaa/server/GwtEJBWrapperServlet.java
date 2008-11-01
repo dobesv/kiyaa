@@ -8,6 +8,8 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.ejb.EJBException;
+import javax.persistence.OptimisticLockException;
 import javax.servlet.http.HttpServletRequest;
 
 import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
@@ -39,6 +41,20 @@ import com.google.gwt.user.server.rpc.SerializationPolicyLoader;
  * The bean must implement the GWT RemoteService interface that is being used
  * by the client code.
  * 
+ * Important note about locking:
+ * 
+ * This code will retry any call that throws an OptimisticLockException; the
+ * reason being that it assumes that your GWT client has no idea what to do
+ * with an OptimisticLockException and that this behavior is probably
+ * acceptable in that case.  
+ * 
+ * To support optimistic locking in your GWT app you'll have to manually 
+ * check the versions of incoming objects and throw your own exception 
+ * to notify the client that there was a concurrent modification, and
+ * ask them (the user) what they would like to do about - typically they
+ * must choose to overwrite the object by re-sending their object
+ * with a new version number, or they can choose to start over with the
+ * new version by re-fetching the object into the UI.
  */
 public abstract class GwtEJBWrapperServlet<T> extends RemoteServiceServlet {
 	private static final long serialVersionUID = 1L;
@@ -143,9 +159,20 @@ public abstract class GwtEJBWrapperServlet<T> extends RemoteServiceServlet {
 			Object bean = getBean();
 			RPCRequest rpcRequest = RPC.decodeRequest(payload, bean
 					.getClass(), this);
-			return RPC.invokeAndEncodeResponse(bean,
-					rpcRequest.getMethod(), rpcRequest.getParameters(),
-					rpcRequest.getSerializationPolicy());
+			for(;;) {
+			    try {
+        			return RPC.invokeAndEncodeResponse(bean,
+        					rpcRequest.getMethod(), rpcRequest.getParameters(),
+        					rpcRequest.getSerializationPolicy());
+			    } catch(EJBException ee) {
+			        // If we get an EJBException caused by an OptimisticLockException, retry
+			        if(!(ee.getCausedByException() instanceof OptimisticLockException)) {
+			            throw ee;
+			        }
+			    } catch(OptimisticLockException ole) {
+			        // retry!
+			    }
+			}
 		} catch (IncompatibleRemoteServiceException ex) {
 			getServletContext().log("An IncompatibleRemoteServiceException was thrown while processing this call.", ex);
 			return RPC.encodeResponseForFailure(null, ex);
