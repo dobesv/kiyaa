@@ -1280,6 +1280,8 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				    generateKeyPressHandler(type, name, value, "' '");
 				} else if ("onPressEscape".equalsIgnoreCase(key)) {
 				    generateKeyPressHandler(type, name, value, "KEY_ESCAPE");
+                } else if ("onKeyPress".equalsIgnoreCase(key)) {
+                    generateKeyPressHandler(type, name, value, null);
 				} else if ("binding".equals(key)) {
 				    generateBinding(type, name, value);
 				} else if ("class".equals(key)) {
@@ -1495,7 +1497,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 			private String generateKeyPressHandler(JClassType type, String name, final String value, String keyName)
 			throws UnableToCompleteException {
     			if(!implementsInterface(type, getType(SourcesClickEvents.class.getName()))) {
-    			    logger.log(TreeLogger.ERROR, "onPressXXX attribute must be on a View/Widget" +
+    			    logger.log(TreeLogger.ERROR, name+" attribute must be on a View/Widget" +
     			    		" that implements SourcesKeyEvents.", null);
     			    throw new UnableToCompleteException();
     			}
@@ -1505,7 +1507,8 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
     			        +" for a onPressXXX handler", null);
     			    throw new UnableToCompleteException();
     			}
-    			attachWidgetEventListener(name, actionExpr, "KeyboardListenerAdapter", "onKeyPress(Widget sender, char keyCode, int modifiers)", "keyCode == "+keyName+" && (modifiers & ~MODIFIER_SHIFT) == 0");
+    			final String condition = keyName==null?null:"keyCode == "+keyName+" && (modifiers & ~MODIFIER_SHIFT) == 0";
+                attachWidgetEventListener(name, actionExpr, "KeyboardListenerAdapter", "onKeyPress(Widget sender, char keyCode, int modifiers)", condition);
     			return actionExpr;
     		}
 			protected void generateAttributeLoadSave(JClassType type, ExpressionInfo attributeAccessors, ExpressionInfo pathAccessors,
@@ -2043,7 +2046,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                         objectType = accessors.type.isClassOrInterface();
                         if (objectType == null) {
                             logger.log(TreeLogger.ERROR, "Can't call a method on a non-class object of type "
-                                            + objectType.getName() + " for expression " + path, null);
+                                            + accessors.type + " for expression " + path, null);
                             throw new UnableToCompleteException();
                         }
                     }
