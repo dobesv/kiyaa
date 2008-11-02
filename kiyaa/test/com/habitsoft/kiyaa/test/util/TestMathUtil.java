@@ -32,6 +32,6 @@ public class TestMathUtil extends GWTTestCase {
 
     @Override
     public String getModuleName() {
-        return "com.habitsoft.kiyaa.KiyaaTests";
+        return "com.habitsoft.kiyaa.test.KiyaaTests";
     }
 }

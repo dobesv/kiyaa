@@ -81,16 +81,24 @@ public class TestLocalizedParser extends GWTTestCase {
         assertEquals(0.01, parser.parsePercentage("1%"));
         assertEquals(0.01, parser.parsePercentage("1.000%"));
         assertEquals(1.01, parser.parsePercentage("101.000%"));
+        assertEquals(-1.01, parser.parsePercentage("-101%"));
+        assertEquals(-0.01, parser.parsePercentage("-1%"));
+        assertEquals(-0.01, parser.parsePercentage("-1.000%"));
+        assertEquals(-1.01, parser.parsePercentage("-101.000%"));
         assertEquals(0.0, parser.parsePercentage("0%"));
         assertEquals(1.01, parser.parsePercentage("101"));
         assertEquals(0.01, parser.parsePercentage("1"));
         assertEquals(0.01, parser.parsePercentage("1.000"));
         assertEquals(1.01, parser.parsePercentage("101.000"));
         assertEquals(0.0, parser.parsePercentage("0"));
+        assertEquals(-1.01, parser.parsePercentage("-101"));
+        assertEquals(-0.01, parser.parsePercentage("-1"));
+        assertEquals(-0.01, parser.parsePercentage("-1.000"));
+        assertEquals(-1.01, parser.parsePercentage("-101.000"));
     }
     
     @Override
     public String getModuleName() {
-        return "com.habitsoft.kiyaa.KiyaaTests";
+        return "com.habitsoft.kiyaa.test.KiyaaTests";
     }
 }
