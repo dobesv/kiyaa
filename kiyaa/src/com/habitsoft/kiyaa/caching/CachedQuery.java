@@ -8,22 +8,27 @@ import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.habitsoft.kiyaa.util.AsyncCallbackShared;
 
+/**
+ * Represents a cached (or cacheable) individual query.  The query is
+ * identified by a composite key of the parameters of the query; the
+ * query's "type" is typically identified by which CacheMap the query
+ * is in, or which GlobalCachedQuery this is an instance of.
+ * 
+ * Expiry times should take into consideration:
+ * 
+ *  - How likely is this to be re-used?  More likely = more time
+ *  - How soon is this likely to be re-used?  If longer than a reasonable
+ *    amount, shorten the expiry to save memory, otherwise lengthen it
+ *    to increase the chances of a cache hit.
+ *  - How often will this be changed by someone else?  Try to set something
+ *    that will show changes by others in a reasonable time frame. 
+ */
 public class CachedQuery<V> {
-    /**
-     * Expiry times should take into consideration:
-     * 
-     *  - How likely is this to be re-used?  More likely = more time
-     *  - How soon is this likely to be re-used?  If longer than a reasonable
-     *    amount, shorten the expiry to save memory, otherwise lengthen it
-     *    to increase the chances of a cache hit.
-     *  - How often will this be changed by someone else?  Try to set something
-     *    that will show changes by others in a reasonable time frame. 
-     */
-    public static final long VERY_LONG_EXPIRY = 24*60*60*1000;
-    public static final long LONG_EXPIRY = 60*60*1000;
-    public static final long MEDIUM_EXPIRY = 5*60*1000;
-    public static final long SHORT_EXPIRY = 60*1000;
-    public static final long VERY_SHORT_EXPIRY = 5*1000;
+    public static final int VERY_LONG_EXPIRY = 24*60*60*1000;
+    public static final int LONG_EXPIRY = 60*60*1000;
+    public static final int MEDIUM_EXPIRY = 5*60*1000;
+    public static final int SHORT_EXPIRY = 60*1000;
+    public static final int VERY_SHORT_EXPIRY = 5*1000;
     
 	long expiry=0;
 	Throwable failure;
