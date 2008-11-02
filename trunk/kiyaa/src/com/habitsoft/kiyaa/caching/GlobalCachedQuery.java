@@ -5,12 +5,22 @@ package com.habitsoft.kiyaa.caching;
 
 import java.util.ArrayList;
 
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 public class GlobalCachedQuery<V> extends CachedQuery<V> {
-    private static ArrayList<GlobalCachedQuery> globalQueries = new ArrayList();
+    private static final ArrayList<GlobalCachedQuery> globalQueries = new ArrayList();
+    private static final Timer timer = new Timer() {
+        @Override
+        public void run() {
+            flushAllExpired();
+        };
+    };
+    
 	public GlobalCachedQuery(long refreshInterval) {
 		super(refreshInterval);
+		if(globalQueries.isEmpty())
+		    timer.scheduleRepeating(VERY_SHORT_EXPIRY);
 		globalQueries.add(this);
 	}
 	
@@ -35,5 +45,9 @@ public class GlobalCachedQuery<V> extends CachedQuery<V> {
             if(query.isExpired())
                 query.flush();
         }
+    }
+
+    public static ArrayList<GlobalCachedQuery> getGlobalQueries() {
+        return globalQueries;
     }
 }

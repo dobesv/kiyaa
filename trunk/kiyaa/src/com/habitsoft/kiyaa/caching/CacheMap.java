@@ -8,12 +8,18 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 public class CacheMap<K,V> extends TreeMap<K,CachedQuery<V>> {
 	private static final long serialVersionUID = 1L;
-    private static ArrayList<CacheMap> allCaches = new ArrayList();
-	
+    private static final ArrayList<CacheMap> allCaches = new ArrayList();
+	private static final Timer timer = new Timer() {
+	    @Override
+	    public void run() {
+	        flushAllExpired();
+	    }  
+	};
 	final long refreshInterval;
 	
 	public CacheMap() {
@@ -21,6 +27,8 @@ public class CacheMap<K,V> extends TreeMap<K,CachedQuery<V>> {
 	}
 	
 	public CacheMap(long refreshInterval) {
+	    if(allCaches.isEmpty())
+	        timer.scheduleRepeating(CachedQuery.VERY_SHORT_EXPIRY);
 		allCaches.add(this);
 		this.refreshInterval = refreshInterval;
 	}
@@ -97,5 +105,9 @@ public class CacheMap<K,V> extends TreeMap<K,CachedQuery<V>> {
         for(CacheMap map : allCaches) {
             map.flushExpired();
         }
+    }
+
+    public static ArrayList<CacheMap> getAllCaches() {
+        return allCaches;
     }
 }
