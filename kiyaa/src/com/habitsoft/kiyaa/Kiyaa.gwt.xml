@@ -8,5 +8,6 @@
     <inherits name='com.habitsoft.kiyaa.Util'/>
     <inherits name='com.habitsoft.kiyaa.Views'/>
     <inherits name='com.habitsoft.kiyaa.Widgets'/>
+    <inherits name='com.habitsoft.kiyaa.Caching'/>
     
 </module>
