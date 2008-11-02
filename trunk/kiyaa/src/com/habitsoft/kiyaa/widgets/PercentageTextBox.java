@@ -1,6 +1,7 @@
 package com.habitsoft.kiyaa.widgets;
 
-import com.google.gwt.i18n.client.NumberFormat;
+import com.habitsoft.kiyaa.util.ClientLocalizedParser;
+import com.habitsoft.kiyaa.util.LocalizedParser;
 
 
 /**
@@ -11,9 +12,10 @@ import com.google.gwt.i18n.client.NumberFormat;
 public class PercentageTextBox extends TextBox {
 	double cachedValue=0;
 	String cachedText="0%";
+	LocalizedParser parser = new ClientLocalizedParser();
 	
 	public double getValue() {
-	    return NumberFormat.getPercentFormat().parse(getText().trim());
+	    return parser.parsePercentage(getText().trim());
 	}
 	public void setValue(double value) {
 		// Try to avoid expensive string operations
@@ -22,7 +24,7 @@ public class PercentageTextBox extends TextBox {
 			return;
 		}
 		
-		String text = NumberFormat.getPercentFormat().format(value);
+		String text = parser.formatPercentage(value);
 		cachedValue = value;
 		cachedText = text;
 		setText(text);
