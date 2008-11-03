@@ -14,7 +14,6 @@ import com.google.gwt.user.client.ui.ChangeListenerCollection;
 import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.PopupListener;
-import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
@@ -321,7 +320,7 @@ public class CustomPopup<T> implements PopupListener {
 
     protected Anchor restoreFilterActionLabel;
 
-    public void onPopupClosed(PopupPanel sender, boolean autoClosed) {
+    public void onPopupClosed(com.google.gwt.user.client.ui.PopupPanel sender, boolean autoClosed) {
         popupShowing = false;
     }
 
