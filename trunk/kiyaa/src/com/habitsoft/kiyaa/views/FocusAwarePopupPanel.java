@@ -15,13 +15,13 @@ import com.google.gwt.user.client.Event;
  * always true for this class.  To use a non-autoHide popup, use
  * the original class.
  */
-class PopupPanel extends com.google.gwt.user.client.ui.PopupPanel {
+class FocusAwarePopupPanel extends com.google.gwt.user.client.ui.PopupPanel {
 
-    public PopupPanel() {
+    public FocusAwarePopupPanel() {
         super(true);
     }
 
-    public PopupPanel(boolean modal) {
+    public FocusAwarePopupPanel(boolean modal) {
         super(true, modal);
     }
     
