@@ -1,3 +1,5 @@
 Manifest-Version: 1.0
-Class-Path: 
+Class-Path: lib/commons-lang-2.3-sources.jar 
+ lib/commons-lang-2.3.jar 
+ lib/javassist-3.4.GA.jar
 

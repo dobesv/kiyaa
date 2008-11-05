@@ -33,6 +33,7 @@ class FocusAwarePopupPanel extends com.google.gwt.user.client.ui.PopupPanel {
             boolean eventTargetsPopup = (target != null)
                 && DOM.isOrHasChild(getElement(), target);
             if(!eventTargetsPopup) {
+                
                 // Focused somewhere outside the popup?  In that case, close the popup!
                 hide(true);
             }

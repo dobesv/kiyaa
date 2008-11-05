@@ -30,7 +30,7 @@ import com.habitsoft.kiyaa.util.ToStringNameValueAdapter;
 public class CustomPopup<T> implements PopupListener {
 
     
-    protected final PopupPanel popup = new FocusAwarePopupPanel(true);
+    protected final PopupPanel popup = new FocusAwarePopupPanel();
     protected final ScrollPanel container = new ScrollPanel();
     protected final FlowPanel flow = new FlowPanel();
     protected BaseCollectionView<T> table;
