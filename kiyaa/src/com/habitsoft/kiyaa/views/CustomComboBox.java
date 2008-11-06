@@ -35,8 +35,10 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 	private final class MyFocusListener implements FocusListener {
 		public void onFocus(Widget sender) {
 			textboxHasFocus = true;
-			if(showOnFocus)
+			if(showOnFocus && !popupShowing) {
+			    GWT.log("Textbox focussed, showing popup", null);
 				showPopup(null);
+			}
 		}
 
 		public void onLostFocus(Widget sender) {
@@ -45,7 +47,6 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 			
 			// If the popup is showing, maybe they clicked on something in the popup (like the scroll bar) and that's why we lost focus.
 			// However, if they've tabbed away we want to hide the popup.
-			// TODO One day the popup might have focusable elements that you don't have to hover the mouse on :-(
 			if(!popupShowing) 
 			    onTabEnterOrLostFocus(false);
 		}
@@ -210,10 +211,11 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 	@Override
     protected void createTableView(AsyncCallback<Void> callback) {
         super.createTableView(callback);
-        table.addChangeListener(new ChangeListener() {
-            public void onChange(Widget sender) {
+        table.addClickListener(new ClickListener() {
+            public void onClick(Widget sender) {
                 if(!textboxHasFocus && !searching) {
-                    textbox.setFocus(true);
+                    GWT.log("table changed, focussing to textbox and updating model from table.", null);
+                    //textbox.setFocus(true);
                     useModelFromTable();
                 }
             }
