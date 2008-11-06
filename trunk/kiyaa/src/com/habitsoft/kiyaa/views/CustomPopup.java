@@ -62,7 +62,7 @@ public class CustomPopup<T> implements PopupListener {
     private Timer hidePopupOperation = new Timer() {
     		@Override
     		public void run() {
-    		    GWT.log("hidePopupOperation.run", null);
+    		    //GWT.log("hidePopupOperation.run", null);
     			hidePopup();
     		}
     	};
@@ -89,7 +89,7 @@ public class CustomPopup<T> implements PopupListener {
      */
     protected void showPopup(AsyncCallback<Void> callback, final int left, final int top) {
     	try {
-    	    GWT.log("showPopup()", new Exception());
+    	    //GWT.log("showPopup()", new Exception());
     		if(table == null) {
     			createTableView(new AsyncCallbackProxy<Void>(callback) {
     				@Override
@@ -163,7 +163,7 @@ public class CustomPopup<T> implements PopupListener {
     	};
     	table.addClickListener(new ClickListener() {
     		public void onClick(Widget sender) {
-    		    GWT.log("Table clicked, enqueueHidePopup(10)", null);
+    		    //GWT.log("Table clicked, enqueueHidePopup(10)", null);
     			enqueueHidePopup(10);
     		}
     	});
@@ -179,7 +179,7 @@ public class CustomPopup<T> implements PopupListener {
 
     public void hidePopup() {
     	if(popupShowing) {
-    		GWT.log("Hide popup "+this, new Exception());
+    		//GWT.log("Hide popup "+this, new Exception());
     		table.getHoverGroup().setActive(null);
     		popup.hide();
     		popupShowing = false;
