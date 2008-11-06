@@ -36,7 +36,7 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 		public void onFocus(Widget sender) {
 			textboxHasFocus = true;
 			if(showOnFocus && !popupShowing) {
-			    GWT.log("Textbox focussed, showing popup", null);
+			    //GWT.log("Textbox focussed, showing popup", null);
 				showPopup(null);
 			}
 		}
@@ -214,7 +214,7 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
         table.addClickListener(new ClickListener() {
             public void onClick(Widget sender) {
                 if(!textboxHasFocus && !searching) {
-                    GWT.log("table changed, focussing to textbox and updating model from table.", null);
+                    //GWT.log("table changed, focussing to textbox and updating model from table.", null);
                     //textbox.setFocus(true);
                     useModelFromTable();
                 }
