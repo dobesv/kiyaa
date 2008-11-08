@@ -304,7 +304,7 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
         }
         
         // Make sure we have the right model instance selected
-        selectValue(currentValue, null, !isOptional());        
+        selectValue(currentValue, null, !isOptional() || textbox.getText().length() == 0);        
     }
 
 	private void onTabEnterOrLostFocus(final boolean tabOrEnter) {
