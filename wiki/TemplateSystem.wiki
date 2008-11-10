@@ -77,8 +77,9 @@ Notes:
                  (probably a better convention, but more work) -->
             <ui:button onclick="checkHeight" text="${labels.button2}"/>
 
-            Localization can be support inside text nodes using
-            ${labels.interpolations}.
+            Localization can be supported inside text using
+            ${labels.interpolations}.  Note however, that these
+            are often wrapped in a span element.
         </k:view>
 	 
 	This text is removed
@@ -89,11 +90,12 @@ Notes:
 Notes:
 
  * The XML namespaces define the meaning of the tags used inside the template
- * The k:view element defines the "significant" part of the template; everything around it is removed in the resulting view.  This allows you to take an existing XHTML page and select just a part of it to be the part you are converting into a view class.
+ * The `k:view` element defines the "significant" part of the template; everything around it is removed in the resulting view.  This allows you to take an existing XHTML page and select just a part of it to be the part you are converting into a view class.
  * You can mix text, XHTML tags, text, widgets, and views together in the template
  * You can use localized strings or just inline text, or mix them
- * Using ${ ... } allows you to access values on properties of your view
- * Using #{ ... } creates a read-write binding; when the view "loads" the value is set in the same manner as with ${ ... } but before running an action the value is copied out of the widget and back to the mentioned property.  Some type conversions are supported.
+ * Using `${ ... }` allows you to access values on properties of your view
+ * Using `#{ ... }` creates a read-write binding; when the view "loads" the value is set in the same manner as with `${ ... }` but before running an action the value is copied out of the widget and back to the mentioned property.  
+
 
 == The EL Syntax ==
 
@@ -106,10 +108,11 @@ But wait ... there's more!  Here are some more of the features supported:
 
  * All property accesses and method calls can be asynchronous, even intermediate objects and properties.  Any method, getter, or setter whose last parameter is an `AsyncCallback` will be treated as asynchronous and handled automagically
  * You can use some basic arithmetic and boolean expressions, including: `+ - * / and or` (`and` is used in place of `&amp;&amp;` and `or` is there for symmetry).
+ * Values can automatically be converted between some core types and other types.  Especially `java.lang.String` can be converted to/from most primitive types and their boxed versions.
 
 Some pitfalls:
 
- * If you use the same #{ ... } expression twice, only one of them counts - when the view saves, it'll keep the last value that it gets from the template
+ * If you use the same `#{ ... }` expression more than once, only one of them counts - when the view saves, it'll keep the last value that it gets from the widgets.  This can be confusing because there is currently no warning that you have done this.  To get around it, add an `onchange` or `onclick` handler that assigns the value when only when it changes instead of binding the value directly.
 
 == Actions ==
 
