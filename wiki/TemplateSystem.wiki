@@ -228,4 +228,7 @@ Notes:
  * The optional package is used as a package prefix for the classes that follow, to save typing
  * Providing a `<content-attribute>text</content-attribute>` means that you can use a format like `<gwt:label>Text</gwt:label> ` instead of `<gwt:label text="Text"/>` - just a notation nicety and may also be helpful when converting templates written by others
  * Default values are treated as if you'd entered that exact attribute name and value into the XHTML template, if that attribute is missing
- 
+
+== More information ==
+
+There are some javadocs at the top of the GeneratedHTMLViewGenerator class with more information (sorry I didn't copy it all in here yet ...).  Furthermore, that class itself represents althmost the entire implementation of this templating system, and thus stands as the ultimate reference of what can be done, as long as you can grok the code (it's not heavily commented).
