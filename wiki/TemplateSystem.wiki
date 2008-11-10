@@ -1,0 +1,175 @@
+#summary How to use the template systems
+
+= Kiyaa XHTML Templates =
+
+Kiyaa templates are based on the facelets template system, and due credit goes to the inventor of facelets for the main ideas behind this.  I just take their great ideas and replaced the JSF components with GWT widgets and a new concept called a View which is somewhat similar to the JSF components.
+
+== Start With the View Class and Data Model ==
+
+Each template is associated with a view class that defines the actions and variables available to that template.  The view class will have fields for the controller of the application and any model objects which are displayed or edited by the view.
+
+{{{
+package com.example;
+import com.habitsoft.kiyaa.views.GeneratedHTMLView;
+import com.google.gwt.core.client.GWT;
+/** 
+ * Sample XHTML view.
+ *
+ * The filename of the template, by default, is MyTemplatedView.xhtml in the same
+ * package folder as this class.
+ */
+public abstract class MyTemplatedView implements GeneratedHTMLView {
+    /** An imaginary Constants subclass for localization */
+    protected final MyLabels labels = GWT.create(MyLabels.class);
+    protected MyLabels getLabels() { return labels; }
+
+    /** An imaginary controller class that implements our business logic */
+    protected final MyController controller = MyController.getInstance();
+    protected MyController getController() { return controller; }
+
+    /** Some field we'll let the UI mess with */
+    int height;
+    protected int getHeight() { return height; }
+    protected void setHeight(int height) { this.height = height; }
+    protected void checkHeight() { controller.checkHeight(height); }
+
+    /** Example static factory method to illustrate how these are created */
+    public static final MyTemplatedView createInstance() {
+        return GWT.create(MyTemplatedView.class);
+    }
+
+}
+}}}
+
+Notes:
+
+ * The class is abstract; Kiyaa adds a generator which generates a subclass of this class for you based on the contents of the xhtml template.
+ * The template file is, by default, at the same location as the java file but with the xhtml extension
+ * The class must implement `GeneratedHTMLView` in order to signal to GWT to use the generator
+ * Fields need getters and setters in order to be used in the templates
+
+== Basic XHTML Example==
+
+{{{
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:k="http://habitsoft.com/kiyaa/core"
+      xmlns:ui="http://habitsoft.com/kiyaa/ui"
+      xmlns:gwt="http://habitsoft.com/kiyaa/gwt">
+    <body> 
+        This text is removed
+        <k:view class="account-editor">
+            <h1>${labels.exampleTitle}</h1>
+            <h2>Non-localized Text Using a Title Tag</h2>
+            <ui:label class="my-label">
+                  ${labels.thisIsAnExampleOfALabel}
+            </ui:label>
+
+            <label>Enter your height in cm:
+            <ui:textbox class="my-textbox" text="#{height}"/>
+            </label>
+             
+            <!-- Button which calls methods directly on the controller -->
+            <ui:button onclick="controller.checkHeight(height)" text="Button 1"/>
+
+            <!-- Button which calls methods on the view class 
+                 (probably a better convention, but more work) -->
+            <ui:button onclick="checkHeight" text="${labels.button2}"/>
+
+            Localization can be support inside text nodes using
+            ${labels.interpolations}.
+        </k:view>
+	 
+	This text is removed
+    </body>
+</html>
+}}}
+
+Notes:
+
+ * The XML namespaces define the meaning of the tags used inside the template
+ * The k:view element defines the "significant" part of the template; everything around it is removed in the resulting view.  This allows you to take an existing XHTML page and select just a part of it to be the part you are converting into a view class.
+ * You can mix text, XHTML tags, text, widgets, and views together in the template
+ * You can use localized strings or just inline text, or mix them
+ * Using ${ ... } allows you to access values on properties of your view
+ * Using #{ ... } creates a read-write binding; when the view "loads" the value is set in the same manner as with ${ ... } but before running an action the value is copied out of the widget and back to the mentioned property.  Some type conversions are supported.
+
+== The EL Syntax ==
+
+As you've seen by now the EL syntax has 3 formats:
+
+ # ${ ... } contains an expression which is read when the view loads and copied into the target property on the widget
+ # #{ ... } extends the behavior of ${ ... } by additionally copying the value back out of the widget to the given expression when the view saves.
+ # Some properties are "actions" which contain a method (or methods to call)
+
+== Loading and Saving ==
+
+The interface for View defines operations load() and save().  
+
+ * When the view is first created you must call load() to copy all the values from the model into the view's widgets.
+ * Before performing any action, the view calls save(), which copies values from the widgets back into the model.
+ * If the action completes successfully, it calls load() to reload any values changed by  the action so the widgets show that value
+ * Although the method is named save(), it is not necessarily the right time to save to the database; you may want to wait until the user clicks a button labelled "Save".  I usually call this action method "commit".
+
+You can define your own methods load() and save() and the subclass will call them before their own implementation, and only if they return success to the callback.  This allows you to pre-load some data from the server which is used in the view and which you don't want to be re-loading several times while the view is loaded - the view is not very smart about sharing the results of previous 
+
+== Debugging Template Issues ==
+
+GWT stores the generated files on disk in the `build.gwt/.gen` folder (or something like that, depending on your GWT setup) so if you get compile errors or stack traces passing through those files, you'll often have to look at the generated output to figure out what's going wrong.  Often you'll have something that is null, but you can't tell what until you look at the right line number in the generated code.
+
+The generator is implemented in `com.habitsoft.kiyaa.rebind.GeneratedHTMLViewGenerator`, if you run into problems where the generated code is invalid, buggy, or doesn't compile you'll have to look there.
+
+== Adding Tag Libraries ==
+
+You can of course define your own tag libraries as namespaces - the libraries shown in the example are the ones included.  The files mus be placed in the classpath in the `META-INF` folder, and named with the extension `.kiyaa-taglib.xml`.  Here's an example:
+
+{{{
+<kiyaa-taglib>
+    <!--
+	This tag library contains GWT widgets that can be instantiated
+	directly using the already available attributes. 
+    -->
+    <namespace>http://habitsoft.com/kiyaa/gwt</namespace>
+    <package>com.google.gwt.user.client.ui</package>
+    <tag>
+	<tag-name>textbox</tag-name>
+	<tag-class>TextBox</tag-class>
+	<content-attr>text</content-attr>
+    </tag>
+    <tag>
+	<tag-name>label</tag-name>
+	<tag-class>Label</tag-class>
+	<content-attribute>text</content-attribute>
+    </tag>
+    <tag>
+        <tag-name>a</tag-name>
+        <tag-class>Anchor</tag-class>
+        <default for="href">javascript:void(0)</default>
+        <content-attribute>text</content-attribute>
+    </tag>
+    <tag>
+        <tag-name>form</tag-name>
+        <tag-class>FormPanel</tag-class>
+        <default for="encoding">multipart/form-data</default>
+        <default for="method">post</default>
+    </tag>
+    <tag>
+        <tag-name>file-upload</tag-name>
+        <tag-class>FileUpload</tag-class>
+        <default for="name">data</default>
+    </tag>
+    <tag>
+        <tag-name>hidden</tag-name>
+        <tag-class>Hidden</tag-class>
+        <content-attribute>value</content-attribute>
+    </tag>
+</kiyaa-taglib>
+}}}
+
+Notes:
+
+ * The namespace defined here is matched against the namespaces in your template file
+ * The optional package is used as a package prefix for the classes that follow, to save typing
+ * Providing a `<content-attribute>text</content-attribute>` means that you can use a format like `<gwt:label>Text</gwt:label> ` instead of `<gwt:label text="Text"/>` - just a notation nicety and may also be helpful when converting templates written by others
+ * Default values are treated as if you'd entered that exact attribute name and value into the XHTML template, if that attribute is missing
+ 
