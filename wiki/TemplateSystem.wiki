@@ -1,4 +1,5 @@
 #summary How to use the template systems
+#labels Featured,Phase-Implementation
 
 = Kiyaa XHTML Templates =
 
@@ -96,11 +97,66 @@ Notes:
 
 == The EL Syntax ==
 
-As you've seen by now the EL syntax has 3 formats:
+As you've seen by now the expressions have 3 formats:
 
  # ${ ... } contains an expression which is read when the view loads and copied into the target property on the widget
  # #{ ... } extends the behavior of ${ ... } by additionally copying the value back out of the widget to the given expression when the view saves.
- # Some properties are "actions" which contain a method (or methods to call)
+
+But wait ... there's more!  Here are some more of the features supported:
+
+ * All property accesses and method calls can be asynchronous, even intermediate objects and properties.  Any method, getter, or setter whose last parameter is an `AsyncCallback` will be treated as asynchronous and handled automagically
+ * You can use some basic arithmetic and boolean expressions, including: `+ - * / and or` (`and` is used in place of `&amp;&amp;` and `or` is there for symmetry).
+
+Some pitfalls:
+
+ * If you use the same #{ ... } expression twice, only one of them counts - when the view saves, it'll keep the last value that it gets from the template
+
+== Actions ==
+
+Specific attributes, as well as some widget or view properties are considered to be "actions" and get special treatment.  Actions are identified as follows:
+
+ * `onclick` is an action if the widget implements `SourcesClickEvents`
+ * `onchange` is an action if the widget implements `SourcesChangeEvents`
+ * `onfocus` and `onblur` are actions if the widget implements `SourcesFocusEvents`
+ * `onPressEnter', '`onPressEscape`, `onPressSpace`, and `onKeyPress` are actions when the widget implements `SourcesKeyboardEvents`.
+ * Any property whose setter takes an `com.habitsoft.kiyaa.metamodel.Action` parameter is an action
+
+You can usually get more information about the event (like `onKeyPress`) from `Event.getCurrentEvent()`, as long as the save() implementation for your view completes without returning to the main event loop.
+
+Notes:
+ * You can specify multiple actions (potentially asynchronous ones) seperated with semicolons and they'll be run serially until the end, or a failure
+ * Actions can be an assignment or a setter method call to update fields in the object
+ * Actions can call methods on objects and pass parameters which must be fetched asynchronously - the engine used to evaluate EL is used on all parts of the action.
+
+== Widget Bindings ==
+
+When a widget or view in the template has the special attribute `binding` it will be set into the view when it is created.  For example:
+
+{{{
+   /** TextBox field in our view class we want to bind to */
+   private TextBox myTextBox;
+   protected TextBox getMyTextBox() { return myTextBox; }
+   protected void setMyTextBox(TextBox tb) { this.myTextBox = tb; }
+
+   /** Some example action that makes use of the binding for something */
+   protected void tbChanged() { tb.setStyleName("dirty", true); }
+}}}
+
+{{{
+<k:view>
+   <!-- By specifying the binding property here, we can get 
+        direct access to this textbox in the code -->
+   <ui:textbox binding="myTextBox" text="#{height}"/>
+<k:view>
+}}}
+
+When you want to refer to a widget from an action, but don't want to bother with a binding, you can use the `id` attribute instead.  Any widget or view with an `id` attribute is declared in such a way that it is accessible to its sibling or child views and widgets.  Example:
+
+{{{
+   <h1>Click the button to change the textbox</h1>
+   <ui:textbox id="tb1" text="Initial Value"/><br/>
+   <ui:button onclick='tb1.text = "new value"'/><br/>
+}}}
 
 == Loading and Saving ==
 
