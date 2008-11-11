@@ -1,0 +1,20 @@
+#summary Required libraries
+#labels Phase-Requirements,Featured
+
+= Base Requirements =
+
+ * GWT 1.5 or better
+ * Java 1.5 or better
+
+= Template System = 
+
+ * [http://xom.nu/ XOM 1.1] - `xom-1.1.jar`
+ * [http://xerces.apache.org/xerces2-j/ Xerces] 2.6.1+; other SAX-compliant parsers may work
+
+= Server-side Localization =
+
+ * [http://www.csg.is.titech.ac.jp/~chiba/javassist/ javassist]
+
+= GWT to EJB bridge =
+
+ * Requires the Java EE jars be on the class path; settings this up depends on your container and your IDE.
