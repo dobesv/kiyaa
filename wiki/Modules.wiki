@@ -7,7 +7,7 @@ The main module of _Kiyaa!_, which includes all the GWT classes it provides, is 
 
 == Sub modules ==
 
-In order to speed up compilation for some projects, _Kiyaa!_ is broken down into a few submodules:
+In order to speed up compilation for some projects, _Kiyaa!_ is broken down into various submodules:
 
  * `com.habitsoft.kiyaa.Caching` - `com.habitsoft.kiyaa.caching.*`
  * `com.habitsoft.kiyaa.Forms` - `com.habitsoft.kiyaa.forms.*`
