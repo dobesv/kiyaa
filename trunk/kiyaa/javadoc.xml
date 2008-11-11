@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="javadoc">
+    <target name="javadoc">
+        <javadoc access="public" author="false" classpath="C:\work\3rdparty\gwt-windows-1.5.3\gwt-dev-windows.jar;C:\work\glassfish\lib\javaee.jar;lib/xom-1.1.jar;C:\work\eclipse-ganymede-sr1\eclipse\plugins\org.junit_3.8.2.v20080602-1318\junit.jar;C:\work\glassfish\lib\appserv-rt.jar;C:\work\3rdparty\gwt-windows-1.5.3\gwt-servlet.jar;C:\work\glassfish\lib\webservices-tools.jar;C:\work\glassfish\lib\mail.jar;C:\work\glassfish\lib\appserv-jstl.jar;C:\work\3rdparty\gwt-windows-1.5.3\gwt-user.jar;C:\work\glassfish\lib\webservices-rt.jar;C:\work\glassfish\lib\appserv-tags.jar;../booksEAR/EarContent/lib/javassist-3.4.GA.jar;C:\work\glassfish\lib\jsf-impl.jar;C:\work\glassfish\lib\activation.jar" destdir="doc" doctitle="Kiyaa! JavaDocs" nodeprecated="true" nodeprecatedlist="true" noindex="false" nonavbar="false" notree="false" packagenames="com.sun.facelets.util,com.habitsoft.kiyaa.rebind,com.habitsoft.kiyaa.caching,com.habitsoft.kiyaa.metamodel,com.habitsoft.kiyaa.forms,com.habitsoft.kiyaa.util,com.datejs.client,com.habitsoft.kiyaa.widgets,com.habitsoft.kiyaa.server,com.dynarch.jscalendar.client,com.habitsoft.kiyaa.views,pl.rmalinowski.gwt2swf.client.utils,pl.rmalinowski.gwt2swf.client.ui.exceptions,pl.rmalinowski.gwt2swf.client.ui" source="1.6" sourcepath="src;test" splitindex="false" use="true" version="false">
+            <link href="http://java.sun.com/javase/6/docs/api/"/>
+        </javadoc>
+    </target>
+</project>
