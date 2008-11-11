@@ -13,8 +13,8 @@
 
 = Server-side Localization =
 
- * [http://www.csg.is.titech.ac.jp/~chiba/javassist/ javassist]
+ * [http://www.csg.is.titech.ac.jp/~chiba/javassist/ javassist] I'm using 3.4.0, I haven't tested any earlier versions
 
 = GWT to EJB bridge =
 
- * Requires the Java EE jars be on the class path; settings this up depends on your container and your IDE.
+ * Requires the Java EE jars for servlets and annotations be on the class path; setting this up depends on your container and your IDE.
