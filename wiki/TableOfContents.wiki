@@ -1,6 +1,6 @@
 #summary Table of contents
 #labels TableOfContents
 
- * [Requirements Requirements]
+ * [Dependencies Dependencies]
  * [Modules Modules]
  * [TemplateSystem Template System]
