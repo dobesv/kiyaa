@@ -1,0 +1,14 @@
+com.datejs.client
+com.dynarch.jscalendar.client
+com.habitsoft.kiyaa.caching
+com.habitsoft.kiyaa.forms
+com.habitsoft.kiyaa.metamodel
+com.habitsoft.kiyaa.rebind
+com.habitsoft.kiyaa.server
+com.habitsoft.kiyaa.util
+com.habitsoft.kiyaa.views
+com.habitsoft.kiyaa.widgets
+com.sun.facelets.util
+pl.rmalinowski.gwt2swf.client.ui
+pl.rmalinowski.gwt2swf.client.ui.exceptions
+pl.rmalinowski.gwt2swf.client.utils
