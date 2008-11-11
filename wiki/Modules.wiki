@@ -16,7 +16,7 @@ In order to speed up compilation for some projects, _Kiyaa!_ is broken down into
  * `com.habitsoft.kiyaa.Views` - `com.habitsoft.kiyaa.views.*` as well as the template generator `com.habitsoft.kiyaa.rebind.GeneratedHTMLViewGenerator`
  * `com.habitsoft.kiyaa.Widgets` - `com.habitsoft.kiyaa.widgets.*`
  * `com.datejs.DateJs` - wrapper for [http://datejs.com datejs]
- * `com.dynarch.jscalendar.JsCalendar` - wrapper for jscalendar
+ * `com.dynarch.jscalendar.JsCalendar` - wrapper for [http://code.google.com/p/gwt2swf/ jscalendar]
  * `pl.rmalinowski.gwt2swf.GWT2SWF` - swfobject wrapper - a fork of [http://code.google.com/p/gwt2swf/ GWT2SWF]
 
 If your GWT application doesn't use all the functionality of _Kiyaa!_ then you can inherit only the modules you use.  One day maybe GWT will only *compile* the modules you use, but for now this can be a big time saver for small apps.
