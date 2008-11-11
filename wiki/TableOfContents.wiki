@@ -4,3 +4,4 @@
  * [Dependencies Dependencies]
  * [Modules Modules]
  * [TemplateSystem Template System]
+ * [http://kiyaa.googlecode.com/svn/trunk/kiyaa/doc/index.html Open Javadoc]
