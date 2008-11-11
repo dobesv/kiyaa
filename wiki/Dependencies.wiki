@@ -18,3 +18,7 @@
 = GWT to EJB bridge =
 
  * Requires the Java EE jars for servlets and annotations be on the class path; setting this up depends on your container and your IDE.
+
+= Analytics = 
+
+To use analytics you'll have to put the Google Analytics or Clicky tracking code into the page hosting your GWT application.
