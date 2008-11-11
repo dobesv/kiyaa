@@ -1,0 +1,20 @@
+#summary Available GWT modules you can inherit into your own
+
+= Introduction =
+
+The main module of _Kiyaa!_, which includes all the GWT classes it provides, is `com.habitsoft.kiyaa.Kiyaa`.  To import _Kiyaa!_ into your GWT project you add a tag like `<inherits name='com.habitsoft.kiyaa.Kiyaa'/>`
+
+== Sub modules ==
+
+In order to speed up compilation for some projects, _Kiyaa!_ is broken down into a few submodules:
+
+ * `com.habitsoft.kiyaa.Caching` - `com.habitsoft.kiyaa.caching.*`
+ * `com.habitsoft.kiyaa.Forms` - `com.habitsoft.kiyaa.forms.*`
+ * `com.habitsoft.kiyaa.Metamodel` - `com.habitsoft.kiyaa.metamodel.*`
+ * `com.habitsoft.kiyaa.Util` - `com.habitsoft.kiyaa.util.*` as well as the cloner generator `com.habitsoft.kiyaa.rebind.ClonerGenerator`
+ * `com.habitsoft.kiyaa.Views` - `com.habitsoft.kiyaa.views.*` as well as the template generator `com.habitsoft.kiyaa.rebind.GeneratedHTMLViewGenerator`
+ * `com.habitsoft.kiyaa.Widgets` - `com.habitsoft.kiyaa.widgets.*`
+
+If your GWT application doesn't use all the functionality of _Kiyaa!_ then you can inherit only the modules you use.  One day maybe GWT will only *compile* the modules you use, but for now this can be a big time saver for small apps.
+
+Each of these will inherit any dependencies they have on other kiyaa modules, however, so if you inherit `com.habitsoft.kiyaa.Views` you get just about everything else except `com.habitsoft.kiyaa.Caching`.
