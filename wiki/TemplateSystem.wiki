@@ -1,4 +1,4 @@
-#summary How to use the template systems
+#summary How to use the template system
 #labels Featured,Phase-Implementation
 
 = Kiyaa XHTML Templates =
@@ -130,6 +130,118 @@ Notes:
  * You can specify multiple actions (potentially asynchronous ones) seperated with semicolons and they'll be run serially until the end, or a failure
  * Actions can be an assignment or a setter method call to update fields in the object
  * Actions can call methods on objects and pass parameters which must be fetched asynchronously - the engine used to evaluate EL is used on all parts of the action.
+
+== Defining Views inside Panels ==
+
+Any View or Widget which implements a method `setView`, `addView`, `setWidget`, or `setViewFactory` taking a `View`, 'Widget', or `ViewFactory` as a parameter (matching the method name) can have an inner subview which is also defined in the same xhtml file.  The generator will construct another `View` subclass and pass either an instance of it, the result of its `getViewWidget()` method, or an instance of `ViewFactory` which constructs and returns it.  This is very useful for defining panels which can contain other views.
+
+When creating a `View` or a `ViewFactory`, the special XML attribute 'with-model' indicates that the view is a `ModelView`.  This property contains a fully qualified class name followed by a variable name which is bound to the "model" of the view; that is, when someone calls `setModel` on the `ModelView` the value is stored into a variable with the given name.  This variable can only be accessed inside the element where it is defined.
+
+See the list and table sections below for examples.
+
+== Conditional Display ==
+
+It's generally quite useful to be able to show and hide parts of the view based on the state of the application.  The template system provides two ways of handling this; first, you can call the `setVisible` method of any widget supporting it by using the `visible` attribute:
+
+{{{
+<gwt:checkbox visible="${shouldShowCheckbox}"/>
+}}}
+
+In addition, a special `WhenView` class is provided, which is typically accessed using the tag `k:when`.  This view takes a `test` property and a `viewFactory`, which can be created automatically for the elements inside it; for example:
+
+{{{
+<k:when test="${myEntity != null}">
+   <ui:label class="entity-name-label" text="${myEntity.name}"/>
+</k:when>
+<k:when test="${myEntity == null}">
+   <h1>Entity is NULL!  NNnnnooOOoooOOoooo!!!!</h1>
+</k:when>
+}}}
+
+The condition passed to test must be enclosed in `${ ... }` and may use boolean operators like `and`, `or`, `<`, `>`, `<=`, `>=`, `!=` along with method calls (`foo.bar(baz)`), bean property paths (`foo.bar.baz`), arithmetic, and various combinations thereof.  Note: these operators are not specific to `k:when` and can be used in any EL expression; I'm mentioning them here for convenience.
+
+`WhenView` is given a `ViewFactory` and it only constructs the inner view if the condition is true as a kind of Lazy Panel.  This means that the code inside `WhenView` can be somewhat expensive to run, and also that it can assume that the condition is true in its code since it won't be invoked otherwise.
+
+== Lists and Tables ==
+
+Lists are implemented using `ListView`, whose tag is `ui:list`.  The list of objects is set using the `models` property, which should be given an array of objects.  For each object in the array, a `View` is constructed using - you guessed it - a `ViewFactory`.  The `ViewFactory` must return a `ModelView` subclass which provides the `setModel` method used by the list to tell each view which object it is displaying.
+
+For example:
+
+{{{
+<h2>Here are some strings:</h2>
+<ui:list models="${someStringArray}" with-model="java.lang.String someString">
+    <ui:label>${"The string is: "+someString}</label>
+</ui:list>
+<h2>Here's some more information about those strings in a table:</h2>
+<ui:table models="${someStringArray}" with-model="java.lang.String someString">
+    <ui:column heading="Length">
+        <ui:label>${someString.length}</ui:label>
+    </ui:column>
+    <ui:column heading="Content">
+        ${someString}
+    </ui:column>
+    <ui:column heading="HashCode">
+        # ${someString.hashCode}
+    </ui:column>
+</ui:table>
+}}}
+
+In addition to the `heading`, the columns can also have a `class` to set the css class for cells in the column and/or a `test` to make the entire column conditionally visible (using setVisible()).
+
+The HTML structure of the table is designed to be styled using CSS, and the DOM tree ends up looking like this:
+
+{{{
+<div class="ui-table"> <!-- change this CSS class using `class` or `styleName` -->
+<!-- Optional ui:navigation if specified, shows up here in a DIV -->
+<div class="table-border-top"/>
+<div class="table-border-middle">
+<table class="ui-table"> <!-- change this CSS class using `tableClass` -->
+<thead><!-- headings ---></thead>
+<tbody>
+<!-- each row has ui-table-row and either odd or even -->
+<tr class="ui-table-row odd">
+    <td> <!-- td will have the class given in the ui:column element --> </td>
+</tr>
+</tbody>
+</table>
+<!-- Optional ui:emptyContent if specified and the table is empty,
+     shows up here in a DIV if the table is empty -->
+<div class="empty-table-content" style="display: none;"> Empty table content </div>
+</div>
+<div class="table-border-bottom"/>
+</div>
+}}}
+
+The list can also be styled using css
+
+{{{
+<!-- The css class of the list is ui-list by default, the -selectable and
+     -clickable suffixes are added if you set selectable=true or 
+     clickable=true on the list.  Change the base "ui-list" by setting
+     class or styleName. -->
+<div class="ui-list ui-list-selectable ui-list-clickable">
+<!-- Each list item gets a div with the class ui-list-item, and an odd or
+     even depending on which row it is in. -->
+<div class="ui-list-item odd">
+</div>
+</div>
+}}}
+
+Lists and tables can also be "clickable" and/or "selectable" in which case they'll start to listen for hover and click events.  When an item is clicked it becomes the new value of "selectedModel" and if selectable is true it also gains a new CSS class, for a list it is "ui-list-item-selected" and for a table it is "ui-table-row-selected".   You can use this to highlight the selected row.  Selectable and clickable lists and tables also detect hovers and you can use the "ui-table-row-hover" for table rollovers and "ui-list-item-hover" for list rollovers.
+
+Example:
+
+{{{
+<ui:list id="employeeList"
+         models="${employees}"
+         clickable="true"
+         onclick="showEmployee(employeeList.selectedModel)"
+    ${employee.name}
+</ui:list>
+}}}
+
+Tables also have some other features, like context menus, which I haven't even gotten into yet and are still at a somewhat experimental stage.  Look at the source to figure this one out.
 
 == Widget Bindings ==
 
