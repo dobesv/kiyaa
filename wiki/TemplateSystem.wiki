@@ -228,7 +228,13 @@ The list can also be styled using css
 </div>
 }}}
 
-Lists and tables can also be "clickable" and/or "selectable" in which case they'll start to listen for hover and click events.  When an item is clicked it becomes the new value of "selectedModel" and if selectable is true it also gains a new CSS class, for a list it is "ui-list-item-selected" and for a table it is "ui-table-row-selected".   You can use this to highlight the selected row.  Selectable and clickable lists and tables also detect hovers and you can use the "ui-table-row-hover" for table rollovers and "ui-list-item-hover" for list rollovers.
+Lists and tables can also be "clickable" and/or "selectable" in which case they'll start to listen for hover and click events.
+
+ * When an item is clicked it becomes the new value of "selectedModel" 
+ * The selectedModel, if selectable is true, gains a new CSS class; "ui-list-item-selected" or "ui-table-row-selected" - you can use this to highlight the selected row.
+ * Selectable and clickable lists and tables also detect hovers and you can use the "ui-table-row-hover" for table rollovers and "ui-list-item-hover" for list rollovers.
+ * When a row in a clickable or selectable list or table is clicked it sends a click event; use `onclick` to set an action for this
+ * When clicking on the table changes current selection, a change event is fired; use `onchange` to set an action for this
 
 Example:
 
@@ -236,12 +242,12 @@ Example:
 <ui:list id="employeeList"
          models="${employees}"
          clickable="true"
-         onclick="showEmployee(employeeList.selectedModel)"
+         onclick="showEmployee(employeeList.selectedModel)">
     ${employee.name}
 </ui:list>
 }}}
 
-Tables also have some other features, like context menus, which I haven't even gotten into yet and are still at a somewhat experimental stage.  Look at the source to figure this one out.
+Tables also have some other features, like context menus, which I haven't even gotten into yet and are still at a somewhat experimental stage.  Look at the source to "discover" some more handy features.
 
 == Widget Bindings ==
 
