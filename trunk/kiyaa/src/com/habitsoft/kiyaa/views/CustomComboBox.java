@@ -341,6 +341,10 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 		
 	}
 
+	/**
+	 * Note: set the name value adapters before setting the models,
+	 * since during setModels() is when the name value adapter is used!
+	 */
 	public void setAlternateNameValueAdapter(NameValueAdapter<T> alternateNameValueAdapter) {
 		this.alternateNameValueAdapter = alternateNameValueAdapter;
 	}
@@ -530,6 +534,10 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
         return nameValueAdapter;
     }
 
+    /**
+     * Note: set the name value adapters before setting the models,
+     * since during setModels() is when the name value adapter is used!
+     */
     public void setNameValueAdapter(NameValueAdapter<T> nameValueAdapter) {
         this.nameValueAdapter = nameValueAdapter;
     }
