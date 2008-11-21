@@ -2,7 +2,6 @@ package com.habitsoft.kiyaa.rebind;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
@@ -23,11 +22,20 @@ public abstract class BaseGenerator extends Generator {
 		super();
 	}
 
-	protected static String getSimpleClassName(final JClassType type) {
+	/**
+	 * Return a "simple" class name - for top-level classes, this is
+	 * the SimpleSourceName() - the name with the package and generics
+	 * removed.
+	 * 
+	 * For nested classes this prepends the parent class(es) name to
+	 * the simple name of the nested class (with the given seperator).
+	 * 
+	 * @param nestedClassSeperator Seperator to use for nested classes
+	 */
+	protected static String getSimpleClassName(final JClassType type, String nestedClassSeperator) {
 		String clsName = type.getSimpleSourceName();
 		if (type.getEnclosingType() != null) {
-			clsName = getSimpleClassName(type.getEnclosingType())
-					+ clsName;
+			clsName = getSimpleClassName(type.getEnclosingType(), nestedClassSeperator)+nestedClassSeperator+clsName;
 		}
 		return clsName;
 	}
@@ -61,7 +69,7 @@ public abstract class BaseGenerator extends Generator {
 		long start = System.currentTimeMillis();
 		TypeOracle types = context.getTypeOracle();
 		final JClassType baseType = types.findType(className);
-		String clsName = getSimpleClassName(baseType);
+		String clsName = getSimpleClassName(baseType, "");
 		String implName = clsName + "Impl";
 		final String packageName = baseType.getPackage().getName();
 
@@ -88,7 +96,7 @@ public abstract class BaseGenerator extends Generator {
 			}
 		}
 		long end = System.currentTimeMillis();
-		if(end-start > 250) {
+		if(end-start > 150) {
 			System.out.println("Took "+(end-start)+"ms to generate "+implName);
 		}
 		return packageName + "." + implName;
@@ -288,11 +296,12 @@ public abstract class BaseGenerator extends Generator {
 			return Character.toLowerCase(name.charAt(0)) + name.substring(1);
 		}
 
-		final HashMap<String, JClassType> typeCache = new HashMap<String, JClassType>();
+//		private final HashMap<String, JClassType> typeCache = new HashMap<String, JClassType>();
 		protected JClassType getType(String name) throws UnableToCompleteException {
 			
 			try {
-				return types.getType(name);
+		        return types.getType(name);
+		        
 //				JClassType result = typeCache.get(name);
 //				if(result == null) {
 //					result = types.getType(name);
@@ -300,6 +309,16 @@ public abstract class BaseGenerator extends Generator {
 //				}
 //				return result;
 			} catch (NotFoundException caught) {
+	            // Check for a nested class
+	            JClassType nestedType = baseType.findNestedType(name);
+	            if(nestedType != null)
+	                return nestedType;
+	            
+	            // Check for a class in the same package
+	            JClassType packageType = baseType.getPackage().findType(name);
+	            if(packageType != null)
+	                return packageType;
+	            
 				//logger.log(TreeLogger.ERROR, "Missing class "+name, caught);
 				final UnableToCompleteException unableToCompleteException = new UnableToCompleteException();
 				unableToCompleteException.initCause(caught);
