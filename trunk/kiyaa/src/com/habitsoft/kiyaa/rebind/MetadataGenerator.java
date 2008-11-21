@@ -107,7 +107,7 @@ public class MetadataGenerator extends BaseGenerator {
 		}
 		protected void generateEmbeddedModelField(
 				final String name, String ctorParams, String fieldType, JClassType childMetaData) {
-			sw.println("new EmbeddedModelField("+ctorParams+", get"+getSimpleClassName(childMetaData)+"()) {");
+			sw.println("new EmbeddedModelField("+ctorParams+", get"+getSimpleClassName(childMetaData, "")+"()) {");
 			sw.indent();
 			sw.println("protected Object getValue(Object model) {");
 			sw.indentln("return (("+modelClassName+")model).get"+capitalize(name)+"();");
@@ -174,7 +174,7 @@ public class MetadataGenerator extends BaseGenerator {
 						metadataType, modelType, types, name);
 				if(!referencedMetadata.contains(childMetaData))
 					referencedMetadata.add(childMetaData);
-				sw.println("new CollectionField(\""+escape(label)+"\", \""+name+"\", get"+getSimpleClassName(childMetaData)+"()),");
+				sw.println("new CollectionField(\""+escape(label)+"\", \""+name+"\", get"+getSimpleClassName(childMetaData, "")+"()),");
 			}
 		}
 
@@ -234,7 +234,7 @@ public class MetadataGenerator extends BaseGenerator {
 			for (Iterator i = referencedMetadata.iterator(); i
 					.hasNext();) {
 				JClassType metadataType = (JClassType) i.next();
-				String shortName = getSimpleClassName(metadataType);
+				String shortName = getSimpleClassName(metadataType, "");
 				
 				sw.println("public static "+metadataType.getQualifiedSourceName()+" get"+shortName+"() {");
 				//sw.indentln("return AllMetadata.getInstance().get"+shortName+"();");
@@ -246,7 +246,7 @@ public class MetadataGenerator extends BaseGenerator {
 	
 		protected void generateModelIdField(
 				final String name, String ctorParams, JClassType childMetaData) {
-			generateField(name, ctorParams+", get"+getSimpleClassName(childMetaData)+"()", "ModelIdField", "Long");
+			generateField(name, ctorParams+", get"+getSimpleClassName(childMetaData, "")+"()", "ModelIdField", "Long");
 		}
 	
 		protected void generateNewInstance() {

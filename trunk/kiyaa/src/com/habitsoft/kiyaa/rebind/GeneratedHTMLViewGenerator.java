@@ -286,7 +286,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             rootClassGenerator = new ClassGenerator();
             String templatePath = getClassMetadata(baseType, baseType, "kiyaa.template");
             if (templatePath == null) {
-                templatePath = baseType.getSimpleSourceName() + ".xhtml";
+                templatePath = getSimpleClassName(baseType, ".") + ".xhtml";
             }
             rootClassType = new JRealClassType(myTypes, myTypes.getOrCreatePackage(baseType.getPackage().getName()), null,
                             false, implName, false);
@@ -307,13 +307,21 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             nu.xom.Builder b = new nu.xom.Builder(reader);
             Document d;
             java.io.File f;
+            JClassType topLevelClass = baseType;
+            while(topLevelClass.getEnclosingType() != null) topLevelClass = topLevelClass.getEnclosingType();
 			try {
-				f = new File(Class.forName(baseType.getQualifiedSourceName()).getResource(templatePath).toURI());
+				Class<?> clazzInstance = Class.forName(topLevelClass.getQualifiedSourceName());
+                URL resource = clazzInstance.getResource(templatePath);
+                if(resource == null) {
+                    logger.log(TreeLogger.ERROR, "No template found at "+templatePath);
+                    throw new UnableToCompleteException();
+                }
+                f = new File(resource.toURI());
 			} catch (ClassNotFoundException caught1) {
-				caught1.printStackTrace();
+			    logger.log(TreeLogger.ERROR, "Couldn't find class "+topLevelClass+" in order to determine path to template file.", caught1);
 				throw new UnableToCompleteException();
 			} catch (URISyntaxException caught) {
-				caught.printStackTrace();
+                logger.log(TreeLogger.ERROR, "Invalid template path: "+templatePath, caught);
 				throw new UnableToCompleteException();
 			}
             //java.io.File f = new File(new File(baseType.getCompilationUnit().getLocation()).getParentFile(), templatePath);
@@ -1023,11 +1031,12 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				if (tag.equals("custom") && namespace.equals(KIYAA_VIEW_TAGS_NAMESPACE)) {
 				    String viewClassName = elem.getAttributeValue("viewClass");
 				    if (viewClassName != null) {
-				        tagClass = types.findType(viewClassName);
-				        if (tagClass == null) {
+				        try {
+				            tagClass = getType(viewClassName);
+				        } catch(UnableToCompleteException e) {
 				            logger.log(TreeLogger.ERROR, "Couldn't find custom view class: " + viewClassName,
 				                            null);
-				            throw new UnableToCompleteException();
+				            throw e;
 				        }
 				    } else {
 				        logger.log(TreeLogger.ERROR, "custom tag must specify viewClass=, in: " + elem.toXML(),
@@ -1266,31 +1275,33 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				    isExpr=true;
 				}
 				String valueExpr;
-				if ("onclick".equals(key)) {
-				    generateOnClickHandler(type, name, value, pathAccessors);
-				} else if ("onchange".equals(key)) {
-				    generateOnChangeListener(type, name, value, pathAccessors);
-				} else if ("onfocus".equals(key)) {
-				    generateOnFocusListener(type, name, value, pathAccessors);
-				} else if ("onblur".equals(key)) {
-				    generateOnBlurListener(type, name, value, pathAccessors);
-				} else if ("onPressEnter".equalsIgnoreCase(key)) {
-				    generateKeyPressHandler(type, name, value, "KEY_ENTER");
-				} else if ("onPressSpace".equalsIgnoreCase(key)) {
-				    generateKeyPressHandler(type, name, value, "' '");
-				} else if ("onPressEscape".equalsIgnoreCase(key)) {
-				    generateKeyPressHandler(type, name, value, "KEY_ESCAPE");
-                } else if ("onKeyPress".equalsIgnoreCase(key)) {
-                    generateKeyPressHandler(type, name, value, null);
-				} else if ("binding".equals(key)) {
-				    generateBinding(type, name, value);
-				} else if ("class".equals(key)) {
-				    generateSetClass(type, name, value);
-				} else if ("style".equals(key)) {
-				    generateSetStyle(type, name, key, value);
-				} else if (attributeAccessors == null) {
-				    logger.log(TreeLogger.ERROR, "Unable to find a property '" + key + "' in " + type + "; value is '" + value + "'", null);
-				    throw new UnableToCompleteException();
+				if ("class".equals(key)) {
+                    generateSetClass(type, name, value);
+                } else if ("style".equals(key)) {
+                    generateSetStyle(type, name, key, value);
+                } else if ("binding".equals(key)) {
+                    generateBinding(type, name, value);
+                } else if (attributeAccessors == null) {
+	                if ("onclick".equals(key)) {
+	                    generateOnClickHandler(type, name, value, pathAccessors);
+	                } else if ("onchange".equals(key)) {
+	                    generateOnChangeListener(type, name, value, pathAccessors);
+	                } else if ("onfocus".equals(key)) {
+	                    generateOnFocusListener(type, name, value, pathAccessors);
+	                } else if ("onblur".equals(key)) {
+	                    generateOnBlurListener(type, name, value, pathAccessors);
+	                } else if ("onPressEnter".equalsIgnoreCase(key)) {
+	                    generateKeyPressHandler(type, name, value, "KEY_ENTER");
+	                } else if ("onPressSpace".equalsIgnoreCase(key)) {
+	                    generateKeyPressHandler(type, name, value, "' '");
+	                } else if ("onPressEscape".equalsIgnoreCase(key)) {
+	                    generateKeyPressHandler(type, name, value, "KEY_ESCAPE");
+	                } else if ("onKeyPress".equalsIgnoreCase(key)) {
+	                    generateKeyPressHandler(type, name, value, null);
+	                } else {
+	                    logger.log(TreeLogger.ERROR, "Unable to find a property '" + key + "' in " + type + "; value is '" + value + "'", null);
+	                    throw new UnableToCompleteException();
+	                }
 				} else if (!attributeAccessors.hasSetter()) {
 				    logger.log(TreeLogger.ERROR, "Unable to find a setter for attribute '" + key + "' in "
 				                    + type + "; value is '" + value + "', getter is "+attributeAccessors.getter+" asyncGetter is "+attributeAccessors.asyncGetter, null);
@@ -1299,7 +1310,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 					        && (pathAccessors == null || !pathAccessors.hasGetter()) 
 					        && (valueExpr = getAction(value)) != null) {
 					if(attributeAccessors.setter==null) {
-						logger.log(TreeLogger.ERROR, "Async setters not support for Actions yet.", null);
+						logger.log(TreeLogger.ERROR, "Async setters do not support for Actions yet.", null);
 						throw new UnableToCompleteException();
 					}
 				    sw.println(attributeAccessors.setter + "(" + valueExpr + ");");
