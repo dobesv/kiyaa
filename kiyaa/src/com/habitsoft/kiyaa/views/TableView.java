@@ -465,6 +465,10 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 		for(Column column:columns) {
 			column.save(group.member());
 		}
+		if(navigation != null && navigation.getViewWidget().isVisible())
+		    navigation.save(group.member());
+		if(emptyContent != null && emptyContent.getViewWidget().isVisible())
+		    emptyContent.save(group.member());
 		group.ready(callback);
 	}
 	
