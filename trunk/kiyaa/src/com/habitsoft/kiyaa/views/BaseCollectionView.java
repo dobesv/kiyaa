@@ -30,7 +30,7 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 	protected ArrayList<T> unfilteredItems = null;
 	protected int[] itemIndexesAfterFiltering;
 	protected ModelCollection collection;
-	protected Long loadedCollectionId;
+	protected Object loadedCollectionId;
 	//protected ScrollAutoLoader scrollAutoLoader;
 	protected int increment = 0;
 	protected int maxHeight = 0;
@@ -242,7 +242,7 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 
 	public void load(AsyncCallback<Void> callback) {
 	    if(collection != null) {
-	        Long collectionId = collection.getId();
+	        Object collectionId = collection.getId();
             boolean collectionChanged = collectionId != null && !collectionId.equals(loadedCollectionId);
             if(collectionChanged) {
                 //GWT.log("Collection changed.  old id = "+loadedCollectionId+" new id "+collectionId+" collection "+collection, null);
