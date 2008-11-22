@@ -40,5 +40,5 @@ public interface ModelCollection<T> {
 	 * collection.  This is used by collection views to decide whether to
 	 * reload fully, or just update incrementally.
 	 */
-    Long getId();
+    Object getId();
 }
