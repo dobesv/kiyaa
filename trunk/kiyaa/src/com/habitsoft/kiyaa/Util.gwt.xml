@@ -8,5 +8,11 @@
      <when-type-assignable
         class="com.habitsoft.kiyaa.util.Cloner"/>
     </generate-with>
+
+    <generate-with
+        class="com.habitsoft.kiyaa.rebind.DictionaryConstantsGenerator">
+     <when-type-assignable
+        class="com.habitsoft.kiyaa.util.DictionaryConstants"/>
+    </generate-with>
     
 </module>
