@@ -19,7 +19,7 @@ import java.lang.annotation.Target;
  * you should specify the value with the correct type, i.e.
  * 
  * <script>
- * var myDict = {
+ * myDict = {
  *    someBool: true,
  *    someInt: 7,
  *    someFloat: 3.5f,
