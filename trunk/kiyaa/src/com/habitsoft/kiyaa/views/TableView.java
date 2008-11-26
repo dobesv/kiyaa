@@ -607,9 +607,9 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 		boolean empty = items.isEmpty() && startOffset == 0;
 		//table.setVisible(!empty);
 		if(navigation != null) {
-			if(!empty && group != null)
+			if(/*!empty &&*/ group != null)
 				navigation.load(group.member());
-			navigation.getViewWidget().setVisible(!empty);
+			//navigation.getViewWidget().setVisible(!empty);
 		}
 		if(emptyContent != null) {
 			emptyContent.getViewWidget().setVisible(empty);
