@@ -14,6 +14,21 @@ import java.lang.annotation.Target;
  * Use the @Dictionary annotation to specify the name of the javascript
  * object to load; by default it uses the name of the class with the
  * first letter changed to lower-case.
+ * 
+ * When generating the host page (or a javascript loaded by the host page)
+ * you should specify the value with the correct type, i.e.
+ * 
+ * <script>
+ * var myDict = {
+ *    someBool: true,
+ *    someInt: 7,
+ *    someFloat: 3.5f,
+ *    someDouble: 31415927
+ * };
+ * </script>
+ * 
+ * The generated subclass utilizes GWT's built-in javascript-to-java
+ * type conversions and won't parse any strings.
  */
 public interface DictionaryConstants {
     /**
@@ -80,43 +95,6 @@ public interface DictionaryConstants {
     @Documented
     public @interface DefaultIntValue {
       int value();
-    }
-
-    /**
-     * Default string array value to be used if no translation is found (and also
-     * used as the source for translation). No quoting (other than normal Java
-     * string quoting) is done.
-     * 
-     * Note that in the corresponding properties/etc file, commas are used to separate
-     * elements of the array unless they are preceded with a backslash.
-     */
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.METHOD)
-    @Documented
-    public @interface DefaultStringArrayValue {
-      String[] value();
-    }
-
-    /**
-     * Default string map value to be used if no translation is found (and also
-     * used as the source for translation). No quoting (other than normal Java
-     * string quoting) is done.  The strings for the map are supplied in key/value
-     * pairs.
-     * 
-     * Note that in the corresponding properties/etc file, new keys can be supplied
-     * with the name of the method (or its corresponding key) listing the set of keys
-     * for the map separated by commas (commas can be part of the keys by preceding
-     * them with a backslash).  In either case, further entries have keys matching
-     * the key in this map.
-     */
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.METHOD)
-    @Documented
-    public @interface DefaultStringMapValue {
-      /**
-       * Must be key-value pairs.
-       */
-      String[] value();
     }
 
     /**
