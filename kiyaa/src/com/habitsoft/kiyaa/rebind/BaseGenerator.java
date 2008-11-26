@@ -137,8 +137,35 @@ public abstract class BaseGenerator extends Generator {
 		public void init() throws UnableToCompleteException {
 			composerFactory = new ClassSourceFileComposerFactory(
 					packageName, implName);
-			composerFactory.setSuperclass(baseType.getName());
+			setupSuperclass();
+			setupImplementedInterfaces();
 		}
+
+        /**
+         * Subclasses can override this to replace the default
+         * interfaces (the base type, if it's an interface) with
+         * their own superclass.  The method should call:
+         * 
+         * composerFactory.addImplementedInterface("inter.face.Name");
+         * 
+         */
+		protected void setupImplementedInterfaces() {
+		    if(baseType.isInterface() != null)
+		        composerFactory.addImplementedInterface(baseType.getName());
+        }
+
+        /**
+		 * Subclasses can override this to replace the default
+		 * superclass (the base type, if it's a class) with
+		 * their own superclass.  The method should call:
+		 * 
+		 * composerFactory.setSuperclass("super.class.Name");
+		 * 
+		 */
+        protected void setupSuperclass() {
+            if(baseType.isInterface() == null)
+                composerFactory.setSuperclass(baseType.getName());
+        }
 		public void generateClass()
 				throws UnableToCompleteException {
 
