@@ -14,10 +14,10 @@ public class PercentageTextBox extends TextBox {
 	String cachedText="0%";
 	LocalizedParser parser = new ClientLocalizedParser();
 	
-	public double getValue() {
+	public double getDoubleValue() {
 	    return parser.parsePercentage(getText().trim());
 	}
-	public void setValue(double value) {
+	public void setDoubleValue(double value) {
 		// Try to avoid expensive string operations
 		if(value == cachedValue) {
 			setText(cachedText);
