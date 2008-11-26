@@ -68,10 +68,11 @@ public class DictionaryConstantsGenerator extends BaseGenerator {
                 }
                 sw.println("public native "+returnType.getQualifiedSourceName()+" "+method.getName()+"() /*-{");
                 sw.indent();
-                sw.println("var value = $wnd[\""+dictionaryName+"\"][\""+escape(key)+"\"];");
+                sw.println("var dict = $wnd[\""+escape(dictionaryName)+"\"];");
                 if(defaultValueExpr != null) {
-                    sw.println("if(value == undefined) return "+defaultValueExpr+";");
+                    sw.println("if(dict == undefined || dict[\""+escape(key)+"\"] == undefined) return "+defaultValueExpr+";");
                 }
+                sw.println("var value = dict[\""+escape(key)+"\"];");
                 sw.println("return value;");
                 sw.outdent();
                 sw.println("}-*/;");
