@@ -533,6 +533,18 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 	public boolean isLastPage() {
 		return (totalItems != -1) && (startOffset + increment >= totalItems);
 	}
+	
+	public int getPageNumber() {
+	    return 1 + startOffset/increment;
+	}
+	
+	public int getMaxPageNumber() {
+	    if(totalItems == -1)
+	        return -1;
+	    else
+	        return 1 + totalItems/increment;
+	}
+
 	public ModelFilter getFilter() {
 		return filter;
 	}
