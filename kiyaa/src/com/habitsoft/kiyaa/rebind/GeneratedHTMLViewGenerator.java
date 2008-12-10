@@ -2726,12 +2726,17 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                     return new ExpressionInfo(thisExpr, null, rootClassType.getSuperclass(), false, false, false);
                 }
                 
-                Matcher staticReference = Pattern.compile("((?:[a-z]+\\.)+(?:[A-Z][A-Za-z0-9]+\\.)+)([a-z].*)").matcher(path);
+                // like books.service.AccountType.ACCOUNTS_RECEIVABLE or abc.def.Foo.bar
+                Matcher staticReference = Pattern.compile("([a-z0-9_]+(?:\\.[a-z0-9_]+)+(?:\\.[A-Z][A-Za-z0-9_]+)+)\\.([A-Za-z0-9_]+.*)").matcher(path);
                 if(staticReference.matches()) {
                 	String className = staticReference.group(1);
                 	String property = staticReference.group(2);
-                	System.out.println("Static reference: "+className+" property "+property);
-                	JClassType staticType = getType(className);                	
+                	//System.out.println("Static reference: "+className+" property "+property);
+                	JClassType staticType = getType(className);  
+                	JField field = staticType.getField(property);
+                	if(field != null && field.isStatic()) {
+                	    return new ExpressionInfo(path, field.getType(), field.isFinal());
+                	}
                 	return findAccessors(staticType, className, property, matchAsync);
                 }
                 
