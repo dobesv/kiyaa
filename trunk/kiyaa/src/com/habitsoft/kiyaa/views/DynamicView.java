@@ -2,7 +2,6 @@ package com.habitsoft.kiyaa.views;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.habitsoft.kiyaa.util.AsyncCallbackProxy;
@@ -50,16 +49,20 @@ public class DynamicView implements View {
 			view.load(new AsyncCallbackProxy(callback) {
 				@Override
 				public void onSuccess(Object result) {
-					if(viewChanged) {
+					show();
+					super.onSuccess(result);
+				}
+
+                private void show() {
+                    if(viewChanged) {
 						wrapper.setWidget(view.getViewWidget());
 						viewChanged = false;
 					}
-					super.onSuccess(result);
-				}
+                }
 				
 				@Override
 				public void onFailure(Throwable caught) {
-					wrapper.setWidget(new Label());
+                    show();
 					super.onFailure(caught);
 				}
 			});
