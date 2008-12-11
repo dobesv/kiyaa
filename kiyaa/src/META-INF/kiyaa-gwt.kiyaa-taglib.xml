@@ -95,6 +95,11 @@
         <content-attribute>url</content-attribute>
     </tag>
     <tag>
+        <tag-name>button</tag-name>
+        <tag-class>Button</tag-class>
+        <content-attribute>text</content-attribute>
+    </tag>
+    <tag>
         <tag-name>hidden</tag-name>
         <tag-class>Hidden</tag-class>
         <content-attribute>value</content-attribute>
