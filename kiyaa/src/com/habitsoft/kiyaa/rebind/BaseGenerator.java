@@ -117,6 +117,13 @@ public abstract class BaseGenerator extends Generator {
 		public ClassSourceFileComposerFactory composerFactory;
 		public SourceWriter sw;
 		
+		/**
+		 * Override this to add your own imports.  To add the import,
+		 * call:
+		 * 
+		 * <code>composerFactory.addImport(className);</code>
+		 * 
+		 */
 		protected void addImports() {
 			if(!baseType.isMemberType())
 				composerFactory.addImport(className);
@@ -124,7 +131,11 @@ public abstract class BaseGenerator extends Generator {
 				composerFactory.addImport(baseType.getEnclosingType().getQualifiedSourceName());
 		}
 		
-		void pushLogger(String message) {
+		public void addImport(String typeName) {
+            composerFactory.addImport(typeName);
+        }
+
+        void pushLogger(String message) {
 			pushedLoggers.add(logger);
 			logger = logger.branch(TreeLogger.TRACE, message, null);
 			// System.out.println(message);
