@@ -8,6 +8,18 @@ package com.habitsoft.kiyaa.util;
  * The class should implement the methods of retrying; the generated
  * subclass provides an implementation of the interface which is
  * the type parameter.
+ * 
+ * Example usage:
+ * 
+ * <pre>
+ * class MyServiceRetryAdapter implements ServiceRetryingAdapter<MyService> {
+ * }
+ * 
+ * MyServiceAsync myServiceTemp = GWT.create(MyService.class); // service without retries
+ * MyServiceRetryAdapter myServiceRetryAdapter = GWT.create(MyServiceRetryAdapter.class); // retry adapter
+ * MyServiceAsync myService = myServiceRetryAdapter.getProxy(myServiceTemp); // wrap the service
+ * 
+ * </pre>
  */
 public interface ServiceRetryingAdapter<T> {
     /**
