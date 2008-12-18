@@ -2,6 +2,7 @@ package com.habitsoft.kiyaa.rebind;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -300,8 +301,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 			}
             reader.setEntityResolver(new EntityResolver() {
 				public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
-					// DTDs are just going to slow us down ... sadly
-					throw new SAXException("Don't use DTDs, they are evil!");
+				    return new InputSource(new StringReader(""));
 				}
 			});
             nu.xom.Builder b = new nu.xom.Builder(reader);
