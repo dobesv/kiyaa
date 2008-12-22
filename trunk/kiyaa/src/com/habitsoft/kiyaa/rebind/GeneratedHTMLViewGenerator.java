@@ -1012,7 +1012,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				String ln = elem.getLocalName();
 				String kc = elem.getAttributeValue("kc");
 				if (kc != null) {
-				    String[] split = kc.split(":", 1);
+				    String[] split = kc.split(":", 2);
 				    if (split.length == 1) {
 				    	ln = kc;
 				    } else {
@@ -1075,7 +1075,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				    } else {
 				        logger.log(TreeLogger.WARN, "Namespace \"" + namespace
 				                        + "\" not recognized, and not the XHTML namespace (" + XHTML_NAMESPACE
-				                        + ")", null);
+				                        + ") while looking for class for tag "+tag, null);
 				    }
 				}
 				return tagClass;
@@ -1247,7 +1247,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                     final String key = attr.getLocalName();
 
                     // These keys are taken care of in an earlier step
-                    if ("viewClass".equals(key) || "id".equals(key) || "with-model".equals(key) || "with-vars".equals(key) || "with-var".equals(key))
+                    if ("viewClass".equals(key) || "id".equals(key) || "with-model".equals(key) || "with-vars".equals(key) || "with-var".equals(key) || "kc".equals(key))
                         continue;
 
                     // final String prefix = attr.getNamespacePrefix();
