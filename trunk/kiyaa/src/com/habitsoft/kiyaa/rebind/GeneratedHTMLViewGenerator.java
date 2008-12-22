@@ -54,6 +54,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.habitsoft.kiyaa.metamodel.Action;
 import com.habitsoft.kiyaa.metamodel.Value;
 import com.habitsoft.kiyaa.views.ModelView;
+import com.habitsoft.kiyaa.views.TakesElementName;
 import com.habitsoft.kiyaa.views.View;
 import com.habitsoft.kiyaa.views.ViewFactory;
 import com.sun.facelets.util.Classpath;
@@ -977,7 +978,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                             continue;
                         }
                         JClassType tagClass = getTagClass(elem);
-                        Element viewElem = new Element("div", XHTML_NAMESPACE);
+                        Element viewElem = new Element(XHTML_NAMESPACE.equals(elem.getNamespaceURI())?elem.getLocalName():"div", XHTML_NAMESPACE);
                         String id = elem.getAttributeValue("id");
                         if (id == null)
                             id = "view" + insertedViews.size();
@@ -1185,7 +1186,8 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                         sw.println(sv.id + " = (" + sv.subviewClass.getQualifiedSourceName() + ") GWT.create("
                                         + sv.subviewClass.getQualifiedSourceName() + ".class);");
                     } else {
-                        sw.println(sv.id + " = new " + sv.subviewClass.getQualifiedSourceName() + "();");
+                        boolean takesTag = implementsInterface(sv.subviewClass, getType(TakesElementName.class.getName()));
+                        sw.println(sv.id + " = new " + sv.subviewClass.getQualifiedSourceName() + (takesTag?"(\""+escape(sv.elem.getLocalName())+"\", \""+escape(sv.elem.getNamespaceURI())+"\");":"();"));
                     }
                     generateContents(sv.elem, sv.subviewClass, sv.id);
                     generateAttributes(sv.elem, sv.subviewClass, sv.id);
