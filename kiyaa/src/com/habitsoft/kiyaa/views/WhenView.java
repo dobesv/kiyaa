@@ -13,23 +13,27 @@ import com.habitsoft.kiyaa.util.AsyncCallbackProxy;
  * Set up a view factory and when the value if test is true, the view
  * is created and shown.
  * 
- * This class wraps its contents in a DIV, which is always around even
+ * This class wraps its contents in a SPAN, which is always around even
  * when the inner view is not created.
  * 
  * As a convenience, you can provide placeholder HTML to use when the
  * test is false, for example to put an &nbsp; to ensure the DIV
  * participates in the HTML layout.
  */
-public class WhenView implements View {
+public class WhenView extends SimplePanel implements View, TakesElementName {
 
 	ViewFactory viewFactory;
 	boolean shouldShow;
 	View view;
-	SimplePanel panel = new SimplePanel();
 	String placeholderHtml;
 	
 	public WhenView() {
-		DOM.setStyleAttribute(panel.getElement(), "display", "inline");
+	    this(null, null);
+	}
+	
+	public WhenView(String tagName, String tagNamespace) {
+	    super(tagName!=null && !"when".equals(tagName) ? DOM.createElement(tagName) : DOM.createDiv());
+        DOM.setStyleAttribute(getElement(), "display", "inline");
 	}
 	
 	/**
@@ -74,7 +78,7 @@ public class WhenView implements View {
 	 * Return the SimplePanel we use as our widget
 	 */
 	public Widget getViewWidget() {
-		return panel;
+		return this;
 	}
 
 	/**
@@ -97,8 +101,8 @@ public class WhenView implements View {
 				@Override
 				public void onSuccess(Object result) {
 					// View may have become null while we waited, for whatever reason
-					if(view != null && panel.getWidget() != view.getViewWidget())
-						panel.setWidget(view.getViewWidget());
+					if(view != null && getWidget() != view.getViewWidget())
+						setWidget(view.getViewWidget());
 					super.onSuccess(result);
 				}
 			});
@@ -108,7 +112,7 @@ public class WhenView implements View {
 				view = null;
 			}
 			if(placeholderHtml != null) {
-				DOM.setInnerHTML(panel.getElement(), placeholderHtml);
+				DOM.setInnerHTML(getElement(), placeholderHtml);
 			}
 			callback.onSuccess(null);
 		}
