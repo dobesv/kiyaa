@@ -165,16 +165,17 @@ public abstract class GwtEJBWrapperServlet<T> extends RemoteServiceServlet {
         					rpcRequest.getMethod(), rpcRequest.getParameters(),
         					rpcRequest.getSerializationPolicy());
 			    } catch(EJBException ee) {
-			        // If we get an EJBException caused by an OptimisticLockException, retry
+			        // If we get an EJBException caused by an OptimisticLockException, client must retry
 			        if(!(ee.getCausedByException() instanceof OptimisticLockException)) {
 			            throw ee;
 			        }
 			    } catch(OptimisticLockException ole) {
-			        // retry!
+			        // client must retry!
 			    }
 			}
 		} catch (IncompatibleRemoteServiceException ex) {
-			getServletContext().log("An IncompatibleRemoteServiceException was thrown while processing this call.", ex);
+		    // Seems to show up in the client-side OK, no need to clutter up the logs any more.
+			//getServletContext().log("An IncompatibleRemoteServiceException was thrown while processing this call.", ex);
 			return RPC.encodeResponseForFailure(null, ex);
 		}
 	}
