@@ -35,6 +35,7 @@ public class CustomPopup<T> implements PopupListener {
     protected final FlowPanel flow = new FlowPanel();
     protected BaseCollectionView<T> table;
     private ArrayList<Action> actions = new ArrayList<Action>();
+    private ArrayList<Action> visibleActions = new ArrayList<Action>();
     private ActionSeries actionTests;
     protected T selectedModel;
     private ChangeListenerCollection changeListeners = new ChangeListenerCollection();
@@ -76,7 +77,7 @@ public class CustomPopup<T> implements PopupListener {
      * @return true if the popup should be shown
      */
     protected boolean shouldShowPopup() {
-    	return (models != null && models.length > 0) || !actions.isEmpty();
+    	return (models != null && models.length > 0) || !visibleActions.isEmpty();
     }
 
     /**
@@ -312,13 +313,19 @@ public class CustomPopup<T> implements PopupListener {
     				test.getValue(new AsyncCallbackProxy<Boolean>(callback) {
     					@Override
     					public void onSuccess(Boolean result) {
-    						widget.setVisible(result);
+    					    if(widget.isVisible() != result) {
+    					        widget.setVisible(result);
+    					        if(result && !visibleActions.contains(action))
+    					            visibleActions.add(action);
+    					        else
+    					            visibleActions.remove(action);
+    					    }
     						super.onSuccess(null);
     					}
     				});
     			}
     		});
-    	}
+    	} else visibleActions.add(action);
     	return widget;
     }
 
