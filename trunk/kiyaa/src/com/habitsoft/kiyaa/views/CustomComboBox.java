@@ -449,7 +449,7 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
         currentValue = value;
         if(table != null) {
             int[] itemIndexesAfterFiltering = table.getItemIndexesAfterFiltering();
-            if(selectedIndex != -1 && itemIndexesAfterFiltering != null) {
+            if(selectedIndex != -1 && selectedIndex < itemIndexesAfterFiltering.length && itemIndexesAfterFiltering != null) {
                 selectedIndex = itemIndexesAfterFiltering[selectedIndex];
             }
             table.setSelectedIndex(selectedIndex);
