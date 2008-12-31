@@ -54,11 +54,12 @@ public class CachedQuery<V> {
 			return null;
 		} else if(System.currentTimeMillis() > expiry) {
 			return saver(callback);
-		} else if(failure != null) {
+		} else if(failure != null) {		    
 			if(callback != null) {
+			    final Throwable failureToReturn = failure;
 				DeferredCommand.addCommand(new Command() {
 					public void execute() {
-						callback.onFailure(failure);
+						callback.onFailure(failureToReturn);
 					}
 				});
 			}
@@ -69,10 +70,11 @@ public class CachedQuery<V> {
 			// Run the onSuccess in a new call stack to more closely emulate the behavior of a server
 			// call.  Otherwise we get weird problems when the callback calls back to us in a cycle
 			// before we've cleaned up our state.
+		    final V resultToReturn = result;
 			if(callback != null) {
 				DeferredCommand.addCommand(new Command() {
 					public void execute() {
-						callback.onSuccess(result);
+						callback.onSuccess(resultToReturn);
 					}
 				});
 			}
