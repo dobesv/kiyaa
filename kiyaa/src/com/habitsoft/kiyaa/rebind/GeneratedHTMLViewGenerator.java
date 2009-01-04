@@ -2,7 +2,6 @@ package com.habitsoft.kiyaa.rebind;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.StringReader;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -25,8 +24,6 @@ import nu.xom.ParentNode;
 import nu.xom.Text;
 import nu.xom.XPathContext;
 
-import org.xml.sax.EntityResolver;
-import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
@@ -57,6 +54,8 @@ import com.habitsoft.kiyaa.views.ModelView;
 import com.habitsoft.kiyaa.views.TakesElementName;
 import com.habitsoft.kiyaa.views.View;
 import com.habitsoft.kiyaa.views.ViewFactory;
+import com.habitsoft.xhtml.dtds.FailingEntityResolver;
+import com.habitsoft.xhtml.dtds.XhtmlEntityResolver;
 import com.sun.facelets.util.Classpath;
 
 /**
@@ -300,11 +299,8 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 			} catch (SAXException caught1) {
 				throw new Error(caught1);
 			}
-            reader.setEntityResolver(new EntityResolver() {
-				public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
-				    return new InputSource(new StringReader(""));
-				}
-			});
+			// Load XHTML declaration from the jar file, otherwise fail if someone wants to load a DTD
+            reader.setEntityResolver(new XhtmlEntityResolver(new FailingEntityResolver()));
             nu.xom.Builder b = new nu.xom.Builder(reader);
             Document d;
             java.io.File f;
