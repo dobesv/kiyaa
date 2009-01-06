@@ -408,7 +408,7 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 	 * @return false if that row was already selected
 	 */
 	private boolean selectRow(int row) {
-	    selectedModel = row == -1 ? null : items.get(row);
+	    selectedModel = row == -1 || row >= items.size() ? null : items.get(row);
 	    if(selectable) {
     		if(selectedRow != -1) {
     			if(selectedRow == row)
