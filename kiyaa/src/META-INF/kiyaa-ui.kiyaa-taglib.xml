@@ -140,4 +140,9 @@
         <tag-class>widgets.AnchorWithSpan</tag-class>
         <content-attribute>text</content-attribute>
     </tag>
+    <tag>
+        <tag-name>booleanDropDown</tag-name>
+        <tag-class>widgets.BooleanDropDown</tag-class>
+        <content-attribute>booleanValue</content-attribute>
+    </tag>
 </kiyaa-taglib>
