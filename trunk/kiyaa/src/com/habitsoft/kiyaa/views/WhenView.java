@@ -51,9 +51,12 @@ public class WhenView extends SimplePanel implements View, TakesElementName {
 	 * If passed true, the view will be constructed on the next load()
 	 * if it wasn't already.  If false, the view will be destroyed on
 	 * the next load() if it has been constructed.
+	 * 
+	 * In addition, setVisible(truth) will be called to hide the WhenView
+	 * if it is not supposed to be shown.
 	 */
 	public void setTest(boolean truth) {
-		shouldShow = truth;
+		setVisible(shouldShow = truth);
 	}
 	
 	/**
