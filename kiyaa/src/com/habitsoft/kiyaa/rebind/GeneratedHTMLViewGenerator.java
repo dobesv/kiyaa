@@ -788,7 +788,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             		sw.indent();
             		sw.println("init();");
             		if(loadMethod.getParameters().length == 1)
-            			sw.println("super.load(new AsyncCallbackProxy(callback) { public void onSuccess(Object result) { "+name+"(this.callback); } });");
+            			sw.println("super.load(new AsyncCallbackProxy(callback, \""+myClass.getName()+".load()\") { public void onSuccess(Object result) { "+name+"(this.callback); } });");
             		else
             			sw.println("super.load();");
                     sw.outdent();
@@ -828,7 +828,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             		name="saveImpl";
             		sw.println("public void save(AsyncCallback callback) {");
             		sw.indent();
-            		sw.println("super.save(new AsyncCallbackProxy(callback) { public void onSuccess(Object result) { "+name+"(this.callback); } });");
+            		sw.println("super.save(new AsyncCallbackProxy(callback, \""+myClass.getName()+".save()\") { public void onSuccess(Object result) { "+name+"(this.callback); } });");
                     sw.outdent();
             		sw.println("}");
             	} else {
@@ -2422,7 +2422,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                         	if(subexpr.getter != null) {
                         		// Synchronous sub-expression, how merciful! 
                             	asyncProxies.add("    public void "+getterName+"(AsyncCallback callback) {\n"+
-                            		             "        "+callAsyncGetter(getter, "new AsyncCallbackProxy(callback) {\n"+
+                            		             "        "+callAsyncGetter(getter, "new AsyncCallbackProxy(callback, \""+path+"\") {\n"+
                             		             "            public void onSuccess(Object result) {\n"+
                             		             "                "+type.getQualifiedSourceName()+" base = ("+type.getQualifiedSourceName()+") result;\n"+
                             		             "                super.onSuccess("+subexpr.getter+");\n"+
@@ -2431,7 +2431,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                             		             "    }\n");
                         	} else if(subexpr.asyncGetter != null) {
                             	asyncProxies.add("    public void "+getterName+"(AsyncCallback callback) {\n"+
-               		             "        "+callAsyncGetter(getter, "new AsyncCallbackProxy(callback) {\n"+
+               		             "        "+callAsyncGetter(getter, "new AsyncCallbackProxy(callback, \""+path+"\") {\n"+
                		             "            public void onSuccess(Object result) {"+
                		             "                "+type.getQualifiedSourceName()+" base = ("+type.getQualifiedSourceName()+") result;\n"+
                		             "                "+callAsyncGetter(subexpr.asyncGetter, "callback")+";\n"+
@@ -2445,7 +2445,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                         	if(subexpr.setter != null) {
                         		// Synchronous sub-expression, how merciful! 
                             	asyncProxies.add("    public void "+setterName+"(final "+subexpr.type.getQualifiedSourceName()+" value, AsyncCallback callback) {\n"+
-                  		             "        "+callAsyncGetter(getter, "new AsyncCallbackProxy(callback) {\n"+
+                  		             "        "+callAsyncGetter(getter, "new AsyncCallbackProxy(callback, \""+path+"\") {\n"+
                             		             "            public void onSuccess(Object result) {\n"+
                             		             "                "+type.getQualifiedSourceName()+" base = ("+type.getQualifiedSourceName()+") result;\n"+
                             		             "                "+subexpr.setter+"(value);\n"+
@@ -2455,7 +2455,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                             		             "    }");
                         	} else if(subexpr.asyncSetter != null) {
                             	asyncProxies.add("    public void "+setterName+"(final "+subexpr.type.getQualifiedSourceName()+" value, AsyncCallback callback) {\n"+
-                 		             "        "+callAsyncGetter(getter, "new AsyncCallbackProxy(callback) {\n"+
+                 		             "        "+callAsyncGetter(getter, "new AsyncCallbackProxy(callback, \""+path+"\") {\n"+
                		             "            public void onSuccess(Object result) {\n"+
                		             "                "+type.getQualifiedSourceName()+" base = ("+type.getQualifiedSourceName()+") result;\n"+
                		             "                "+subexpr.asyncSetter+"(value, callback);\n"+

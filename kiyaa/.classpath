@@ -9,5 +9,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
 	<classpathentry kind="con" path="org.eclipse.jst.server.core.container/com.sun.enterprise.jst.server.runtimeTarget/GlassFish V2 Java EE 5"/>
 	<classpathentry kind="lib" path="lib/xhtml-dtds-cache.jar"/>
+	<classpathentry kind="lib" path="lib/gwt-log-2.5.3.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>
