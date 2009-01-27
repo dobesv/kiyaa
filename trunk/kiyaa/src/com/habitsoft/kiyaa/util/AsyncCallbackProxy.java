@@ -20,7 +20,7 @@ public class AsyncCallbackProxy<T> implements AsyncCallback<T> {
 	}
 
 	public void onFailure(Throwable caught) {
-	    if(marker != null && (caught instanceof Error) || (caught instanceof RuntimeException)) try {
+	    if(marker != null && (caught instanceof Error || caught instanceof RuntimeException)) try {
 	        Log.error("At "+marker.toString(), caught);
 	    } catch(Exception e) { }
 		if(callback != null)

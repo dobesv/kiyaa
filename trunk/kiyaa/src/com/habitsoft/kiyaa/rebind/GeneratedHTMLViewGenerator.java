@@ -1433,7 +1433,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				    logger.log(TreeLogger.ERROR, "Unable to find action for "+value+" for an onchange handler", null);
 				    throw new UnableToCompleteException();
 				}
-				attachWidgetEventListener(name, actionExpr, "ChangeListener", "onChange(Widget sender)", null);
+				attachWidgetEventListener(name, actionExpr, "ChangeListener", "onChange(Widget sender)", null, value);
 				return actionExpr;
 			}
 
@@ -1500,7 +1500,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				        +" for an onclick handler", null);
 				    throw new UnableToCompleteException();
 				}
-				attachWidgetEventListener(name, actionExpr, "ClickListener", "onClick(Widget sender)", null);
+				attachWidgetEventListener(name, actionExpr, "ClickListener", "onClick(Widget sender)", null, value);
 				return actionExpr;
 			}
 			private String generateKeyPressHandler(JClassType type, String name, final String value, String keyName)
@@ -1517,7 +1517,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
     			    throw new UnableToCompleteException();
     			}
     			final String condition = keyName==null?null:"keyCode == "+keyName+" && (modifiers & ~MODIFIER_SHIFT) == 0";
-                attachWidgetEventListener(name, actionExpr, "KeyboardListenerAdapter", "onKeyPress(Widget sender, char keyCode, int modifiers)", condition);
+                attachWidgetEventListener(name, actionExpr, "KeyboardListenerAdapter", "onKeyPress(Widget sender, char keyCode, int modifiers)", condition, value);
     			return actionExpr;
     		}
 			protected void generateAttributeLoadSave(JClassType type, ExpressionInfo attributeAccessors, ExpressionInfo pathAccessors,
@@ -1553,7 +1553,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 			}
 
             private void attachWidgetEventListener(String name, String valueExpr, String listenerClass,
-                            String listenerMethod, String condition) {
+                            String listenerMethod, String condition, String actionStr) {
                 String adder = "add"+listenerClass;
                 if(adder.endsWith("Adapter")) adder = adder.substring(0, adder.length()-7);
             	sw.println(name + "." + adder + "(new " + listenerClass + "() {");
@@ -1564,7 +1564,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 	sw.println("if("+condition+")");
                 	sw.indent();
                 }
-                sw.println(valueExpr + ".perform(AsyncCallbackFactory.defaultNewInstance(\""+valueExpr+"."+listenerMethod+"\"));");
+                sw.println(valueExpr + ".perform(AsyncCallbackFactory.defaultNewInstance(\""+myClass.getName()+"["+actionStr.replace("\"", "\\\"")+"]\"));");
                 if(condition != null)
                 	sw.outdent();
                 sw.outdent();
