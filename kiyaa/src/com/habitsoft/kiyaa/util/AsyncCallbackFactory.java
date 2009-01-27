@@ -18,7 +18,7 @@ public class AsyncCallbackFactory {
             public void onSuccess(Object arg0) {
             }
             public void onFailure(Throwable caught) {
-                if(marker != null && (caught instanceof Error) || (caught instanceof RuntimeException)) try {
+                if(marker != null && (caught instanceof Error || caught instanceof RuntimeException)) try {
                     Log.error("At "+marker.toString(), caught);
                 } catch(Exception e) { }
                 if(caught.getMessage() != null)
