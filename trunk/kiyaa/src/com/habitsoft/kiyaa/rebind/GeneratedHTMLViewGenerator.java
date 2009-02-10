@@ -1523,7 +1523,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 			protected void generateAttributeLoadSave(JClassType type, ExpressionInfo attributeAccessors, ExpressionInfo pathAccessors,
 				boolean readOnly)
 				throws UnableToCompleteException {
-				String loadExpr = attributeAccessors.asyncCopyStatement(pathAccessors, "group.member(\""+attributeAccessors.toString()+" load\")", true);
+				String loadExpr = attributeAccessors.asyncCopyStatement(pathAccessors, "group.member(\""+attributeAccessors.setterString()+" load\")", true);
 				// Put the value into the widget on load()
 				//if(attributeAccessors.getter != null && attributeAccessors.getType().equals(getType(String.class.getName())) && pathAccessors.getter != null) {
 					// It turns out that calling setText() and setValue to the same value is a high-cost operation
@@ -3234,6 +3234,12 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 this.type = type;
                 this.constant = constant;
                 this.baseExpression = null;
+            }
+
+            public String setterString() {
+                if(asyncSetter != null) return asyncSetter;
+                if(setter != null) return setter;
+                return toString();
             }
 
             public boolean hasSetter() {
