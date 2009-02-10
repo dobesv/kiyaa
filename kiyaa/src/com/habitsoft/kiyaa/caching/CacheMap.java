@@ -39,7 +39,7 @@ public class CacheMap<K,V> extends TreeMap<K,CachedQuery<V>> {
 	 * Returns null if a cached result was returned to the
 	 * given callback, otherwise a callback is returned.
 	 */
-	public AsyncCallback fetch(K key, AsyncCallback callback) {
+	public AsyncCallback<V> fetch(K key, AsyncCallback callback) {
 		return getOrCreateQuery(key).fetch(callback);
 	}
 

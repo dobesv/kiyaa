@@ -805,7 +805,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 } else {
                     sw.println("try {");
                     sw.indent();
-                    sw.println("final AsyncCallbackGroup group = new AsyncCallbackGroup();");
+                    sw.println("final AsyncCallbackGroup group = new AsyncCallbackGroup(\""+myClass.getName()+".load()\");");
                     for (String load : loads) {
                         sw.println(load);
                     }
@@ -842,7 +842,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                     sw.println("if(!didInit) return;");
                     sw.println("try {");
                     sw.indent();
-                    sw.println("AsyncCallbackGroup group = new AsyncCallbackGroup();");
+                    sw.println("AsyncCallbackGroup group = new AsyncCallbackGroup(\""+myClass.getName()+".save()\");");
                     for (String save : saves) {
                         sw.println(save);
                     }
@@ -1144,7 +1144,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 		if(expr.isConstant() && expr.getter != null) {
                 			sw.println(textExpr.copyStatement(expr));
                 		} else {
-                			loads.add(textExpr.asyncCopyStatement(expr, "group.member()", true));
+                			loads.add(textExpr.asyncCopyStatement(expr, "group.member(\"inline text "+text+"\")", true));
                 		}
                 	}
             	} finally {
@@ -1221,11 +1221,11 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                         }
                     }
                     if (canLoad) {
-                        loads.add(viewExpr + ".load(group.member());");
+                        loads.add(viewExpr + ".load(group.member(\""+myClass.getName()+"."+id+".load()\"));");
                     }
                     if (!readOnly) {
                         if (canSave)
-                            saves.add(viewExpr + ".save(group.member());");
+                            saves.add(viewExpr + ".save(group.member(\""+myClass.getName()+"."+id+".save()\"));");
                     }
                     if(canLoad) {
                     	clearFields.add(viewExpr + ".clearFields();");
@@ -1523,7 +1523,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 			protected void generateAttributeLoadSave(JClassType type, ExpressionInfo attributeAccessors, ExpressionInfo pathAccessors,
 				boolean readOnly)
 				throws UnableToCompleteException {
-				String loadExpr = attributeAccessors.asyncCopyStatement(pathAccessors, "group.member()", true);
+				String loadExpr = attributeAccessors.asyncCopyStatement(pathAccessors, "group.member(\""+attributeAccessors.toString()+" load\")", true);
 				// Put the value into the widget on load()
 				//if(attributeAccessors.getter != null && attributeAccessors.getType().equals(getType(String.class.getName())) && pathAccessors.getter != null) {
 					// It turns out that calling setText() and setValue to the same value is a high-cost operation
@@ -1547,7 +1547,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				    }
 				    
 				    // If it's a two-way affair, copy the value back on save()
-				    String saveExpr = pathAccessors.asyncCopyStatement(attributeAccessors, "group.member()", true);
+				    String saveExpr = pathAccessors.asyncCopyStatement(attributeAccessors, "group.member(\""+attributeAccessors.toString()+" save\")", true);
 				    saves.add(saveExpr);
 				}
 			}
@@ -1683,8 +1683,8 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                             generateField(fieldName, getType(View.class.getName()));
                             sw.println(fieldName + " = " + createViewExpr + ";");
 							sw.println(name + ".setWidget("+fieldName+".getViewWidget());");
-							loads.add(fieldName + ".load(group.member());");
-                            saves.add(fieldName + ".save(group.member());");
+							loads.add(fieldName + ".load(group.member(\""+fieldName+".load()\"));");
+                            saves.add(fieldName + ".save(group.member(\""+fieldName+".save()\"));");
                             clearFields.add(fieldName + ".clearFields();");
                         } else if (findMethod(type, "setView", 1, false) != null
                         	 || (elem.getAttribute("with-model") != null && findMethod(type, "setView", 1, false) != null)) {

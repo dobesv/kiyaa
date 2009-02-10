@@ -4,16 +4,16 @@
 package com.habitsoft.kiyaa.caching;
 
 
-public class TypedChildrenByOffsetLimitKey<E extends Enum> extends ChildrenByOffsetLimitKey {
+public class TypedChildrenByOffsetLimitKey<T, E extends Enum> extends ChildrenByOffsetLimitKey<T> {
 	private E type;
 
-	public TypedChildrenByOffsetLimitKey(Long parentId, E type, int offset, int limit) {
+	public TypedChildrenByOffsetLimitKey(T parentId, E type, int offset, int limit) {
 		super(parentId, offset, limit);
 		this.type = type;
 	}
 	
 	@Override
-	public int compareTo(ChildrenByOffsetLimitKey other) {
+	public int compareTo(ChildrenByOffsetLimitKey<T> other) {
 		int cmp = type.compareTo(((TypedChildrenByOffsetLimitKey)other).type);
 		if(cmp == 0) return super.compareTo(other);
 		return cmp;

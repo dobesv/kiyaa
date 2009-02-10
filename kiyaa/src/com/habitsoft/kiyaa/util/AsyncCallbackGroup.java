@@ -1,5 +1,6 @@
 package com.habitsoft.kiyaa.util;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -20,16 +21,24 @@ public class AsyncCallbackGroup {
 	AsyncCallbackGroupMember sharedMember;
 	AsyncCallback callback;
 	Object callbackParam;
+	Object marker;
 	
 	public AsyncCallbackGroup() {
 		
 	}
+
+    public AsyncCallbackGroup(Object marker) {
+        this.marker = marker;
+    }
 	
 	public void addPending() {
 		pending++;
 	}
 	
 	public void addFailure(Throwable caught) {
+        if(marker != null && (caught instanceof Error || caught instanceof RuntimeException)) try {
+            Log.error("At "+marker.toString(), caught);
+        } catch(Exception e) { }	    
 		error = caught;
 		removePending();
 	}
@@ -69,6 +78,13 @@ public class AsyncCallbackGroup {
 			});
 		}
 	}
+    public AsyncCallback member(Object marker) {
+        if(marker != null) {
+            return new AsyncCallbackGroupMember(this, marker);
+        } else {
+            return member();
+        }
+    }
 
 	public AsyncCallback member() {
 		if(sharedMember == null) {
