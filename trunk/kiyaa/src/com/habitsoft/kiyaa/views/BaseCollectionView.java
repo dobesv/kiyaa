@@ -66,7 +66,7 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 	 * @param object Model object which should be shown
 	 * @param callback 
 	 */
-	protected abstract void showItem(int i, Object object, AsyncCallback callback);
+	protected abstract void showItem(int i, T model, AsyncCallback callback);
 	
 	/**
 	 * Remove an item from the view.  Items following the removed one should
@@ -524,6 +524,15 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 		startOffset -= increment;
 		if(startOffset < 0)
 			startOffset = 0;
+	}
+	
+	public void gotoFirstPage() {
+	    startOffset = 0;
+	}
+	public void gotoLastPage() {
+	    int lastPage = getMaxPageNumber();
+	    if(lastPage > 0)
+	        startOffset = (lastPage-1) * increment;
 	}
 
 	public boolean isFirstPage() {

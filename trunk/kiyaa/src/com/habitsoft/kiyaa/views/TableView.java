@@ -35,6 +35,7 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 	private Element borderMiddle;
     private T contextMenuTarget;
     CustomPopup contextMenu;
+    RowStyleHandler<T> rowStyleHandler;
     
     private final ClickListener contextMenuListener = new ClickListener() {
         public void onClick(Widget sender) {
@@ -42,6 +43,10 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
         }
     };
 	
+    public interface RowStyleHandler<T> {
+        public String getStyle(int row, T model);
+    }
+    
 	class Column {
 		int position;
 		ViewFactory viewFactory;
@@ -332,17 +337,18 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 	}
 	
 	@Override
-	protected void showItem(int row, Object object, AsyncCallback callback) {
+	protected void showItem(int row, T model, AsyncCallback callback) {
 		HTMLTableRowPanel rowPanel = new HTMLTableRowPanel(table, row, "ui-table-row", selectable || clickable, hoverGroup);
 		rowPanel.addContextMenuListener(contextMenuListener);
         rowPanels.add(row, rowPanel);
+        maybeAssignStyle(row, rowPanel, model);
 
 		AsyncCallbackGroup group = new AsyncCallbackGroup();
 		for (Column column : columns) {
-			column.addItem(row, object, group.member());
+			column.addItem(row, model, group.member());
 		}
 				
-		if(object == selectedModel) {
+		if(model == selectedModel) {
 			if(selectedRow != -1) {
 				showSelected(selectedRow, false);
 			}
@@ -353,8 +359,16 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 			checkEmpty(group);
 		if(isAttached())
 		    rowPanel.onAttach();
+		
 		group.ready(callback);
 	}
+    private void maybeAssignStyle(int row, HTMLTableRowPanel rowPanel, T model) {
+        if(rowStyleHandler != null) {
+		    String style = rowStyleHandler.getStyle(row, model);
+		    if(style != null)
+		        rowPanel.setStylePrimaryName(style);
+		}
+    }
 	
 	protected void onContextMenu(int row) {
 	    if(contextMenu != null) {
@@ -391,11 +405,14 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 			checkEmpty(null);
 	}
 	@Override
-	protected void setItem(int row, Object model, AsyncCallback callback) {
+	protected void setItem(int row, T model, AsyncCallback callback) {
 		callback = new AsyncCallbackWithTimeout(callback); // debug
 		if(row == rowPanels.size()) {
 			showItem(row, model, callback);
 			return;
+		}
+		if(rowStyleHandler != null) {
+		    maybeAssignStyle(row, rowPanels.get(row), model);
 		}
 		AsyncCallbackGroup group = new AsyncCallbackGroup();
 		for(Column column: columns) {
@@ -659,4 +676,10 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
         createContextMenu();
         contextMenu.setSelectable(selectable);
 	}
+    public RowStyleHandler<T> getRowStyleHandler() {
+        return rowStyleHandler;
+    }
+    public void setRowStyleHandler(RowStyleHandler<T> rowStyleHandler) {
+        this.rowStyleHandler = rowStyleHandler;
+    }
 }
