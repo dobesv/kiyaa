@@ -12,10 +12,14 @@ import com.habitsoft.kiyaa.metamodel.Action;
 import com.habitsoft.kiyaa.util.AsyncCallbackFactory;
 
 public class Feedback extends FlowPanel {
-
-	boolean positive;
-	boolean negative;
-	boolean busy;
+    public enum FeedbackType {
+        POSITIVE,
+        NEGATIVE,
+        WARNING,
+        NEUTRAL,
+        BUSY;
+    }
+    FeedbackType feedbackType;
 	ArrayList<Hyperlink> actionLinks = new ArrayList<Hyperlink>();
 	Action[] actions;
 	Timer clearTimer = new Timer() {
@@ -30,12 +34,12 @@ public class Feedback extends FlowPanel {
 		clearFeedback();
 	}
 	
-	public void setText(String text, Collection<Action> actions, Collection<Widget> widgets, int timeout) {
+	public void setText(FeedbackType feedbackType, String text, Collection<Action> actions, Collection<Widget> widgets, int timeout) {
 		clear();
-		if(text == null || text.length() == 0) {
+		if((text == null || text.length() == 0) && (widgets == null || widgets.isEmpty()) && (actions == null || actions.isEmpty())) {
 			setVisible(false);
 		} else {
-			setVisible(true);
+            setFeedbackType(feedbackType);
 			add(new Label(text));
 			if(actions != null) {
     			for(final Action action: actions) {
@@ -56,33 +60,26 @@ public class Feedback extends FlowPanel {
 					add(widget);
 				}
 			}
+            setVisible(true);
 			if(timeout == 0) clearTimer.cancel();
 			else clearTimer.schedule(timeout);
 		}
 	}
 
 	public boolean isPositive() {
-		return positive;
+		return feedbackType == FeedbackType.POSITIVE;
 	}
 
 	public void setPositive(boolean positive) {
-		if(positive != this.positive) {
-			this.positive = positive;
-			if(positive) addStyleDependentName("positive");
-			else removeStyleDependentName("positive");
-		}
+	    if(positive) setFeedbackType(FeedbackType.POSITIVE);
 	}
 
 	public boolean isNegative() {
-		return negative;
+		return feedbackType == FeedbackType.NEGATIVE;
 	}
 
 	public void setNegative(boolean negative) {
-		if(negative != this.negative) {
-			this.negative = negative;
-			if(negative) addStyleDependentName("negative");
-			else removeStyleDependentName("negative");
-		}
+	    if(negative) setFeedbackType(FeedbackType.NEGATIVE);
 	}
 	
 	/**
@@ -90,10 +87,7 @@ public class Feedback extends FlowPanel {
 	 * @param timeout Message disappears automatically after this many millisenconds
 	 */
 	public void positiveFeedback(String text, Collection<Action> actions, int timeout) {
-		setPositive(true);
-		setNegative(false);
-        setBusy(false);
-		setText(text, actions, null, timeout);
+		setText(FeedbackType.POSITIVE, text, actions, null, timeout);
 	}
 	
 	/**
@@ -101,10 +95,7 @@ public class Feedback extends FlowPanel {
 	 * @param timeout Message disappears automatically after this many millisenconds
 	 */
 	public void positiveFeedback(String text, Collection<Action> actions, Collection<Widget> widgets, int timeout) {
-		setPositive(true);
-		setNegative(false);
-        setBusy(false);
-		setText(text, actions, widgets, timeout);
+		setText(FeedbackType.POSITIVE, text, actions, widgets, timeout);
 	}
 	
 	/**
@@ -112,10 +103,7 @@ public class Feedback extends FlowPanel {
 	 * @param timeout Message disappears automatically after this many millisenconds
 	 */
 	public void negativeFeedback(String text, Collection<Action> actions, int timeout) {
-		setPositive(false);
-		setNegative(true);
-        setBusy(false);
-		setText(text, actions, null, timeout);
+		setText(FeedbackType.NEGATIVE, text, actions, null, timeout);
 	}
 	
 	/**
@@ -123,39 +111,39 @@ public class Feedback extends FlowPanel {
 	 * @param timeout Message disappears automatically after this many millisenconds
 	 */
 	public void neutralFeedback(String text, Collection<Action> actions, int timeout) {
-		setPositive(false);
-		setNegative(false);
-        setBusy(false);
-		setText(text, actions, null, timeout);
+		setText(FeedbackType.NEUTRAL, text, actions, null, timeout);
 	}
 
 	/**
 	 * Remove any message currently showing
 	 */
 	public void clearFeedback() {
-		setPositive(false);
-		setNegative(false);
-        setBusy(false);
-		setText(null, null, null, 0);
+		setText(null, null, null, null, 0);
 	}
 
     public boolean isBusy() {
-        return busy;
+        return feedbackType == FeedbackType.BUSY;
     }
 
     public void setBusy(boolean working) {
-        if(working != this.busy) {
-            this.busy = working;
-            if(working) addStyleDependentName("busy");
-            else removeStyleDependentName("busy");
-        }
-        this.busy = working;
+        if(working) setFeedbackType(FeedbackType.BUSY);
     }
     
     public void busy(String text) {
-        setPositive(false);
-        setNegative(false);
-        setBusy(true);
-        setText(text, null, null, 0);
+        setText(FeedbackType.BUSY, text, null, null, 0);
+    }
+    
+    public FeedbackType getFeedbackType() {
+        return feedbackType;
+    }
+
+    public void setFeedbackType(FeedbackType feedbackType) {
+        if(feedbackType != this.feedbackType) {
+            if(this.feedbackType != null)
+                this.removeStyleName(this.feedbackType.name().toLowerCase());
+            this.feedbackType = feedbackType;
+            if(feedbackType != null)
+                this.addStyleName(feedbackType.name().toLowerCase());
+        }
     }
 }
