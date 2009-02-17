@@ -29,6 +29,18 @@ import java.lang.annotation.Target;
  * 
  * The generated subclass utilizes GWT's built-in javascript-to-java
  * type conversions and won't parse any strings.
+ * 
+ * This class could be used for cross-site data loading,
+ * whereby you fetch a javascript file that sets the variable loaded
+ * by this class and invokes a callback that tells your code that the
+ * data is ready.  To do so you would insert a <script> tag into the
+ * DOM whose source points to your servlet, and your servlet would
+ * return the appropriate javascript to update your GWT data.
+ * 
+ * This is useful when you want to embed your GWT app on a different site
+ * than your server code runs on - due to the "single origin policy"
+ * this is the only practical way to load data from another site - by 
+ * requesting a javascript file with that data in it.
  */
 public interface DictionaryConstants {
     /**
