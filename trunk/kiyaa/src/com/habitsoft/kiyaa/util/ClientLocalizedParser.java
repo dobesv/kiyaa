@@ -56,7 +56,12 @@ public class ClientLocalizedParser implements LocalizedParser {
     }
 
     public long parseCurrency(String text, String currencyCode) throws CurrencyParseException, DifferentCurrencyCodeProvided {
-        double val = NumberFormat.getCurrencyFormat(currencyCode).parse(text);
+        double val;
+        try {
+            val = NumberFormat.getCurrencyFormat(currencyCode).parse(text);
+        } catch (IllegalArgumentException badCurrencyCode) {
+            throw new CurrencyParseException("Unknown currency "+currencyCode, badCurrencyCode);
+        }
         int decimalPlaces = getDecimalPlaces(currencyCode);
         return MathUtil.roundToFixedPoint(val, decimalPlaces);
     }
