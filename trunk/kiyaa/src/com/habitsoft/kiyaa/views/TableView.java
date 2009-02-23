@@ -345,7 +345,7 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 
 		AsyncCallbackGroup group = new AsyncCallbackGroup();
 		for (Column column : columns) {
-			column.addItem(row, model, group.member());
+			column.addItem(row, model, group.member("Table col "+column.position+" row "+row));
 		}
 				
 		if(model == selectedModel) {
