@@ -99,8 +99,12 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 	}
 	
 	protected void removeItem(int i) {
-		items.remove(i-startOffset);
-		hideItem(i-startOffset);
+	    try {
+    		items.remove(i-startOffset);
+    		hideItem(i-startOffset);
+	    } catch(IndexOutOfBoundsException e) {
+	        // already gone I suppose
+	    }
 	}
 	
 	protected void replaceItem(int i, T object, AsyncCallback callback) {
@@ -551,7 +555,7 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 	    if(totalItems == -1)
 	        return -1;
 	    else
-	        return 1 + totalItems/increment;
+	        return totalItems/increment;
 	}
 
 	public ModelFilter getFilter() {
@@ -609,6 +613,14 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 	public void setHoverGroup(HoverStyleHandler.Group hoverGroup) {
 		this.hoverGroup = hoverGroup;
 	}
+
+    public int getStartOffset() {
+        return startOffset;
+    }
+
+    public void setStartOffset(int startOffset) {
+        this.startOffset = startOffset;
+    }
 
 
 }
