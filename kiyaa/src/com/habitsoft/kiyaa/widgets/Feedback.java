@@ -108,7 +108,7 @@ public class Feedback extends FlowPanel {
 	
 	/**
 	 * 
-	 * @param timeout Message disappears automatically after this many millisenconds
+	 * @param timeout Message disappears automatically after this many milliseconds
 	 */
 	public void neutralFeedback(String text, Collection<Action> actions, int timeout) {
 		setText(FeedbackType.NEUTRAL, text, actions, null, timeout);
@@ -140,10 +140,10 @@ public class Feedback extends FlowPanel {
     public void setFeedbackType(FeedbackType feedbackType) {
         if(feedbackType != this.feedbackType) {
             if(this.feedbackType != null)
-                this.removeStyleName(this.feedbackType.name().toLowerCase());
+                this.removeStyleDependentName(this.feedbackType.name().toLowerCase());
             this.feedbackType = feedbackType;
             if(feedbackType != null)
-                this.addStyleName(feedbackType.name().toLowerCase());
+                this.addStyleDependentName(feedbackType.name().toLowerCase());
         }
     }
 }
