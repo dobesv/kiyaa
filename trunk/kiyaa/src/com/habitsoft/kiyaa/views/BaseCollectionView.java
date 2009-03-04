@@ -283,7 +283,8 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 			// If we get less than we asked for, there's no more to get
 			final boolean done = models.length<limit;
 			int endOffset = offset + models.length;
-			totalItems = Math.max(totalItems, endOffset);
+			if(models.length > 0) // If we got models back then we can push totalItems ahead to include them
+			    totalItems = Math.max(totalItems, endOffset);
 			if(done) {
 				for(int i=offset + items.size()-1; i >= endOffset; i--){
 					removeItem(i);
