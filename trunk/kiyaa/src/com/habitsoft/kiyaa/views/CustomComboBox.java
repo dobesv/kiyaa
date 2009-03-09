@@ -103,7 +103,7 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 	            }
 			} else if(keyCode == KEY_RIGHT || keyCode == KEY_LEFT) {
 			} else if(Character.isLetterOrDigit(keyCode) || keyCode == KEY_BACKSPACE || keyCode == KEY_DELETE) {
-				applySearchTextOperation.schedule(250);
+		        applySearchTextOperation.schedule(250);
 			}
 		}
 		
@@ -143,6 +143,7 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 	private FocusGroup focusGroup;
 	boolean focusNextOnEnter=true;
     protected String currentValue;
+	protected boolean searchable=true;
 	
 	public CustomComboBox() {
 		this(new TextBox());
@@ -184,6 +185,8 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 		final String text = getText();
 		
 		final String value = nameValueMap.get(text.toLowerCase());
+		if(!searchable && value == null)
+		    return; // Only take exact matches if searchable is off
 		// GWT.log("Selecting value "+value+" based on text "+text.toLowerCase(), null);
 		selectValue(value, null, false);
 		
@@ -588,5 +591,13 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 
     public void setFocusNextOnEnter(boolean focusNextOnEnter) {
         this.focusNextOnEnter = focusNextOnEnter;
+    }
+
+    public boolean isSearchable() {
+        return searchable;
+    }
+
+    public void setSearchable(boolean searchable) {
+        this.searchable = searchable;
     }
 }
