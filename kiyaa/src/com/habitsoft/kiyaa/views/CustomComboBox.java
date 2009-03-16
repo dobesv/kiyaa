@@ -600,4 +600,17 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
     public void setSearchable(boolean searchable) {
         this.searchable = searchable;
     }
+    
+    public String getInnerHelp() {
+        if(textbox instanceof TextBox) {
+            return ((TextBox)textbox).getInnerHelp();
+        } else {
+            return null;
+        }
+    }
+    public void setInnerHelp(String helpText) {
+        if(textbox instanceof TextBox) {
+            ((TextBox)textbox).setInnerHelp(helpText);
+        }
+    }
 }
