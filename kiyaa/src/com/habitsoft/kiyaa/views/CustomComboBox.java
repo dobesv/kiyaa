@@ -302,12 +302,14 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
             }
         }
         // Try to initialize the value by matching a model's text
+        String text = getText();
         if(currentValue == null) {
-            currentValue = nameValueMap.get(getText().toLowerCase());
+            if(text != null)
+                currentValue = nameValueMap.get(text.toLowerCase());
         }
         
         // Make sure we have the right model instance selected
-        selectValue(currentValue, null, !isOptional() || textbox.getText().length() == 0);        
+        selectValue(currentValue, null, !isOptional() || text == null || text.length() == 0);        
     }
 
 	private void onTabEnterOrLostFocus(final boolean tabOrEnter) {
