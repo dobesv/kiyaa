@@ -496,6 +496,9 @@ public class CustomPopup<T> implements PopupListener {
     }
 
     protected void applyFilter() {
+        // Don't apply the filter if we haven't created the table
+        if(table == null)
+            return;
         //GWT.log("Filtering...", null);
         AsyncCallback<Void> callback = new AsyncCallback<Void>() {
             public void onSuccess(Void result) {
