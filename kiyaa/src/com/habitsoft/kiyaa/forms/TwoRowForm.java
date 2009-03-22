@@ -120,6 +120,15 @@ public class TwoRowForm extends ComplexPanel implements View {
 		fieldset.appendChild(row);
 	}
 	
+	/**
+	 * Field with no label at all
+	 */
+	public void addField(View field) {
+        addField(null, false, defaultFieldClass, field, null);
+	}
+    public void addField(View field, Value test) {
+        addField(null, false, defaultFieldClass, field, test);
+    }
 	public void addField(String label, View field) {
 		addField(label, false, defaultFieldClass, field, null);
 	}
@@ -137,17 +146,19 @@ public class TwoRowForm extends ComplexPanel implements View {
 	}
 
 	public void addField(String label, boolean htmlLabel, String styleName, View field, Value test) {
-		
+			    
 		Element fieldDiv = DOM.createDiv();
-		setStyleName(fieldDiv, styleName);
-		Element labelElement = DOM.createLabel();
-		DOM.setStyleAttribute(labelElement, "whiteSpace", "nowrap");
-		fieldDiv.appendChild(labelElement);
-		if(htmlLabel) DOM.setInnerHTML(labelElement, label); 
-		else DOM.setInnerText(labelElement, label);
-		setStylePrimaryName(labelElement, labelClass);
-		if(labelStyle != null) DOM.setElementAttribute(labelElement, "style", labelStyle);
-		fieldDiv.appendChild(DOM.createElement("br"));
+		setStyleName(fieldDiv, styleName);	
+		if(label != null) {
+    		Element labelElement = DOM.createLabel();
+    		DOM.setStyleAttribute(labelElement, "whiteSpace", "nowrap");
+    		fieldDiv.appendChild(labelElement);
+    		if(htmlLabel) DOM.setInnerHTML(labelElement, label); 
+    		else DOM.setInnerText(labelElement, label);
+    		setStylePrimaryName(labelElement, labelClass);
+    		if(labelStyle != null) DOM.setElementAttribute(labelElement, "style", labelStyle);
+    		fieldDiv.appendChild(DOM.createElement("br"));
+		}
 		Widget fieldWidget = field.getViewWidget();
 		fieldWidget.setStyleName(fieldClass);
 		if(fieldStyle != null) DOM.setElementAttribute(fieldWidget.getElement(), "style", fieldStyle);
