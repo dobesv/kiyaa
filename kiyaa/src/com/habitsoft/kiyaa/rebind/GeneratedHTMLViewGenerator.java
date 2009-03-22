@@ -1328,7 +1328,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				} else if(isExpr) {
 					logger.log(TreeLogger.WARN, "Couldn't figure out how to set attribute "+key+" on "+type+"; couldn't find a getter for "+value, null);                    	
 				} else if (attributeAccessors.type.equals(getType("java.lang.String"))) {
-					ExpressionInfo valueAccessors = new ExpressionInfo("\"" + value + "\"", getType("java.lang.String"), true);
+					ExpressionInfo valueAccessors = new ExpressionInfo("\"" + backslashEscape(value) + "\"", getType("java.lang.String"), true);
 					generateAttributeLoadSave(type, attributeAccessors, valueAccessors, true);
 				} else if (attributeAccessors.type.equals(getType("java.lang.Boolean"))) {
 				    if (!"true".equals(value) && !"false".equals(value)) {
@@ -1347,7 +1347,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 					ExpressionInfo valueAccessors = new ExpressionInfo(value, attributeAccessors.type, true);
 					generateAttributeLoadSave(type, attributeAccessors, valueAccessors, true);
 				} else if (attributeAccessors.type == JPrimitiveType.CHAR) {
-					ExpressionInfo valueAccessors = new ExpressionInfo("'"+value+"'", attributeAccessors.type, true);
+					ExpressionInfo valueAccessors = new ExpressionInfo("'"+backslashEscape(value)+"'", attributeAccessors.type, true);
 					generateAttributeLoadSave(type, attributeAccessors, valueAccessors, true);					
 				} else if (attributeAccessors.type.isPrimitive() != null) {
 					ExpressionInfo valueAccessors = new ExpressionInfo(value, attributeAccessors.type, true);
