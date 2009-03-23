@@ -190,8 +190,10 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 		// GWT.log("Selecting value "+value+" based on text "+text.toLowerCase(), null);
 		selectValue(value, null, false);
 		
-		searching = true;
-        applyFilter();
+		if(searchable) {
+		    searching = true;
+		    applyFilter();
+		}
         
 		showPopup(new AsyncCallback<Void>() {
 			public void onFailure(Throwable caught) {
