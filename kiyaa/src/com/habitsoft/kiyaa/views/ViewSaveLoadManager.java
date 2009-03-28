@@ -78,6 +78,8 @@ public class ViewSaveLoadManager {
         if(currentOperation == null) {
             currentOperation = saveLoadOperation;
             saveLoadOperation.perform();
+        } else {
+            queue.add(saveLoadOperation);
         }
     }
 }
