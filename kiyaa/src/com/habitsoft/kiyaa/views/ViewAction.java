@@ -37,14 +37,16 @@ public class ViewAction extends Action {
 			callback = new AsyncCallbackProxy(callback) {
 				@Override
 				public void onSuccess(Object result) {
-				    ViewSaveLoadManager.getInstance().load(view, callback);
+				    // ViewSaveLoadManager.getInstance().load(view, callback);
+				    view.load(callback);
 				}
 			};
 		}
 		if(action != null)
 			callback = action.performOnSuccess(callback);
 		if(saveBefore) {
-		    ViewSaveLoadManager.getInstance().save(view, callback);
+		    view.save(callback);
+		    //ViewSaveLoadManager.getInstance().save(view, callback);
 		} else {
 			callback.onSuccess(null);
 		}

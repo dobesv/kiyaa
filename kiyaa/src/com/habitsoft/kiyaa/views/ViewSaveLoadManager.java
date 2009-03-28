@@ -2,6 +2,8 @@ package com.habitsoft.kiyaa.views;
 
 import java.util.LinkedList;
 
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 /**
@@ -48,14 +50,20 @@ public class ViewSaveLoadManager {
             else view.save(operationCallback);
         }
         public void operationComplete() {
-            currentOperation = queue.removeFirst();
-            if(currentOperation != null) {
-                currentOperation.perform();
+            if(queue.isEmpty()) {
+                currentOperation = null;
+            } else {
+                currentOperation = queue.removeFirst();
+                DeferredCommand.addCommand(new Command() {
+                    public void execute() {
+                       currentOperation.perform();
+                    } 
+                });
             }
         }
     }
     
-    LinkedList<SaveLoadOperation> queue;
+    final LinkedList<SaveLoadOperation> queue = new LinkedList<SaveLoadOperation>();
     SaveLoadOperation currentOperation;
     
     /**
