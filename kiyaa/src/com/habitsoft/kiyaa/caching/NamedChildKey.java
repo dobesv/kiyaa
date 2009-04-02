@@ -10,7 +10,7 @@ public class NamedChildKey implements Comparable<NamedChildKey> {
 	public NamedChildKey(Long parent, String childName) {
 		super();
 		this.parentId = parent;
-		this.childName = childName;
+		this.childName = childName==null?"":childName;
 	}
 
 	public int compareTo(NamedChildKey other) {
