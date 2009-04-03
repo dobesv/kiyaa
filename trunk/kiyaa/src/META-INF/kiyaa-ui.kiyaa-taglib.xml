@@ -48,6 +48,11 @@
 		<tag-class>widgets.TextBox</tag-class>
         <content-attribute>text</content-attribute>
 	</tag>
+    <tag>
+        <tag-name>passwordtextbox</tag-name>
+        <tag-class>widgets.PasswordTextBox</tag-class>
+        <content-attribute>text</content-attribute>
+    </tag>
 	<tag>
 		<tag-name>suggestbox</tag-name>
 		<tag-class>widgets.SuggestBox</tag-class>
