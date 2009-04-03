@@ -491,10 +491,10 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 	
 	@Override
 	public void load(AsyncCallback callback) {
-		super.load(new AsyncCallbackProxy(callback) {
+		super.load(new AsyncCallbackProxy(callback, "TableView.super.load") {
 			@Override
 			public void onSuccess(Object result) {
-				AsyncCallbackGroup group = new AsyncCallbackGroup();
+				AsyncCallbackGroup group = new AsyncCallbackGroup("TableView.load");
 				
 				final int rowCount = items.size();
 				for(Column column:columns) {

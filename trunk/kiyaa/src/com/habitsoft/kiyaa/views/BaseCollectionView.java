@@ -219,7 +219,7 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 			return;
 		}
 		
-		AsyncCallbackGroup group = new AsyncCallbackGroup();
+		AsyncCallbackGroup group = new AsyncCallbackGroup("Load offset="+offset+" limit="+limit);
 		collection.getLength(new AsyncCallbackGroupMember<Integer>(group) {
 			@Override
 			public void onSuccess(Integer length) {
@@ -233,11 +233,11 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 				super.onFailure(caught);
 			}
 		});
-		collection.load(offset, limit, new AsyncCallbackGroupMember<T[]>(group) {
+		collection.load(offset, limit, new AsyncCallbackGroupMember<T[]>(group, getClass().getName()+".collection.load()") {
 			@Override
 			public void onSuccess(T[] models) {				
 				//GWT.log("Loading list ... got "+models.length+" results attached = "+isAttached(), null);
-				showLoadedModels(models, offset, limit, group.member());
+				showLoadedModels(models, offset, limit, group.member(getClass().getName()+".showLoadedModels("+models+")"));
 				super.onSuccess(null);
 			}
 		});
@@ -319,27 +319,27 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 			callback.onSuccess(null);
 			return;
 		}
-		
 		//GWT.log("New models: "+models+" old models "+this.models, null);
 		this.models = models;
-		totalItems = models.length;
+		int modelCount = models==null?0:models.length;
+        totalItems = modelCount;
 		
-		while(items.size() > models.length) {
+		while(items.size() > modelCount) {
 			removeItem(items.size()-1);
 		}
 		
 		if(filter != null) {
 			unfilteredItems = new ArrayList();
-			itemIndexesAfterFiltering = new int[models.length];
+			itemIndexesAfterFiltering = new int[modelCount];
 		}
 		startOffset = 0;
 		AsyncCallbackGroup group = new AsyncCallbackGroup();
 		int selectedIndex=-1;
 		int row=0;
-		for (int i = 0; i < models.length; i++) {
+		for (int i = 0; i < modelCount; i++) {
 			T model = models[i];
 			if(model == null) {
-				callback.onFailure(new NullPointerException("Model "+i+" of "+models.length+" was null in "+models));
+				callback.onFailure(new NullPointerException("Model "+i+" of "+modelCount+" was null in "+models));
 				return;
 			}
 			if(filter != null) {
