@@ -42,4 +42,10 @@ public class PercentageTextBox extends TextBox {
     public void setDefaultValue(double defaultValue) {
         this.defaultValue = defaultValue;
     }
+    public LocalizedParser getParser() {
+        return parser;
+    }
+    public void setParser(LocalizedParser parser) {
+        this.parser = parser;
+    }
 }
