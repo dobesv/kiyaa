@@ -1453,7 +1453,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				sw.indent();
 				sw.println("public void " + "onFocus(Widget sender)" + " {");
 				sw.indent();
-				sw.println(actionExpr + ".perform(AsyncCallbackFactory.defaultNewInstance(\"onfocus:"+value+"\"));");
+				sw.println(actionExpr + ".perform(AsyncCallbackFactory.defaultNewInstance(\"onfocus:"+escape(value)+"\"));");
 				sw.outdent();
 				sw.println("}");
 				sw.println("public void " + "onLostFocus(Widget sender)" + " { }");
@@ -1478,7 +1478,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				sw.indent();
 				sw.println("public void " + "onLostFocus(Widget sender)" + " {");
 				sw.indent();
-				sw.println(actionExpr + ".perform(AsyncCallbackFactory.defaultNewInstance(\"onblur:"+value+"\"));");
+				sw.println(actionExpr + ".perform(AsyncCallbackFactory.defaultNewInstance(\"onblur:"+escape(value)+"\"));");
 				sw.outdent();
 				sw.println("}");
 				sw.println("public void " + "onFocus(Widget sender)" + " { }");
@@ -1564,7 +1564,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 	sw.println("if("+condition+")");
                 	sw.indent();
                 }
-                sw.println(valueExpr + ".perform(AsyncCallbackFactory.defaultNewInstance(\""+myClass.getName()+"["+actionStr.replace("\"", "\\\"")+"]\"));");
+                sw.println(valueExpr + ".perform(AsyncCallbackFactory.defaultNewInstance(\""+myClass.getName()+"["+escape(actionStr)+"]\"));");
                 if(condition != null)
                 	sw.outdent();
                 sw.outdent();
