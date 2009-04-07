@@ -13,7 +13,7 @@ public class ChildKey<T extends Comparable<T>> implements Comparable<ChildKey<T>
     }
     public int compareTo(ChildKey<T> other) {
         int cmp = parentId.compareTo(other.parentId);
-        if(cmp == 0) cmp = childKey.compareTo(other.childKey);
+        if(cmp == 0) cmp = childKey==null?other.childKey==null?0:-1:childKey.compareTo(other.childKey);
         return cmp;
     }
 }
