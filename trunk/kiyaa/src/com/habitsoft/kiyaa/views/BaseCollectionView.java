@@ -556,7 +556,7 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 	    if(totalItems == -1)
 	        return -1;
 	    else
-	        return totalItems/increment;
+	        return (totalItems+increment-1)/increment;
 	}
 
 	public ModelFilter getFilter() {
