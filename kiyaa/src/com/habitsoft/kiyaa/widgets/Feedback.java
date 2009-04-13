@@ -40,7 +40,8 @@ public class Feedback extends FlowPanel {
 			setVisible(false);
 		} else {
             setFeedbackType(feedbackType);
-			add(new Label(text));
+            if(text != null && !text.isEmpty())
+                add(new Label(text));
 			if(actions != null) {
     			for(final Action action: actions) {
     				Anchor actionLink = new Anchor();
