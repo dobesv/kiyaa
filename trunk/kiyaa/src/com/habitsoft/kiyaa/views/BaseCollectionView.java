@@ -363,6 +363,11 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 			row++;
 		}
 
+	    // Clean up any trailing rows after filters were applied
+        while(items.size() > row) {
+            removeItem(items.size()-1);
+        }
+
 		if(selectedIndex >= 0) {
 			setSelectedIndex(selectedIndex);
 		} else {

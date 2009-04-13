@@ -10,6 +10,7 @@ import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HasFocus;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SourcesTableEvents;
 import com.google.gwt.user.client.ui.TableListener;
 import com.google.gwt.user.client.ui.UIObject;
@@ -25,8 +26,8 @@ import com.habitsoft.kiyaa.widgets.HTMLTableRowPanel;
 
 public class TableView<T> extends BaseCollectionView<T> implements SourcesTableEvents, TableListener, Focusable {
 
-	FlexTable table = new FlexTable();
-	ArrayList<Column> columns = new ArrayList();
+	final FlexTable table = new FlexTable();
+	ArrayList<Series> series = new ArrayList();
 	ArrayList<HTMLTableRowPanel> rowPanels = new ArrayList();
 	Element headings;
 	View navigation;
@@ -36,6 +37,7 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
     private T contextMenuTarget;
     CustomPopup contextMenu;
     RowStyleHandler<T> rowStyleHandler;
+    boolean horizontal;
     
     private final ClickListener contextMenuListener = new ClickListener() {
         public void onClick(Widget sender) {
@@ -47,7 +49,11 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
         public String getStyle(int row, T model);
     }
     
-	class Column {
+    /**
+     * Represents either a row or a column, depending on whether
+     * horizontal == true.
+     */
+	class Series {
 		int position;
 		ViewFactory viewFactory;
 		String styleName;
@@ -55,7 +61,7 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 		boolean visible;
 		private ArrayList<ModelView> views; // One per row
 		
-		public Column(ViewFactory viewFactory, String styleName, Value test, boolean visible, int position) {
+		public Series(ViewFactory viewFactory, String styleName, Value test, boolean visible, int position) {
 			super();
 			this.position = position;
 			this.viewFactory = viewFactory;
@@ -96,21 +102,31 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 		}
 		public void hide() {
 			if(visible) {
-				DOM.setStyleAttribute(DOM.getChild(headings, position), "display", "none");
-				for(HTMLTableRowPanel rowPanel : rowPanels) {
-					Element cellElement = DOM.getChild(rowPanel.getElement(), position);
-					DOM.setStyleAttribute(cellElement, "display", "none");
-				}
+			    if(horizontal) {
+			        HTMLTableRowPanel panel = rowPanels.get(position);
+			        panel.setVisible(false);
+			    } else {
+                    DOM.setStyleAttribute(DOM.getChild(headings, position), "display", "none");
+                    for(HTMLTableRowPanel rowPanel : rowPanels) {
+                        Element cellElement = DOM.getChild(rowPanel.getElement(), position);
+                        DOM.setStyleAttribute(cellElement, "display", "none");
+                    }
+			    }
 				visible = false;
 			}
 		}
 		public void show() {
 			if(!visible) {
-				DOM.setStyleAttribute(DOM.getChild(headings, position), "display", "");
-				for(HTMLTableRowPanel rowPanel : rowPanels) {
-					Element cellElement = DOM.getChild(rowPanel.getElement(), position);
-					DOM.setStyleAttribute(cellElement, "display", "");
-				}
+			    if(horizontal) {
+                    HTMLTableRowPanel panel = rowPanels.get(position);
+                    panel.setVisible(true);
+			    } else {
+    				DOM.setStyleAttribute(DOM.getChild(headings, position), "display", "");
+    				for(HTMLTableRowPanel rowPanel : rowPanels) {
+    					Element cellElement = DOM.getChild(rowPanel.getElement(), position);
+    					DOM.setStyleAttribute(cellElement, "display", "");
+    				}
+			    }
 				visible = true;
 			}
 		}
@@ -190,20 +206,22 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 			}
 		}
 		boolean isLast() {
-		    return getPosition() == columns.size()-1;
+		    return getPosition() == series.size()-1;
 		}
 		
-		void addItem(int row, Object model, AsyncCallback callback) {
+		void addItem(int index, Object model, AsyncCallback callback) {
 			ModelView view = addView();			
 			view.setModel(model, callback);
-			table.setWidget(row, getPosition(), view.getViewWidget());
+			int row = horizontal?position:index;
+			int col = horizontal?index+1:position;
+			table.setWidget(row, col, view.getViewWidget());
 			// This is useless until we get the headings to have first and last ... in fact we only care about first and last on the headings!
 			//if(getPosition() == 0) styleName = styleName==null?"first":styleName+" first";
 			//if(isLast()) styleName = styleName==null?"last":styleName+" last";
 			if(styleName != null)
-				table.getCellFormatter().setStyleName(row, getPosition(), styleName);
+				table.getCellFormatter().setStyleName(row, col, styleName);
 			if(!visible) {
-				Element cellElement = table.getCellFormatter().getElement(row, getPosition());
+				Element cellElement = table.getCellFormatter().getElement(row, col);
 				DOM.setStyleAttribute(cellElement, "display", "none");
 			}
 		}
@@ -266,7 +284,7 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 		addColumn(viewFactory, heading, null, test);
 	}
 	public void addColumn(ViewFactory viewFactory, String heading, String styleName, Value test) {
-		columns.add(new Column(viewFactory, styleName, test, true, columns.size()));
+		series.add(new Series(viewFactory, styleName, test, true, series.size()));
 		if(heading != null)
 			addHeadingText(heading, styleName);
 	}
@@ -281,6 +299,34 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 		if(table.getRowCount() == 0) return 0;
 		return table.getCellCount(0);
 	}
+    public void addRow(ViewFactory viewFactory, String label) {
+        addRow(viewFactory, null, label, null);
+    }
+    public void addRow(ViewFactory viewFactory, String styleName, String label) {
+        addRow(viewFactory, styleName, label, null);
+    }
+    public void addRow(ViewFactory viewFactory, Value test) {
+        addRow(viewFactory, null, test);
+    }
+    public void addRow(ViewFactory viewFactory, String styleName, Value test) {
+        addRow(viewFactory, styleName, null, test);
+    }
+    public void addRow(ViewFactory viewFactory, String styleName, String label, Value test) {
+        horizontal=true;
+        final int row = series.size();
+        final HTMLTableRowPanel rowPanel = addRowPanel(row, null, styleName==null?"ui-table-row":"ui-table-row "+styleName);
+        //if(styleName != null) rowPanel.addStyleName(styleName);
+        if(label != null) {
+            final Label labelWidget = new Label(label);
+            labelWidget.setStyleName("ui-row-label");
+            rowPanel.add(labelWidget);
+        }
+        series.add(new Series(viewFactory, styleName, test, true, row));
+    }
+    public void addRow(ViewFactory viewFactory) {
+        addRow(viewFactory, null, null, null);
+    }
+    
 	/*
 	public void addHeading(Widget widget) {
 		int col = getColumnCount();
@@ -325,11 +371,18 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 	}
 	@Override
 	public void clearRows() {
-		while(table.getRowCount() > 0) {
-			table.removeRow(table.getRowCount()-1);
-		}
-		rowPanels.clear();
-		for(Column column:columns) {
+	    if(horizontal) {
+	        for(HTMLTableRowPanel rowPanel : rowPanels) {
+	            int count = DOM.getChildCount(rowPanel.getElement());
+                table.removeCells(rowPanel.getRow(), 1, count-1);
+	        }
+	    } else {
+    		while(table.getRowCount() > 0) {
+    			table.removeRow(table.getRowCount()-1);
+    		}
+    		rowPanels.clear();
+        }
+		for(Series column:series) {
 			column.getViews().clear();
 		}
 		checkEmpty(null);
@@ -338,30 +391,39 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 	
 	@Override
 	protected void showItem(int row, T model, AsyncCallback callback) {
-		HTMLTableRowPanel rowPanel = new HTMLTableRowPanel(table, row, "ui-table-row", selectable || clickable, hoverGroup);
-		rowPanel.addContextMenuListener(contextMenuListener);
-        rowPanels.add(row, rowPanel);
-        maybeAssignStyle(row, rowPanel, model);
-
-		AsyncCallbackGroup group = new AsyncCallbackGroup();
-		for (Column column : columns) {
-			column.addItem(row, model, group.member("Table col "+column.position+" row "+row));
-		}
-				
-		if(model == selectedModel) {
-			if(selectedRow != -1) {
-				showSelected(selectedRow, false);
-			}
-			selectedRow = row;
-			showSelected(selectedRow, true);
-		}
-		if(rowPanels.size() == 1)
-			checkEmpty(group);
-		if(isAttached())
-		    rowPanel.onAttach();
-		
+        AsyncCallbackGroup group = new AsyncCallbackGroup();
+	    if(horizontal) {
+            for (Series column : series) {
+                column.addItem(row, model, group.member("Table col "+row+" row "+column.position));
+            }
+	    } else {
+    		HTMLTableRowPanel rowPanel = addRowPanel(row, model, "ui-table-row");
+    
+    		for (Series column : series) {
+    			column.addItem(row, model, group.member("Table col "+column.position+" row "+row));
+    		}
+    				
+    		if(model == selectedModel) {
+    			if(selectedRow != -1) {
+    				showSelected(selectedRow, false);
+    			}
+    			selectedRow = row;
+    			showSelected(selectedRow, true);
+    		}
+    		if(rowPanels.size() == 1)
+    			checkEmpty(group);
+    		if(isAttached())
+    		    rowPanel.onAttach();
+	    }
 		group.ready(callback);
 	}
+    private HTMLTableRowPanel addRowPanel(int row, T model, String styleName) {
+        HTMLTableRowPanel rowPanel = new HTMLTableRowPanel(table, row, styleName, selectable || clickable, hoverGroup);
+        rowPanel.addContextMenuListener(contextMenuListener);
+        rowPanels.add(row, rowPanel);
+        maybeAssignStyle(row, rowPanel, model);
+        return rowPanel;
+    }
     private void maybeAssignStyle(int row, HTMLTableRowPanel rowPanel, T model) {
         if(rowStyleHandler != null) {
 		    String style = rowStyleHandler.getStyle(row, model);
@@ -389,18 +451,29 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
     }
     @Override
 	protected void hideItem(int i) {
-		for(Column column: columns) {
+		for(Series column: series) {
 			column.getViews().remove(i);
 		}
-		rowPanels.remove(i);
-		
-		// Fix the row numbers for proceeding row panels
-		for(int j=i; j < rowPanels.size(); j++) {
-			HTMLTableRowPanel tableRowPanel = (HTMLTableRowPanel)rowPanels.get(j);
-			tableRowPanel.setRow(j);
+		if(horizontal) {
+		    for(HTMLTableRowPanel rowPanel : rowPanels) {
+		        final Element rowElement = rowPanel.getElement();
+		        if(DOM.getChildCount(rowElement) > i+1)
+		            rowElement.removeChild(DOM.getChild(rowElement, i+1));
+		    }
+		} else {
+    		rowPanels.remove(i);
+    		
+    		// Fix the row numbers for proceeding row panels
+    		for(int j=i; j < rowPanels.size(); j++) {
+    			HTMLTableRowPanel tableRowPanel = (HTMLTableRowPanel)rowPanels.get(j);
+    			tableRowPanel.setRow(j);
+    			// TODO Should we assign the style?  Need to know the model object for these rows
+//    	        if(rowStyleHandler != null) {
+//    	            maybeAssignStyle(j, tableRowPanel,);
+//    	        }
+    		}
+    		table.removeRow(i);
 		}
-		table.removeRow(i);
-		
 		if(rowPanels.size() == 0)
 			checkEmpty(null);
 	}
@@ -415,7 +488,7 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 		    maybeAssignStyle(row, rowPanels.get(row), model);
 		}
 		AsyncCallbackGroup group = new AsyncCallbackGroup();
-		for(Column column: columns) {
+		for(Series column: series) {
 			ArrayList<ModelView> views = column.getViews();
 			ModelView view;
 			try {
@@ -470,7 +543,7 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 	@Override
 	public void clearFields() {
 		super.clearFields();
-		for(Column column:columns) {
+		for(Series column:series) {
 			for (View view:column.getViews()) {
 				view.clearFields();
 			}
@@ -479,7 +552,7 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 
 	public void save(AsyncCallback callback) {
 		AsyncCallbackGroup group = new AsyncCallbackGroup();
-		for(Column column:columns) {
+		for(Series column:series) {
 			column.save(group.member());
 		}
 		if(navigation != null && navigation.getViewWidget().isVisible())
@@ -497,11 +570,11 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 				AsyncCallbackGroup group = new AsyncCallbackGroup("TableView.load");
 				
 				final int rowCount = items.size();
-				for(Column column:columns) {
+				for(Series column:series) {
 					column.checkVisible(group);
 				}
 				for(int i=0; i < rowCount; i++) {
-		    		for(Column column:columns) {
+		    		for(Series column:series) {
 		    			column.load(i, group);
 		    		}
 				}
@@ -535,7 +608,7 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 	public void focus() {
 		if(getRowCount() == 0)
 			return;
-		for(Column c : columns) {
+		for(Series c : series) {
 			ModelView firstView = c.getViews().get(0);
 			if(firstView instanceof Focusable) {
 				((Focusable)firstView).focus();
@@ -554,14 +627,11 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 	public FlexTable getTable() {
 		return table;
 	}
-	public void setTable(FlexTable table) {
-		this.table = table;
+	public ArrayList<Series> getSeries() {
+		return series;
 	}
-	public ArrayList<Column> getColumns() {
-		return columns;
-	}
-	public void setColumns(ArrayList<Column> columns) {
-		this.columns = columns;
+	public void setSeries(ArrayList<Series> columns) {
+		this.series = columns;
 	}
 	public ArrayList<HTMLTableRowPanel> getRowPanels() {
 		return rowPanels;
@@ -680,6 +750,17 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
         return rowStyleHandler;
     }
     public void setRowStyleHandler(RowStyleHandler<T> rowStyleHandler) {
-        this.rowStyleHandler = rowStyleHandler;
+        if(rowStyleHandler != this.rowStyleHandler) {
+            this.rowStyleHandler = rowStyleHandler;
+            for(HTMLTableRowPanel rowPanel : rowPanels) {
+                maybeAssignStyle(rowPanel.getRow(), rowPanel, null);
+            }
+        }
+    }
+    public boolean isHorizontal() {
+        return horizontal;
+    }
+    public void setHorizontal(boolean horizontal) {
+        this.horizontal = horizontal;
     }
 }
