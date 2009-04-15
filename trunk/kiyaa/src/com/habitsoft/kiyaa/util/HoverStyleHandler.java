@@ -1,9 +1,17 @@
 package com.habitsoft.kiyaa.util;
 
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.event.dom.client.MouseOutEvent;
+import com.google.gwt.event.dom.client.MouseOutHandler;
+import com.google.gwt.event.dom.client.MouseOverEvent;
+import com.google.gwt.event.dom.client.MouseOverHandler;
+import com.google.gwt.event.dom.client.MouseUpEvent;
+import com.google.gwt.event.dom.client.MouseUpHandler;
 import com.google.gwt.user.client.ui.MouseListener;
 import com.google.gwt.user.client.ui.Widget;
 
-public class HoverStyleHandler implements MouseListener {
+public class HoverStyleHandler implements MouseListener, MouseOutHandler, MouseOverHandler, MouseDownHandler, MouseUpHandler {
 	
 	final Widget target;
 	final Group group;
@@ -45,43 +53,57 @@ public class HoverStyleHandler implements MouseListener {
 	}
 
 	public void onMouseDown(Widget widget, int arg1, int arg2) {
-		try {
-			target.addStyleDependentName("active");
-		} catch(Throwable t) {
-			// oh well ...
-			t.printStackTrace();
-		}
-		if(group != null) group.setActive(this);
+	    onMouseDown(null);
 	}
 
+    public void onMouseDown(MouseDownEvent event) {
+        try {
+            target.addStyleDependentName("active");
+        } catch(Throwable t) {
+            // oh well ...
+            t.printStackTrace();
+        }
+        if(group != null) group.setActive(this);
+    }
+
+    public void onMouseOver(MouseOverEvent event) {
+        try {
+            target.addStyleDependentName("hover");
+        } catch(Throwable t) {
+            // oh well ...
+            t.printStackTrace();
+        }
+        //GWT.log("hovering "+target.getStyleName(), null);
+        if(group != null) group.setActive(this);
+    }
 	public void onMouseEnter(Widget widget) {
-		try {
-			target.addStyleDependentName("hover");
-		} catch(Throwable t) {
-			// oh well ...
-			t.printStackTrace();
-		}
-		//GWT.log("hovering "+target.getStyleName(), null);
-		if(group != null) group.setActive(this);
+	    onMouseOver(null);
 	}
 
+	public void onMouseOut(MouseOutEvent event) {
+        try {
+            target.removeStyleDependentName("hover");
+            target.removeStyleDependentName("active");
+        } catch(Throwable t) {
+            // oh well ...
+            t.printStackTrace();
+        }
+        //GWT.log("not hovering "+target.getStyleName(), null);
+        if(group != null) group.setInActive(this);
+	}
 	public void onMouseLeave(Widget widget) {
-		try {
-			target.removeStyleDependentName("hover");
-			target.removeStyleDependentName("active");
-		} catch(Throwable t) {
-			// oh well ...
-			t.printStackTrace();
-		}
-		//GWT.log("not hovering "+target.getStyleName(), null);
-		if(group != null) group.setInActive(this);
+	    onMouseOut(null);
 	}
 
 	public void onMouseMove(Widget widget, int arg1, int arg2) {
 	}
 
 	public void onMouseUp(Widget widget, int arg1, int arg2) {
-		target.removeStyleDependentName("active");
+	    onMouseUp(null);
+	}
+	
+	public void onMouseUp(MouseUpEvent event) {
+        target.removeStyleDependentName("active");
 	}
 
 }
