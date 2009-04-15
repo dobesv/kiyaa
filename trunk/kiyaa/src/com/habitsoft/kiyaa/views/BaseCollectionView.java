@@ -2,6 +2,7 @@ package com.habitsoft.kiyaa.views;
 
 import java.util.ArrayList;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
@@ -336,17 +337,17 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 			itemIndexesAfterFiltering = new int[modelCount];
 		}
 		startOffset = 0;
-		final AsyncCallbackGroup group = new AsyncCallbackGroup();
 		loadCommand = new IncrementalCommand() {
+	        final AsyncCallbackGroup group = new AsyncCallbackGroup();
 		    int i = 0;
+            int selectedIndex=-1;
+            int row=0;
 		    
             @Override
             public boolean execute() {
                 if(loadCommand != this) // Did another load come along and replace us?
                     return false;
-                int selectedIndex=-1;
-                int row=0;
-                for (; i < modelCount; i++) {
+                for (int done=0; i < modelCount && done < 5; i++, done++) {
                     T model = models[i];
                     if(model == null) {
                         callback.onFailure(new NullPointerException("Model "+i+" of "+modelCount+" was null in "+models));
@@ -373,11 +374,15 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
                     row++;
                 }
 
-                if(i == modelCount) {
-                    // Clean up any trailing rows after filters were applied
-                    while(items.size() > row) {
+                if(i >= modelCount) {
+                    if(filter != null)
+                        GWT.log("Got "+row+" rows after filtering "+modelCount+" models with "+filter, null);
+                    // Clean up any trailing rows after filters were applied, 10 at a time
+                    for(int done=0; items.size() > row && done < 5; done++) {
                         removeItem(items.size()-1);
                     }
+                    if(items.size() > row)
+                        return true;
     
                     if(selectedIndex >= 0) {
                         setSelectedIndex(selectedIndex);

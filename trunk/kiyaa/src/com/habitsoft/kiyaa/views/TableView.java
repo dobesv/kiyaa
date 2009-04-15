@@ -574,10 +574,9 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 
             @Override
 			public void onSuccess(Object result) {
-				final AsyncCallbackGroup group = new AsyncCallbackGroup("TableView.load");
-				
                 currentlyLoadingCommand = new IncrementalCommand() {
                     int i=0;
+                    final AsyncCallbackGroup group = new AsyncCallbackGroup("TableView.load");
                     
                     @Override
                     public boolean execute() {
@@ -590,14 +589,12 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
                         }
                         
                         final int rowCount = items.size();
-                        int done = 0;
-                        for(; i < rowCount && done < 25; i++, done++) {
+                        for(int done = 0; i < rowCount && done < 5; i++, done++) {
                             for(Series column:series) {
                                 column.load(i, group);
                             }
                         }
-                        
-                        if(i == rowCount) {
+                        if(i >= rowCount) {
                             checkEmpty(group);
                             if(footer != null)
                                 footer.load(group.member());
