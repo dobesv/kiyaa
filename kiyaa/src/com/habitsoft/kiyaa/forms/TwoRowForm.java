@@ -149,7 +149,7 @@ public class TwoRowForm extends ComplexPanel implements View {
 			    
 		Element fieldDiv = DOM.createDiv();
 		setStyleName(fieldDiv, styleName);	
-		if(label != null) {
+		if(label != null && !label.isEmpty()) {
     		Element labelElement = DOM.createLabel();
     		DOM.setStyleAttribute(labelElement, "whiteSpace", "nowrap");
     		fieldDiv.appendChild(labelElement);
