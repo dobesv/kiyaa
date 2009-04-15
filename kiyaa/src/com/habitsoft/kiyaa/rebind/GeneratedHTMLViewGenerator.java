@@ -896,7 +896,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             private void generateSubviewClasses() throws UnableToCompleteException {
                 for (int i = 0; i < subviewClasses.size(); i++) {
                     Element elem = subviewClasses.get(i);
-                    String subviewClassName = myClass.getSimpleSourceName()+"Subview" + i;
+                    String subviewClassName = "S" + i;
                     
                     pushLogger("Inside subview "+i+" element "+elem.getQualifiedName()+" class name "+subviewClassName);
                     try {
