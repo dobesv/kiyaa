@@ -3,8 +3,10 @@ package com.habitsoft.kiyaa.views;
 import java.util.ArrayList;
 
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.IncrementalCommand;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.ClickListener;
@@ -422,6 +424,9 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
         rowPanel.addContextMenuListener(contextMenuListener);
         rowPanels.add(row, rowPanel);
         maybeAssignStyle(row, rowPanel, model);
+        // Passing clickable || selectable to HTMLTableRowPanel adds a hoverstylehandler for us ...
+//        if(clickable || selectable)
+//            rowPanel.addMouseListener(new HoverStyleHandler(rowPanel, hoverGroup));
         return rowPanel;
     }
     private void maybeAssignStyle(int row, HTMLTableRowPanel rowPanel, T model) {
@@ -565,28 +570,47 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 	@Override
 	public void load(AsyncCallback callback) {
 		super.load(new AsyncCallbackProxy(callback, "TableView.super.load") {
-			@Override
+			private IncrementalCommand currentlyLoadingCommand;
+
+            @Override
 			public void onSuccess(Object result) {
-				AsyncCallbackGroup group = new AsyncCallbackGroup("TableView.load");
+				final AsyncCallbackGroup group = new AsyncCallbackGroup("TableView.load");
 				
-				final int rowCount = items.size();
-				for(Series column:series) {
-					column.checkVisible(group);
-				}
-				for(int i=0; i < rowCount; i++) {
-		    		for(Series column:series) {
-		    			column.load(i, group);
-		    		}
-				}
-				/*
-				for(Column column:columns) {
-					column.load(group.member());
-				}
-				*/
-				checkEmpty(group);
-				if(footer != null)
-					footer.load(group.member());
-				group.ready(callback);
+                currentlyLoadingCommand = new IncrementalCommand() {
+                    int i=0;
+                    
+                    @Override
+                    public boolean execute() {
+                        if(currentlyLoadingCommand != this)
+                            return false;
+                        if(i == 0) {
+                            for(Series column:series) {
+                                column.checkVisible(group);
+                            }
+                        }
+                        
+                        final int rowCount = items.size();
+                        int done = 0;
+                        for(; i < rowCount && done < 25; i++, done++) {
+                            for(Series column:series) {
+                                column.load(i, group);
+                            }
+                        }
+                        
+                        if(i == rowCount) {
+                            checkEmpty(group);
+                            if(footer != null)
+                                footer.load(group.member());
+                            group.ready(callback);
+                            return false;
+                        } else {
+                            return true;
+                        }
+                    }
+                };
+                if(currentlyLoadingCommand.execute()) {
+                    DeferredCommand.addCommand(currentlyLoadingCommand);
+                }
 			}
 		});
 	}
