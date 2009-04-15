@@ -3,7 +3,9 @@ package com.habitsoft.kiyaa.views;
 import java.util.ArrayList;
 
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
+import com.google.gwt.user.client.IncrementalCommand;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.ChangeListener;
 import com.google.gwt.user.client.ui.ChangeListenerCollection;
@@ -43,6 +45,7 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 	ClickListenerCollection clickListeners;
 	ChangeListenerCollection changeListeners;
 	protected HoverStyleHandler.Group hoverGroup = new HoverStyleHandler.Group();
+    private IncrementalCommand loadCommand;
 	
 	public BaseCollectionView() {
 		super();
@@ -314,14 +317,14 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 		return callback;
 	}
 	
-	public void setModels(T[] models, AsyncCallback callback) {
+	public void setModels(final T[] models, final AsyncCallback callback) {
 		if(models == this.models) {
 			callback.onSuccess(null);
 			return;
 		}
 		//GWT.log("New models: "+models+" old models "+this.models, null);
 		this.models = models;
-		int modelCount = models==null?0:models.length;
+		final int modelCount = models==null?0:models.length;
         totalItems = modelCount;
 		
 		while(items.size() > modelCount) {
@@ -333,50 +336,67 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 			itemIndexesAfterFiltering = new int[modelCount];
 		}
 		startOffset = 0;
-		AsyncCallbackGroup group = new AsyncCallbackGroup();
-		int selectedIndex=-1;
-		int row=0;
-		for (int i = 0; i < modelCount; i++) {
-			T model = models[i];
-			if(model == null) {
-				callback.onFailure(new NullPointerException("Model "+i+" of "+modelCount+" was null in "+models));
-				return;
-			}
-			if(filter != null) {
-				unfilteredItems.add(model);
-				
-				if(!filter.includes(model)) {
-					itemIndexesAfterFiltering[i] = -1; 
-					continue;
-				} else {
-					itemIndexesAfterFiltering[i] = row; 
-				}
-			}
-			if(row == items.size()) {
-    			addItem(row, model, group.member());
-			} else {
-				replaceItem(row, model, group.member());
-			}
-			if(selectedModel != null && selectedModel.equals(model)) {
-				selectedIndex = row;
-			}
-			row++;
-		}
+		final AsyncCallbackGroup group = new AsyncCallbackGroup();
+		loadCommand = new IncrementalCommand() {
+		    int i = 0;
+		    
+            @Override
+            public boolean execute() {
+                if(loadCommand != this) // Did another load come along and replace us?
+                    return false;
+                int selectedIndex=-1;
+                int row=0;
+                for (; i < modelCount; i++) {
+                    T model = models[i];
+                    if(model == null) {
+                        callback.onFailure(new NullPointerException("Model "+i+" of "+modelCount+" was null in "+models));
+                        return false;
+                    }
+                    if(filter != null) {
+                        unfilteredItems.add(model);
+                        
+                        if(!filter.includes(model)) {
+                            itemIndexesAfterFiltering[i] = -1; 
+                            continue;
+                        } else {
+                            itemIndexesAfterFiltering[i] = row; 
+                        }
+                    }
+                    if(row == items.size()) {
+                        addItem(row, model, group.member());
+                    } else {
+                        replaceItem(row, model, group.member());
+                    }
+                    if(selectedModel != null && selectedModel.equals(model)) {
+                        selectedIndex = row;
+                    }
+                    row++;
+                }
 
-	    // Clean up any trailing rows after filters were applied
-        while(items.size() > row) {
-            removeItem(items.size()-1);
-        }
-
-		if(selectedIndex >= 0) {
-			setSelectedIndex(selectedIndex);
-		} else {
-			selectedRow = -1;
+                if(i == modelCount) {
+                    // Clean up any trailing rows after filters were applied
+                    while(items.size() > row) {
+                        removeItem(items.size()-1);
+                    }
+    
+                    if(selectedIndex >= 0) {
+                        setSelectedIndex(selectedIndex);
+                    } else {
+                        selectedRow = -1;
+                    }
+    //              if(scrollAutoLoader != null) {
+    //                  scrollAutoLoader.setEnd(models.length);
+    //              }
+                    group.ready(callback, null);
+                    return false;
+                } else {
+                    return true;
+                }
+            }
+        };
+		if(loadCommand.execute()) {
+		    DeferredCommand.addCommand(loadCommand);
 		}
-//		if(scrollAutoLoader != null) {
-//			scrollAutoLoader.setEnd(models.length);
-//		}
-		group.ready(callback, null);
 	}
 
 //	public void load(AsyncCallback callback) {
