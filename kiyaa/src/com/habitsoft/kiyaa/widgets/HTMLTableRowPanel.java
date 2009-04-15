@@ -2,6 +2,38 @@ package com.habitsoft.kiyaa.widgets;
 
 import java.util.Iterator;
 
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.ContextMenuEvent;
+import com.google.gwt.event.dom.client.ContextMenuHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.dom.client.HasAllFocusHandlers;
+import com.google.gwt.event.dom.client.HasAllKeyHandlers;
+import com.google.gwt.event.dom.client.HasAllMouseHandlers;
+import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.dom.client.HasContextMenuHandlers;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.KeyPressEvent;
+import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.event.dom.client.MouseMoveEvent;
+import com.google.gwt.event.dom.client.MouseMoveHandler;
+import com.google.gwt.event.dom.client.MouseOutEvent;
+import com.google.gwt.event.dom.client.MouseOutHandler;
+import com.google.gwt.event.dom.client.MouseOverEvent;
+import com.google.gwt.event.dom.client.MouseOverHandler;
+import com.google.gwt.event.dom.client.MouseUpEvent;
+import com.google.gwt.event.dom.client.MouseUpHandler;
+import com.google.gwt.event.dom.client.MouseWheelEvent;
+import com.google.gwt.event.dom.client.MouseWheelHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
@@ -24,11 +56,13 @@ import com.google.gwt.user.client.ui.SourcesMouseEvents;
 import com.google.gwt.user.client.ui.SourcesMouseWheelEvents;
 import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.HTMLTable.RowFormatter;
 import com.habitsoft.kiyaa.util.HoverStyleHandler;
 
-public class HTMLTableRowPanel extends Panel implements SourcesClickEvents,
-		SourcesMouseEvents, SourcesFocusEvents, SourcesKeyboardEvents,
-		SourcesMouseWheelEvents {
+public class HTMLTableRowPanel extends Panel 
+implements HasAllMouseHandlers, HasAllKeyHandlers, HasAllFocusHandlers, HasContextMenuHandlers, HasClickHandlers, SourcesClickEvents,
+SourcesMouseEvents, SourcesFocusEvents, SourcesKeyboardEvents,
+SourcesMouseWheelEvents {
 	protected final HTMLTable table;
 	protected int row;
 	protected int column;
@@ -56,12 +90,14 @@ public class HTMLTableRowPanel extends Panel implements SourcesClickEvents,
         int events = Event.FOCUSEVENTS | Event.KEYEVENTS | Event.ONCLICK
             | Event.MOUSEEVENTS | Event.ONMOUSEWHEEL;
         if(contextMenuListeners != null) events |= Event.ONCONTEXTMENU;
-        sinkEvents(events);
+        DOM.sinkEvents(getElement(), events);
 	}
 	
 	@Override
 	public void addStyleDependentName(String styleSuffix) {
-		table.getRowFormatter().addStyleName(row, table.getRowFormatter().getStylePrimaryName(row)+"-"+styleSuffix);
+		final RowFormatter rowFormatter = table.getRowFormatter();
+        final String newStyleName = rowFormatter.getStylePrimaryName(row)+"-"+styleSuffix;
+        rowFormatter.addStyleName(row, newStyleName);
 	}
 	@Override
 	public void removeStyleDependentName(String styleSuffix) {
@@ -274,4 +310,82 @@ public class HTMLTableRowPanel extends Panel implements SourcesClickEvents,
 	        }
 	    }
 	}
+
+    @Override
+    public HandlerRegistration addMouseDownHandler(MouseDownHandler handler) {
+        return addDomHandler(handler, MouseDownEvent.getType());
+    }
+
+    @Override
+    public HandlerRegistration addMouseUpHandler(MouseUpHandler handler) {
+        return addDomHandler(handler, MouseUpEvent.getType());
+    }
+
+    @Override
+    public HandlerRegistration addMouseOutHandler(MouseOutHandler handler) {
+        return addDomHandler(handler, MouseOutEvent.getType());
+    }
+
+    @Override
+    public HandlerRegistration addMouseOverHandler(MouseOverHandler handler) {
+        return addDomHandler(handler, MouseOverEvent.getType());
+    }
+
+    @Override
+    public HandlerRegistration addMouseMoveHandler(MouseMoveHandler handler) {
+        return addDomHandler(handler, MouseMoveEvent.getType());
+    }
+
+    @Override
+    public HandlerRegistration addMouseWheelHandler(MouseWheelHandler handler) {
+        return addDomHandler(handler, MouseWheelEvent.getType());
+    }
+
+    @Override
+    public HandlerRegistration addKeyUpHandler(KeyUpHandler handler) {
+        return addDomHandler(handler, KeyUpEvent.getType());
+    }
+
+    @Override
+    public HandlerRegistration addKeyDownHandler(KeyDownHandler handler) {
+        return addDomHandler(handler, KeyDownEvent.getType());
+    }
+
+    @Override
+    public HandlerRegistration addKeyPressHandler(KeyPressHandler handler) {
+        return addDomHandler(handler, KeyPressEvent.getType());
+    }
+
+    @Override
+    public HandlerRegistration addFocusHandler(FocusHandler handler) {
+        return addDomHandler(handler, FocusEvent.getType());
+    }
+
+    @Override
+    public HandlerRegistration addBlurHandler(BlurHandler handler) {
+        return addDomHandler(handler, BlurEvent.getType());
+    }
+
+    @Override
+    public HandlerRegistration addContextMenuHandler(ContextMenuHandler handler) {
+        return addDomHandler(handler, ContextMenuEvent.getType());
+    }
+
+    @Override
+    public HandlerRegistration addClickHandler(ClickHandler handler) {
+        return addDomHandler(handler, ClickEvent.getType());
+    }
+    
+    /*
+    @Override
+    public void sinkEvents(int eventBitsToAdd) {
+        if (table.isAttached()) {
+            DOM.setEventListener(getElement(), this);
+            DOM.sinkEvents(getElement(), eventBitsToAdd
+                | DOM.getEventsSunk(getElement()));
+        } else {
+            super.sinkEvents(eventBitsToAdd);
+        }
+    }
+    */
 }
