@@ -2,7 +2,6 @@ package com.habitsoft.kiyaa.views;
 
 import java.util.ArrayList;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
@@ -375,8 +374,6 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
                 }
 
                 if(i >= modelCount) {
-                    if(filter != null)
-                        GWT.log("Got "+row+" rows after filtering "+modelCount+" models with "+filter, null);
                     // Clean up any trailing rows after filters were applied, 10 at a time
                     for(int done=0; items.size() > row && done < 5; done++) {
                         removeItem(items.size()-1);
