@@ -40,12 +40,13 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 	protected int totalItems = -1;
 	protected boolean selectable = false;
 	protected boolean clickable = false;
-	Object[] models;
+	T[] models;
 	ModelFilter filter;
 	ClickListenerCollection clickListeners;
 	ChangeListenerCollection changeListeners;
 	protected HoverStyleHandler.Group hoverGroup = new HoverStyleHandler.Group();
-    private IncrementalCommand loadCommand;
+    private IncrementalCommand loadModelsCommand;
+    private boolean modelsChanged;
 	
 	public BaseCollectionView() {
 		super();
@@ -218,7 +219,7 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 	
 	public void load(final int offset, final int limit, AsyncCallback callback) {
 		if(collection == null) {
-			callback.onSuccess(Boolean.FALSE);
+			callback.onSuccess(null);
 			return;
 		}
 		
@@ -236,6 +237,7 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 				super.onFailure(caught);
 			}
 		});
+
 		collection.load(offset, limit, new AsyncCallbackGroupMember<T[]>(group, getClass().getName()+".collection.load()") {
 			@Override
 			public void onSuccess(T[] models) {				
@@ -247,7 +249,7 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 		group.ready(callback);
 	}
 
-	public void load(AsyncCallback<Void> callback) {
+	public void load(final AsyncCallback<Void> callback) {
 	    if(collection != null) {
 	        Object collectionId = collection.getId();
             boolean collectionChanged = collectionId != null && !collectionId.equals(loadedCollectionId);
@@ -261,91 +263,47 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
             }
 	    }
         
-		load(startOffset, increment, callback);
+	    if(modelsChanged) {
+	        modelsChanged = false;
+            loadModels(callback);
+	    } else {
+	        load(startOffset, increment, callback);
+	    }
 	}
 	
-	private void showLoadedModels(T[] models, final int offset, final int limit, AsyncCallback callback) {
-		// Hide during update to avoid annoying jitter
-		callback = hideDuringUpdate(callback, getWidget());
-		try {
-			if(selectedRow >= offset && selectedRow < (offset+limit)) {
-				selectRow(-1);
-			}
-			AsyncCallbackGroup group = new AsyncCallbackGroup();
-			for (int i = 0; i < models.length; i++) {
-				if(models[i] == null)
-					throw new NullPointerException("Model "+i+" of "+models.length+" in "+models+" was null");
-				int idx = offset+i-startOffset;
-				if(idx == items.size()) {
-					addItem(offset+i, models[i], group.member());
-				} else {
-					replaceItem(offset+i, models[i], group.member());
-				}
-			}
-			
-			// If we get less than we asked for, there's no more to get
-			final boolean done = increment <= 0 || models.length<limit;
-			int endOffset = offset + models.length;
-			if(models.length > 0) // If we got models back then we can push totalItems ahead to include them
-			    totalItems = Math.max(totalItems, endOffset);
-			if(done) {
-				for(int i=offset + items.size()-1; i >= endOffset; i--){
-					removeItem(i);
-				}
-			}
-			group.ready(callback, new Boolean(!done));
-		} catch (Throwable caught) {
-			callback.onFailure(caught);
-		}
+	protected void startLoadingModels(AsyncCallbackGroup group) {
+	    
 	}
 
-	public static AsyncCallback hideDuringUpdate(AsyncCallback callback, final Widget widget) {
-		DOM.setStyleAttribute(widget.getElement(), "visibility", "hidden");
-		callback = new AsyncCallbackProxy(callback) {
-			@Override
-			public void onSuccess(Object result) {
-				DOM.setStyleAttribute(widget.getElement(), "visibility", "visible");
-				super.onSuccess(result);
-			}
-			
-			@Override
-			public void onFailure(Throwable caught) {
-				DOM.setStyleAttribute(widget.getElement(), "visibility", "visible");
-				super.onFailure(caught);
-			}
-		};
-		return callback;
-	}
-	
-	public void setModels(final T[] models, final AsyncCallback callback) {
-		if(models == this.models) {
-			callback.onSuccess(null);
-			return;
-		}
-		//GWT.log("New models: "+models+" old models "+this.models, null);
-		this.models = models;
-		final int modelCount = models==null?0:models.length;
+    private void loadModels(final AsyncCallback<Void> callback) {
+        final int modelCount = models==null?0:models.length;
         totalItems = modelCount;
-		
-		while(items.size() > modelCount) {
-			removeItem(items.size()-1);
-		}
-		
-		if(filter != null) {
-			unfilteredItems = new ArrayList();
-			itemIndexesAfterFiltering = new int[modelCount];
-		}
-		startOffset = 0;
-		loadCommand = new IncrementalCommand() {
-	        final AsyncCallbackGroup group = new AsyncCallbackGroup();
-		    int i = 0;
+        
+        while(items.size() > modelCount) {
+            removeItem(items.size()-1);
+        }
+        
+        if(filter != null) {
+            unfilteredItems = new ArrayList();
+            itemIndexesAfterFiltering = new int[modelCount];
+        }
+        startOffset = 0;
+        loadModelsCommand = new IncrementalCommand() {
+            final AsyncCallbackGroup group = new AsyncCallbackGroup();
+            int i = 0;
             int selectedIndex=-1;
             int row=0;
-		    
+            
             @Override
             public boolean execute() {
-                if(loadCommand != this) // Did another load come along and replace us?
+                if(loadModelsCommand != this) { // Did another load come along and replace us?
+                    callback.onSuccess(null);
                     return false;
+                }
+                if(i == 0) {
+                    startLoadingModels(group);
+                }
+                
                 for (int done=0; i < modelCount && done < 5; i++, done++) {
                     T model = models[i];
                     if(model == null) {
@@ -370,9 +328,10 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
                     if(selectedModel != null && selectedModel.equals(model)) {
                         selectedIndex = row;
                     }
+                    loadItem(row, group);
                     row++;
                 }
-
+   
                 if(i >= modelCount) {
                     // Clean up any trailing rows after filters were applied, 10 at a time
                     for(int done=0; items.size() > row && done < 5; done++) {
@@ -380,35 +339,95 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
                     }
                     if(items.size() > row)
                         return true;
-    
+      
                     if(selectedIndex >= 0) {
                         setSelectedIndex(selectedIndex);
                     } else {
                         selectedRow = -1;
                     }
-    //              if(scrollAutoLoader != null) {
-    //                  scrollAutoLoader.setEnd(models.length);
-    //              }
-                    group.ready(callback, null);
+      //              if(scrollAutoLoader != null) {
+      //                  scrollAutoLoader.setEnd(models.length);
+      //              }
+                    loadModelsCommand = null;
+                    
+                    finishLoadingModels(group);
+                    load(startOffset, increment, callback);
                     return false;
                 } else {
                     return true;
                 }
             }
         };
-		if(loadCommand.execute()) {
-		    DeferredCommand.addCommand(loadCommand);
+        if(loadModelsCommand.execute()) {
+            DeferredCommand.addCommand(loadModelsCommand);
+        }
+    }
+	
+	private void showLoadedModels(T[] models, final int offset, final int limit, AsyncCallback callback) {
+		// Hide during update to avoid annoying jitter
+		try {
+			if(selectedRow >= offset && selectedRow < (offset+limit)) {
+				selectRow(-1);
+			}
+			AsyncCallbackGroup group = new AsyncCallbackGroup();
+	        startLoadingModels(group);
+			for (int i = 0; i < models.length; i++) {
+				if(models[i] == null)
+					throw new NullPointerException("Model "+i+" of "+models.length+" in "+models+" was null");
+				int idx = offset+i-startOffset;
+				if(idx == items.size()) {
+					addItem(offset+i, models[i], group.member());
+				} else if(models[i] != items.get(i)){
+					replaceItem(offset+i, models[i], group.member());
+				}
+				loadItem(i, group);
+			}
+			
+			// If we get less than we asked for, there's no more to get
+			final boolean done = increment <= 0 || models.length<limit;
+			int endOffset = offset + models.length;
+			if(models.length > 0) // If we got models back then we can push totalItems ahead to include them
+			    totalItems = Math.max(totalItems, endOffset);
+			if(done) {
+				for(int i=offset + items.size()-1; i >= endOffset; i--){
+					removeItem(i);
+				}
+			}
+			
+			finishLoadingModels(group);
+			group.ready(callback, new Boolean(!done));
+		} catch (Throwable caught) {
+			callback.onFailure(caught);
 		}
 	}
 
-//	public void load(AsyncCallback callback) {
-//		if(modelsChanged) {
-//			loadModels(callback);
-//			modelsChanged = false;
-//		} else {
-//			callback.onSuccess(null);
-//		}
-//	}
+	public static AsyncCallback hideDuringUpdate(AsyncCallback callback, final Widget widget) {
+		DOM.setStyleAttribute(widget.getElement(), "visibility", "hidden");
+		callback = new AsyncCallbackProxy(callback) {
+			@Override
+			public void onSuccess(Object result) {
+				DOM.setStyleAttribute(widget.getElement(), "visibility", "visible");
+				super.onSuccess(result);
+			}
+			
+			@Override
+			public void onFailure(Throwable caught) {
+				DOM.setStyleAttribute(widget.getElement(), "visibility", "visible");
+				super.onFailure(caught);
+			}
+		};
+		return callback;
+	}
+	
+	public void setModels(final T[] models) {
+		if(models == this.models) {
+			return;
+		}
+		//GWT.log("New models: "+models+" old models "+this.models, null);
+		this.models = models;
+		modelsChanged = true;
+	}
+
 	public Object[] getModels() {
 		if(unfilteredItems != null) return unfilteredItems.toArray();
 		return items.toArray();
@@ -648,6 +667,12 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 
     public void setStartOffset(int startOffset) {
         this.startOffset = startOffset;
+    }
+
+    protected void finishLoadingModels(AsyncCallbackGroup group) {
+    }
+
+    protected void loadItem(int i, AsyncCallbackGroup group) {
     }
 
 

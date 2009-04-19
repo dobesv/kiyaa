@@ -213,8 +213,8 @@ public class CssTableView implements View, SourcesChangeEvents {
 	public void setIncrement(int increment) {
 		list.setIncrement(increment);
 	}
-	public void setModels(Object[] models, AsyncCallback callback) {
-		list.setModels(models, callback);
+	public void setModels(Object[] models) {
+		list.setModels(models);
 	}
 	public void setPixelSize(int width, int height) {
 		list.setPixelSize(width, height);

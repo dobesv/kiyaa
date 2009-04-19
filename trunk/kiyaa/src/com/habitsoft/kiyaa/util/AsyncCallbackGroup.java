@@ -22,6 +22,7 @@ public class AsyncCallbackGroup {
 	AsyncCallback callback;
 	Object callbackParam;
 	Object marker;
+    private boolean complete;
 	
 	public AsyncCallbackGroup() {
 		
@@ -97,6 +98,10 @@ public class AsyncCallbackGroup {
 		
 	}
 	public void onComplete() {
+        try {
+            if(complete) Log.error("AsyncCallbackGroup completed twice; at "+marker, new Error());
+        } catch(Exception e) { }
+	    complete = true;
 		if(callback != null) {
 			if(error != null) {
 				callback.onFailure((Throwable)error);

@@ -3,10 +3,8 @@ package com.habitsoft.kiyaa.views;
 import java.util.ArrayList;
 
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.IncrementalCommand;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.ClickListener;
@@ -22,7 +20,6 @@ import com.habitsoft.kiyaa.metamodel.Value;
 import com.habitsoft.kiyaa.util.AsyncCallbackFactory;
 import com.habitsoft.kiyaa.util.AsyncCallbackGroup;
 import com.habitsoft.kiyaa.util.AsyncCallbackProxy;
-import com.habitsoft.kiyaa.util.AsyncCallbackWithTimeout;
 import com.habitsoft.kiyaa.util.HoverStyleHandler;
 import com.habitsoft.kiyaa.widgets.HTMLTableRowPanel;
 
@@ -484,7 +481,7 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 	}
 	@Override
 	protected void setItem(int row, T model, AsyncCallback callback) {
-		callback = new AsyncCallbackWithTimeout(callback); // debug
+		//callback = new AsyncCallbackWithTimeout(callback); // debug
 		if(row == rowPanels.size()) {
 			showItem(row, model, callback);
 			return;
@@ -566,51 +563,7 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 		    emptyContent.save(group.member());
 		group.ready(callback);
 	}
-	
-	@Override
-	public void load(AsyncCallback callback) {
-		super.load(new AsyncCallbackProxy(callback, "TableView.super.load") {
-			private IncrementalCommand currentlyLoadingCommand;
 
-            @Override
-			public void onSuccess(Object result) {
-                currentlyLoadingCommand = new IncrementalCommand() {
-                    int i=0;
-                    final AsyncCallbackGroup group = new AsyncCallbackGroup("TableView.load");
-                    
-                    @Override
-                    public boolean execute() {
-                        if(currentlyLoadingCommand != this)
-                            return false;
-                        if(i == 0) {
-                            for(Series column:series) {
-                                column.checkVisible(group);
-                            }
-                        }
-                        
-                        final int rowCount = items.size();
-                        for(int done = 0; i < rowCount && done < 5; i++, done++) {
-                            for(Series column:series) {
-                                column.load(i, group);
-                            }
-                        }
-                        if(i >= rowCount) {
-                            checkEmpty(group);
-                            if(footer != null)
-                                footer.load(group.member());
-                            group.ready(callback);
-                            return false;
-                        } else {
-                            return true;
-                        }
-                    }
-                };
-                if(currentlyLoadingCommand.execute()) {
-                    DeferredCommand.addCommand(currentlyLoadingCommand);
-                }
-			}
-		});
-	}
 	@Override
 	protected UIObject getRowUIObject(int row) {
 		return (UIObject)rowPanels.get(row);
@@ -783,5 +736,23 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
     }
     public void setHorizontal(boolean horizontal) {
         this.horizontal = horizontal;
+    }
+    @Override
+    protected void startLoadingModels(AsyncCallbackGroup group) {
+        for(Series column:series) {
+            column.checkVisible(group);
+        }
+    }
+    @Override
+    protected void loadItem(int i, AsyncCallbackGroup group) {
+        for(Series column:series) {
+            column.load(i, group);
+        }
+    }
+    @Override
+    protected void finishLoadingModels(AsyncCallbackGroup group) {
+        checkEmpty(group);
+        if(footer != null)
+            footer.load(group.member());
     }
 }
