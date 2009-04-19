@@ -269,6 +269,8 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
         protected TypeOracle myTypes = new TypeOracle();
         protected Element rootElement;
         private JClassType rootClassType;
+        int subviewCounter;
+        
         @Override
 		public void init() throws UnableToCompleteException {
             super.init();
@@ -446,6 +448,8 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             ArrayList<String> calculations = new ArrayList();
             ArrayList<String> asyncProxies = new ArrayList();
             ArrayList<String> loads = new ArrayList();
+            ArrayList<String> asyncLoads = new ArrayList();
+            ArrayList<String> subviewLoads = new ArrayList();
             ArrayList<String> saves = new ArrayList();
             ArrayList<String> clearFields = new ArrayList();
             //ArrayList<String> setModels = new ArrayList();
@@ -745,7 +749,9 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 					String text = e.getValue();
 					if(!text.trim().isEmpty()) {
     					if(parentElement != null && parentElement.getChildCount() == 1 && parentEltVar != null) {
-        					sw.println("DOM.setInnerText("+parentEltVar+", \""+backslashEscape(child.getValue())+"\");");
+        					final String value = child.getValue();
+        					if(!value.matches("[$#]\\{.*}$"))
+        					    sw.println("DOM.setInnerText("+parentEltVar+", \""+backslashEscape(value)+"\");");
         					return null;
     					} else { 
     						//logger.log(TreeLogger.WARN, "Wrapping text into a SPAN .... "+text, null);
@@ -779,9 +785,10 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 
             private void generateLoad() throws UnableToCompleteException {
             	String name;
+                final boolean nothingToLoad = loads.isEmpty() && subviewLoads.isEmpty() && asyncLoads.isEmpty();
             	JMethod loadMethod = findMethod(myClass, "load", 0, true);
             	if(loadMethod != null) {
-                	if(loads.isEmpty())
+                    if(nothingToLoad)
                 		return;
             		name="loadImpl";
             		sw.println("public void load(AsyncCallback callback) {");
@@ -800,7 +807,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 sw.indent();
                 if(loadMethod == null)
                     sw.println("init();");
-                if(loads.isEmpty()) {
+                if(nothingToLoad) {
                 	sw.println("callback.onSuccess(null);");
                 } else {
                     sw.println("try {");
@@ -809,7 +816,38 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                     for (String load : loads) {
                         sw.println(load);
                     }
-                    sw.println("group.ready(callback);");
+                    if(asyncLoads.isEmpty() || subviewLoads.isEmpty()) {
+                        for (String load : asyncLoads) {
+                            sw.println(load);
+                        }
+                        for (String load : subviewLoads) {
+                            sw.println(load);
+                        }
+                        sw.println("group.ready(callback);");
+                    } else {
+                        for (String load : asyncLoads) {
+                            sw.println(load);
+                        }
+                        sw.println("group.ready(new AsyncCallbackProxy(callback) {");
+                        sw.indent();
+                        sw.println("public void onSuccess(Object result) {");
+                        sw.indent();
+                        sw.println("final AsyncCallbackGroup group = new AsyncCallbackGroup(\""+myClass.getName()+".load() (subviews)\");");
+                        sw.println("try {");
+                        sw.indent();
+                        for (String load : subviewLoads) {
+                            sw.println(load);
+                        }
+                        sw.println("group.ready(callback);");
+                        sw.outdent();
+                        sw.println("} catch(Throwable t) {");
+                        sw.indentln("callback.onFailure(t);");
+                        sw.println("}");
+                        sw.outdent();
+                        sw.println("}");
+                        sw.outdent();
+                        sw.println("});");
+                    }
                     sw.outdent();
                     sw.println("} catch(Throwable t) {");
                     sw.indentln("callback.onFailure(t);");
@@ -896,7 +934,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             private void generateSubviewClasses() throws UnableToCompleteException {
                 for (int i = 0; i < subviewClasses.size(); i++) {
                     Element elem = subviewClasses.get(i);
-                    String subviewClassName = "S" + i;
+                    String subviewClassName = myClass.getSimpleSourceName()+"S" + i;
                     
                     pushLogger("Inside subview "+i+" element "+elem.getQualifiedName()+" class name "+subviewClassName);
                     try {
@@ -1221,7 +1259,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                         }
                     }
                     if (canLoad) {
-                        loads.add(viewExpr + ".load(group.member(\""+myClass.getName()+"."+id+".load()\"));");
+                        subviewLoads.add(viewExpr + ".load(group.member(\""+myClass.getName()+"."+id+".load()\"));");
                     }
                     if (!readOnly) {
                         if (canSave)
@@ -1533,8 +1571,11 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				boolean constantLoad = pathAccessors.isConstant() 
 					&& pathAccessors.getter != null 
 					&& attributeAccessors.setter != null;
+				boolean asyncLoad = pathAccessors.asyncGetter != null || attributeAccessors.asyncSetter != null;
 				if(constantLoad)
 					sw.println(loadExpr);
+				else if(asyncLoad)
+				    asyncLoads.add(loadExpr);
 				else
 					loads.add(loadExpr);
 				if (!readOnly) {
@@ -1683,7 +1724,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                             generateField(fieldName, getType(View.class.getName()));
                             sw.println(fieldName + " = " + createViewExpr + ";");
 							sw.println(name + ".setWidget("+fieldName+".getViewWidget());");
-							loads.add(fieldName + ".load(group.member(\""+fieldName+".load()\"));");
+							subviewLoads.add(fieldName + ".load(group.member(\""+fieldName+".load()\"));");
                             saves.add(fieldName + ".save(group.member(\""+fieldName+".save()\"));");
                             clearFields.add(fieldName + ".clearFields();");
                         } else if (findMethod(type, "setView", 1, false) != null
@@ -1850,7 +1891,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 			}
 
             protected String addSubviewClass(Element childElem) {
-                String className = myClass.getSimpleSourceName()+"Subview" + subviewClasses.size();
+                String className = myClass.getSimpleSourceName()+ "S" + subviewClasses.size();
                 subviewClasses.add(childElem);
                 return className;
             }
@@ -2912,6 +2953,10 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             if (superclass == null)
                 return false;
             return implementsInterface(superclass, iface);
+        }
+
+        public String replaceGroupMember(String expr, String newCallback) {
+            return expr.replaceFirst("group.member\\((?:\"[^\"]*\")?[^)]*\\)", newCallback);
         }
 
         public Object backslashEscape(String substring) {
