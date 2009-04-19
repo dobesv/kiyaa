@@ -104,4 +104,8 @@
         <tag-class>Hidden</tag-class>
         <content-attribute>value</content-attribute>
     </tag>
+    <tag>
+        <tag-name>iframe</tag-name>
+        <tag-class>Frame</tag-class>
+    </tag>
 </kiyaa-taglib>
