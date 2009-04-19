@@ -6,6 +6,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 public class AsyncCallbackProxy<T> implements AsyncCallback<T> {
 	protected final AsyncCallback callback;
 	protected final Object marker;
+	protected boolean complete;
 	
 	public AsyncCallbackProxy(AsyncCallback delegate, Object marker) {
 		super();
@@ -20,6 +21,7 @@ public class AsyncCallbackProxy<T> implements AsyncCallback<T> {
 	}
 
 	public void onFailure(Throwable caught) {
+	    completed();
 	    if(marker != null && (caught instanceof Error || caught instanceof RuntimeException)) try {
 	        Log.error("At "+marker.toString(), caught);
 	    } catch(Exception e) { }
@@ -27,7 +29,15 @@ public class AsyncCallbackProxy<T> implements AsyncCallback<T> {
 			callback.onFailure(caught);
 	}
 
-	public void onSuccess(T result) {
+	private void completed() {
+	    try {
+	        if(complete) Log.error("AsyncCallbackProxy called twice; at "+marker, new Error());
+        } catch(Exception e) { }
+        complete = true;
+    }
+
+    public void onSuccess(T result) {
+        completed();
 		if(callback != null)
 			callback.onSuccess(result);
 	}

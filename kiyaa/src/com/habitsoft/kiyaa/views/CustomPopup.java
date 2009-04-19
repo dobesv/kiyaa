@@ -22,7 +22,6 @@ import com.habitsoft.kiyaa.metamodel.Action;
 import com.habitsoft.kiyaa.metamodel.ActionSeries;
 import com.habitsoft.kiyaa.metamodel.Value;
 import com.habitsoft.kiyaa.util.AsyncCallbackFactory;
-import com.habitsoft.kiyaa.util.AsyncCallbackGroup;
 import com.habitsoft.kiyaa.util.AsyncCallbackProxy;
 import com.habitsoft.kiyaa.util.ModelFilter;
 import com.habitsoft.kiyaa.util.ToStringNameValueAdapter;
@@ -90,34 +89,43 @@ public class CustomPopup<T> implements PopupListener {
      */
     protected void showPopup(AsyncCallback<Void> callback, final int left, final int top) {
     	try {
-    	    //GWT.log("showPopup()", new Exception());
-    		if(table == null) {
-    			createTableView(new AsyncCallbackProxy<Void>(callback) {
-    				@Override
-    				public void onSuccess(Void arg0) {
-    					if(table == null) throw new NullPointerException();
-    					showPopup(callback, left, top);
-    				}
-    			});
-    		} else {
-        		if(shouldShowPopup()) {
-            		if(!popupShowing) {
-            			hidePopupOperation.cancel();
-            			popupShowing = true;
-            			popup.setPopupPosition(left, top);
-            			popup.show();
-            			//GWT.log("Show popup ...", null);
-            			ensureSelectedIndexIsVisible();
+    	    if(shouldShowPopup()) {
+        	    if(!popupShowing) {
+                    popupShowing = true;
+            		if(table == null) {
+            			createTableView(new AsyncCallbackProxy<Void>(callback) {
+            				@Override
+            				public void onSuccess(Void arg0) {
+            					if(table == null) throw new NullPointerException();
+            					showPopupImpl(left, top);
+            					if(callback != null)
+            					    callback.onSuccess(null);
+            				}
+            			});
+            		} else {
+                        showPopupImpl(left, top);
+                		if(callback != null)
+                			callback.onSuccess(null);
             		}
-        		} else hidePopup();
-        		if(callback != null)
-        			callback.onSuccess(null);
-    		}
+        	    }
+            } else {
+                hidePopup();
+                if(callback != null)
+                    callback.onSuccess(null);
+            }
     	} catch(Throwable caught) {
     		if(callback != null)
     			callback.onFailure(caught);
     		else caught.printStackTrace();
     	}
+    }
+
+    private void showPopupImpl(final int left, final int top) {
+        hidePopupOperation.cancel();
+        popupShowing = true;
+        popup.setPopupPosition(left, top);
+        popup.show();
+        ensureSelectedIndexIsVisible();
     }
 
     /**
@@ -170,12 +178,11 @@ public class CustomPopup<T> implements PopupListener {
     	});
     	table.setSelectable(selectable);
     	table.setClickable(clickable);
-    	AsyncCallbackGroup group = new AsyncCallbackGroup();
     	if(models != null) {
-    		updateModelsInTable(group.member());
+    		updateModelsInTable();
     	}
-    	table.load(group.member());
-    	group.ready(callback);
+    	//GWT.log("loading table in custom popup.createTableView()", null);
+    	table.load(callback);
     }
 
     public void hidePopup() {
@@ -240,31 +247,20 @@ public class CustomPopup<T> implements PopupListener {
     protected void modelsChanged(T[] models) {
         
     }
-    public void setModels(final T[] models, AsyncCallback<Void> callback) {
+    public void setModels(final T[] models) {
     	if(this.models == models) {
-    		callback.onSuccess(null);
     		return;
     	}
     	this.models = models;
-    	
-    	callback = new AsyncCallbackProxy<Void>(callback) {
-    		@Override
-    		public void onSuccess(Void result) {
-    			super.onSuccess(result);
-    			
-    			modelsChanged(models);
-    		}
-    	};
     	if(table != null) {
-    		updateModelsInTable(callback);
-    	} else {
-    		callback.onSuccess(null);
+    		updateModelsInTable();
     	}
+        modelsChanged(models);
     }
 
-    private void updateModelsInTable(AsyncCallback<Void> callback) {
+    private void updateModelsInTable() {
     	applyFilter();
-    	table.setModels(models, callback);
+    	table.setModels(models);
     }
 
     public void addChangeListener(ChangeListener listener) {
@@ -441,13 +437,9 @@ public class CustomPopup<T> implements PopupListener {
     	    modelsValue.getValue(new AsyncCallbackProxy<T[]>(callback) {
     	        @Override
                 public void onSuccess(T[] result) {
-    	            setModels(result, new AsyncCallbackProxy(callback) {
-    	                @Override
-    	                public void onSuccess(Object result) {
-    	                    loadTable(callback);
-    	                    super.onSuccess(result);
-    	                }
-    	            });
+    	            setModels(result);
+    	            if(table != null) GWT.log("loading table in custom popup.load() (async models)", null);
+    	            loadTable(callback);
     	        }
     	    });
     	} else {
@@ -459,7 +451,7 @@ public class CustomPopup<T> implements PopupListener {
         if(table != null) {
     		table.load(callback);
     	} else {
-    		callback.onSuccess(null);
+    		createTableView(callback);
     	}
     }
 
