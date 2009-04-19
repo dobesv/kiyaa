@@ -30,6 +30,7 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 	ArrayList<HTMLTableRowPanel> rowPanels = new ArrayList();
 	Element headings;
 	View navigation;
+    View bottomNavigation;
 	View emptyContent;
 	View footer;
 	private Element borderMiddle;
@@ -559,6 +560,8 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 		}
 		if(navigation != null && navigation.getViewWidget().isVisible())
 		    navigation.save(group.member());
+        if(bottomNavigation != null && bottomNavigation.getViewWidget().isVisible())
+            bottomNavigation.save(group.member());
 		if(emptyContent != null && emptyContent.getViewWidget().isVisible())
 		    emptyContent.save(group.member());
 		group.ready(callback);
@@ -631,6 +634,18 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 		this.navigation = navigation;
 		insert(navigation.getViewWidget(), 0);
 	}
+    public View getbottomNavigation() {
+        return bottomNavigation;
+    }
+    public void setbottomNavigation(View bottomNavigation) {
+        if(this.bottomNavigation != null) {
+            if(this.bottomNavigation == bottomNavigation)
+                return;
+            this.bottomNavigation.getViewWidget().removeFromParent();
+        }
+        this.bottomNavigation = bottomNavigation;
+        add(bottomNavigation.getViewWidget());
+    }
 	
 	/**
 	 * The footer is a view that appears inside the border, below the table
@@ -667,11 +682,10 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 	private void checkEmpty(AsyncCallbackGroup group) {
 		boolean empty = items.isEmpty() && startOffset == 0;
 		//table.setVisible(!empty);
-		if(navigation != null) {
-			if(/*!empty &&*/ group != null)
-				navigation.load(group.member());
-			//navigation.getViewWidget().setVisible(!empty);
-		}
+		if(navigation != null &&  group != null)
+			navigation.load(group.member());
+		if(bottomNavigation != null && group != null)
+		    bottomNavigation.load(group.member());		    
 		if(emptyContent != null) {
 			emptyContent.getViewWidget().setVisible(empty);
 			if(empty && group != null)
