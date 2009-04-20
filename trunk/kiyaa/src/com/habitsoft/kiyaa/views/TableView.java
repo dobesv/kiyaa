@@ -64,6 +64,7 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 		public Series(ViewFactory viewFactory, String styleName, Value test, boolean visible, int position) {
 			super();
 			this.position = position;
+			if(viewFactory == null) throw new NullPointerException("viewFactory");
 			this.viewFactory = viewFactory;
 			this.styleName = styleName;
 			this.test = test;

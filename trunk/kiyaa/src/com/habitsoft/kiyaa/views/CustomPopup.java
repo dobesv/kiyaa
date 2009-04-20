@@ -43,8 +43,8 @@ public class CustomPopup<T> implements PopupListener {
     private Value modelsValue;
     private ArrayList<ViewFactory> columns = new ArrayList<ViewFactory>();
     private View emptyContent;
-    private boolean selectable = true;
-    private boolean clickable = false;
+    protected boolean selectable = true;
+    protected boolean clickable = false;
     private Timer filterOperation = new Timer() {
     		@Override
     		public void run() {
@@ -389,6 +389,7 @@ public class CustomPopup<T> implements PopupListener {
     }
 
     public void addColumn(ViewFactory viewFactory) {
+        if(viewFactory == null) throw new NullPointerException("viewFactory");
     	columns.add(viewFactory);
     	if(table != null) {
     		if(table instanceof TableView)
