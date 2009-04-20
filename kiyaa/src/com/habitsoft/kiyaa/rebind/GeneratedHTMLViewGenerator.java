@@ -32,6 +32,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.JEnumConstant;
 import com.google.gwt.core.ext.typeinfo.JEnumType;
 import com.google.gwt.core.ext.typeinfo.JField;
 import com.google.gwt.core.ext.typeinfo.JMethod;
@@ -1368,6 +1369,23 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				} else if (attributeAccessors.type.equals(getType("java.lang.String"))) {
 					ExpressionInfo valueAccessors = new ExpressionInfo("\"" + backslashEscape(value) + "\"", getType("java.lang.String"), true);
 					generateAttributeLoadSave(type, attributeAccessors, valueAccessors, true);
+				} else if (attributeAccessors.type.isEnum() != null) {
+				    final JEnumType et = attributeAccessors.type.isEnum();
+				    final JEnumConstant[] consts = et.getEnumConstants();
+				    boolean found_it = false;
+				    for(JEnumConstant c : consts) {
+				        if(c.getName().equalsIgnoreCase(value)) {
+		                    ExpressionInfo valueAccessors = new ExpressionInfo(et.getQualifiedSourceName()+"."+c.getName(), et, true);
+		                    generateAttributeLoadSave(type, attributeAccessors, valueAccessors, true);
+		                    found_it = true;
+		                    break;
+				        }
+				    }
+				    if(!found_it) {
+                        logger.log(TreeLogger.ERROR, "Enum constant '" + value + "' not found in enum "+et.getQualifiedSourceName()+" for attribute "+key,
+                            null);
+                        throw new UnableToCompleteException();
+				    }
 				} else if (attributeAccessors.type.equals(getType("java.lang.Boolean"))) {
 				    if (!"true".equals(value) && !"false".equals(value)) {
 				        logger.log(TreeLogger.ERROR, "Boolean attribute '" + key + "' should be true or false; got '"+value+"'",

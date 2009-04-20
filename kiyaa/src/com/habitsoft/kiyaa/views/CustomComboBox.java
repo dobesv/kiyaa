@@ -103,7 +103,8 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 	            }
 			} else if(keyCode == KEY_RIGHT || keyCode == KEY_LEFT) {
 			} else if(Character.isLetterOrDigit(keyCode) || keyCode == KEY_BACKSPACE || keyCode == KEY_DELETE) {
-		        applySearchTextOperation.schedule(250);
+			    if(searchable)
+			        applySearchTextOperation.schedule(250);
 			}
 		}
 		
@@ -116,10 +117,12 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 		 * to highlight the currently selected item.
 		 */
 		protected void showSelectedIndex(int newIndex) {
-			searching = false;
-			table.setSelectedIndex(newIndex);
-			if(newIndex >= 0)
-				container.ensureVisible(table.getRowUIObject(newIndex));
+		    if(selectable) {
+    			searching = false;
+    			table.setSelectedIndex(newIndex);
+    			if(newIndex >= 0)
+    				container.ensureVisible(table.getRowUIObject(newIndex));
+		    }
 		}
 
 	}
@@ -287,31 +290,33 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 
 	@Override
     protected void modelsChanged(T[] models) {
-        valueIndexMap.clear();
-        nameValueMap.clear();
-        for(int i=0; i < models.length; i++) {
-            T model = models[i];
-            String value = nameValueAdapter.getValue(model);
-            valueIndexMap.put(value, i);
-            nameValueMap.put(nameValueAdapter.getName(model).toLowerCase(), value);
-            if(alternateNameValueAdapter != null) {
-                String altValue = alternateNameValueAdapter.getValue(model);
-                String altName = alternateNameValueAdapter.getName(model);
-                if(altName != null && altName.length() > 0) {
-                    valueIndexMap.put(altValue, i);
-                    nameValueMap.put(altName.toLowerCase(), altValue);
+	    if(selectable || clickable) {
+            valueIndexMap.clear();
+            nameValueMap.clear();
+            for(int i=0; i < models.length; i++) {
+                T model = models[i];
+                String value = nameValueAdapter.getValue(model);
+                valueIndexMap.put(value, i);
+                nameValueMap.put(nameValueAdapter.getName(model).toLowerCase(), value);
+                if(alternateNameValueAdapter != null) {
+                    String altValue = alternateNameValueAdapter.getValue(model);
+                    String altName = alternateNameValueAdapter.getName(model);
+                    if(altName != null && altName.length() > 0) {
+                        valueIndexMap.put(altValue, i);
+                        nameValueMap.put(altName.toLowerCase(), altValue);
+                    }
                 }
             }
-        }
-        // Try to initialize the value by matching a model's text
-        String text = getText();
-        if(currentValue == null) {
-            if(text != null)
-                currentValue = nameValueMap.get(text.toLowerCase());
-        }
-        
-        // Make sure we have the right model instance selected
-        selectValue(currentValue, null, !isOptional() || text == null || text.length() == 0);        
+            // Try to initialize the value by matching a model's text
+            String text = getText();
+            if(currentValue == null) {
+                if(text != null)
+                    currentValue = nameValueMap.get(text.toLowerCase());
+            }
+            
+            // Make sure we have the right model instance selected
+            selectValue(currentValue, null, !isOptional() || text == null || text.length() == 0);
+	    }
     }
 
 	private void onTabEnterOrLostFocus(final boolean tabOrEnter) {
@@ -385,7 +390,7 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 	}
 	public void setText(String text) {
 		// Select any exact match for the search string, if there is one; otherwise select nothing
-		if(nameValueMap != null)
+		if(nameValueMap != null && (selectable || clickable))
 			selectValue(nameValueMap.get(text==null?"":text.toLowerCase()), null, false);
 		
 		// Regardless of whether we selected a value, set the text to what they asked for
@@ -419,6 +424,8 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 	}
 
     protected boolean selectValue(String value, T model, boolean updateText) {
+        if(!(selectable || clickable))
+            return false;
         if(value == null && model != null)
             value = nameValueAdapter.getValue(model);
         int selectedIndex = indexOfValue(value);
