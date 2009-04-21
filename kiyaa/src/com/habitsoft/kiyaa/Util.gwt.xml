@@ -15,10 +15,16 @@
         class="com.habitsoft.kiyaa.util.DictionaryConstants"/>
     </generate-with>
 
-        <generate-with
+    <generate-with
         class="com.habitsoft.kiyaa.rebind.ServiceRetryingAdapterGenerator">
      <when-type-assignable
         class="com.habitsoft.kiyaa.util.ServiceRetryingAdapter"/>
+    </generate-with>
+
+    <generate-with
+        class="com.habitsoft.kiyaa.rebind.ServiceProfilingAdapterGenerator">
+     <when-type-assignable
+        class="com.habitsoft.kiyaa.util.ServiceProfilingAdapter"/>
     </generate-with>
     
 </module>
