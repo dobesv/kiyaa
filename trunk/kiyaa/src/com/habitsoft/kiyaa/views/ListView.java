@@ -198,7 +198,10 @@ public class ListView extends BaseCollectionView {
 
 	@Override
 	protected UIObject getRowUIObject(int row) {
-		return ((View)views.get(row)).getViewWidget();
+	    if(row < views.size())
+	        return ((View)views.get(row)).getViewWidget();
+	    else
+	        return null;
 	}
 
 	public String getRowClass() {
