@@ -1180,7 +1180,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                         //System.out.println("Got getter: "+expr.getter);
                 		ExpressionInfo textExpr = findAccessors(id, false, false);
                 		if(textExpr == null) throw new Error("Weird, couldn't find the field I just added: "+id+" to hold text for "+stringBuildExpr+" even though I added a method "+setter+" and a field "+field+"?");
-                		if(expr.isConstant() && expr.getter != null) {
+                		if(expr.isConstant() && expr.hasSynchronousGetter()) {
                 			sw.println(textExpr.copyStatement(expr));
                 		} else {
                 			loads.add(textExpr.asyncCopyStatement(expr, "group.member(\"inline text "+text+"\")", true));
@@ -1359,7 +1359,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 						throw new UnableToCompleteException();
 					}
 				    sw.println(attributeAccessors.setter + "(" + valueExpr + ");");
-				} else if (pathAccessors != null && (pathAccessors.getter != null || pathAccessors.asyncGetter != null)) {
+				} else if (pathAccessors != null && pathAccessors.hasGetter()) {
 				    generateAttributeLoadSave(type, attributeAccessors, pathAccessors, readOnly);
 				} else if (path != null && (valueExpr = getFieldValue(path)) != null) {
 					ExpressionInfo valueAccessors = findAccessors(getType(Value.class.getName()), valueExpr, "value", true);
@@ -1587,8 +1587,8 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				//}
 				// Constant values stored to a non-async setter are set during initialization
 				boolean constantLoad = pathAccessors.isConstant() 
-					&& pathAccessors.getter != null 
-					&& attributeAccessors.setter != null;
+					&& pathAccessors.hasSynchronousGetter() 
+					&& attributeAccessors.hasSynchronousSetter();
 				boolean asyncLoad = pathAccessors.asyncGetter != null || attributeAccessors.asyncSetter != null;
 				if(constantLoad)
 					sw.println(loadExpr);
@@ -1597,11 +1597,11 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				else
 					loads.add(loadExpr);
 				if (!readOnly) {
-				    if (attributeAccessors.getter == null && attributeAccessors.asyncGetter == null) {
+				    if (!attributeAccessors.hasGetter()) {
 				        logger.log(TreeLogger.ERROR, "Missing matching getter for attribute '"+attributeAccessors.setter+"' on "+type+"; use ${} to set the value only.  Value is "+pathAccessors, null);
 				        throw new UnableToCompleteException();
-				    } else if(pathAccessors.setter == null && pathAccessors.asyncSetter == null) {
-				        logger.log(TreeLogger.ERROR, "Missing matching setter for '" + (pathAccessors.getter==null?pathAccessors.asyncGetter:pathAccessors.getter) + "' for attribute '"+attributeAccessors.setter+"' on "+type+"; use ${} to set the value only.", null);
+				    } else if(!pathAccessors.hasSetter()) {
+				        logger.log(TreeLogger.ERROR, "Missing matching setter for '" + pathAccessors + "' for attribute '"+attributeAccessors.setter+"' on "+type+"; use ${} to set the value only.", null);
 				        throw new UnableToCompleteException();
 				    }
 				    
@@ -1887,7 +1887,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 						        && (valueExpr = getFieldValue(path)) != null) {
 						paramString = valueExpr;
 					} else if (pathAccessors != null) {
-						if(pathAccessors.getter == null) {
+						if(!pathAccessors.hasSynchronousGetter()) {
 							logger.log(TreeLogger.ERROR, "Async/write-only values when calling a setter with multiple parameters is not supported currently.", null);
 							throw new UnableToCompleteException();
 						}
@@ -1930,18 +1930,18 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 if (accessors != null) {
                     final JClassType valueClassType = getType(Value.class.getName());
                 	if(accessors.type.equals(valueClassType)) {
-                		if(accessors.getter == null) {
+                		if(!accessors.hasSynchronousGetter()) {
                 			logger.log(TreeLogger.ERROR, "Can't handle an async Value getter yet; for "+path, null);
                 			throw new UnableToCompleteException();
                     	}
-                		return accessors.getter;
+                		return accessors.getterExpr();
                 	}
                     String valueName = "value" + values.size();
                     values.put(path, valueName);
 					generateField(valueName, valueClassType);
                     sw.println(valueName + " = new Value() { ");
-                    if(accessors.getter != null) {
-                        sw.indentln("public void getValue(AsyncCallback callback) { callback.onSuccess(" + accessors.getter + "); } ");
+                    if(accessors.hasSynchronousGetter()) {
+                        sw.indentln("public void getValue(AsyncCallback callback) { callback.onSuccess(" + accessors.getterExpr() + "); } ");
                     } else if(accessors.asyncGetter != null) {
                         sw.indentln("public void getValue(AsyncCallback callback) { "+callAsyncGetter(accessors.asyncGetter, "callback")+"; } ");
                     } else {
@@ -2074,7 +2074,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 		throw new UnableToCompleteException();
                 	}
                 	ExpressionInfo rvalue = findAccessors(right, true, true);
-                	if(rvalue == null || (rvalue.getter == null && rvalue.asyncGetter == null)) {
+                	if(rvalue == null || !rvalue.hasGetter()) {
                 		logger.log(TreeLogger.ERROR, "Can't find any getter for the right side of "+path, null);
                 		throw new UnableToCompleteException();
                 	}
@@ -2106,11 +2106,11 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                         objectPath = preargs.substring(0, objectPathEnd);
                         methodName = preargs.substring(objectPathEnd+1);
                         ExpressionInfo accessors = findAccessors(objectPath, true, false);
-                        if (accessors == null || accessors.getter == null || accessors.type == null) {
+                        if (accessors == null || !accessors.hasSynchronousGetter() || accessors.type == null) {
                             logger.log(TreeLogger.ERROR, "Can't find any object for " + path, null);
                             return null;
                         }
-                        getter = accessors.getter;
+                        getter = accessors.getterExpr();
                         objectType = accessors.type.isClassOrInterface();
                         if (objectType == null) {
                             logger.log(TreeLogger.ERROR, "Can't call a method on a non-class object of type "
@@ -2478,17 +2478,17 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                     	}
                     	String getterName = "getAsync"+asyncProxies.size();
                     	if(subexpr.hasGetter()) {
-                        	if(subexpr.getter != null) {
+                        	if(subexpr.hasSynchronousGetter()) {
                         		// Synchronous sub-expression, how merciful! 
                             	asyncProxies.add("    public void "+getterName+"(AsyncCallback callback) {\n"+
                             		             "        "+callAsyncGetter(getter, "new AsyncCallbackProxy(callback, \""+path+"\") {\n"+
                             		             "            public void onSuccess(Object result) {\n"+
                             		             "                "+type.getQualifiedSourceName()+" base = ("+type.getQualifiedSourceName()+") result;\n"+
-                            		             "                super.onSuccess("+subexpr.getter+");\n"+
+                            		             "                super.onSuccess("+subexpr.getterExpr()+");\n"+
                             		             "            }\n"+
                             		             "        }")+";\n"+
                             		             "    }\n");
-                        	} else if(subexpr.asyncGetter != null) {
+                        	} else if(subexpr.hasAsyncGetter()) {
                             	asyncProxies.add("    public void "+getterName+"(AsyncCallback callback) {\n"+
                		             "        "+callAsyncGetter(getter, "new AsyncCallbackProxy(callback, \""+path+"\") {\n"+
                		             "            public void onSuccess(Object result) {"+
@@ -2919,7 +2919,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 						calculations.add("    public void "+getterName+"(AsyncCallback<"+resultClassTypeName+"> callback) {\n"+
 				             "        "+callAsyncGetter(left.asyncGetter, "new AsyncCallbackProxy<"+classLeftTypeName+">(callback) {\n"+
 				             "            public void onSuccess(final "+classLeftTypeName+" left) {\n"+
-					         "                final "+rightTypeName+" right = "+right.getter+";\n"+
+					         "                final "+rightTypeName+" right = "+right.getterExpr()+";\n"+
 					         "                callback.onSuccess("+convertLeft+oper+convertRight+");\n"+
 				             "            }\n"+
 				             "        }")+";\n"+
@@ -2928,7 +2928,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				} else {
 					// right.asyncGetter must != null
 					calculations.add("    public void "+getterName+"(AsyncCallback<"+resultClassTypeName+"> callback) {\n"+
-				         "            final "+leftTypeName+" left = "+left.getter+";\n"+
+				         "            final "+leftTypeName+" left = "+left.getterExpr()+";\n"+
 				         "            "+callAsyncGetter(right.asyncGetter, "new AsyncCallbackProxy<"+classRightTypeName+">(callback) {\n"+
 				         "            public void onSuccess(final "+classRightTypeName+" right) {\n"+
 				         "                callback.onSuccess("+convertLeft+oper+convertRight+");\n"+
@@ -3267,14 +3267,13 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 			
 		}
         class ExpressionInfo {
-        	final String getter;
-            final String setter;
-            final String asyncGetter;
-            final String asyncSetter;
-            final boolean constant;
-            final ExpressionInfo baseExpression;
-            final JType type;
-            ArrayList<OperatorInfo> operators;
+        	final private String getter;
+            final private String setter;
+            final private String asyncGetter;
+            final private String asyncSetter;
+            final private boolean constant;
+            final private JType type;
+            private ArrayList<OperatorInfo> operators;
             
             public ExpressionInfo(String getter, String setter, JType type, boolean asyncGetter, boolean asyncSetter, boolean constant) {
                 super();
@@ -3296,7 +3295,18 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 }
                 this.type = type;
                 this.constant = constant;
-                this.baseExpression = null;
+            }
+
+            public boolean hasSynchronousSetter() {
+                return setter != null;
+            }
+
+            public boolean hasAsyncGetter() {
+                return asyncGetter != null;
+            }
+
+            public boolean hasSynchronousGetter() {
+                return getter != null;
             }
 
             public String setterString() {
@@ -3328,7 +3338,6 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             	this.asyncSetter = x.asyncSetter;
             	this.constant = false;
             	this.type = x.type;
-            	this.baseExpression = null;
             	addOperator(operator);
 			}
 
@@ -3370,6 +3379,11 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 					logger.log(TreeLogger.ERROR, "Converted type successfully, but applying operators returned null!", null);
 				}
 				return postOp;
+            }
+            
+            public String getterExpr() throws UnableToCompleteException {
+                if(getter == null) throw new NullPointerException("No synchronous getter for this expression.");
+                return applyGetOperators(getter);
             }
             
             /**
