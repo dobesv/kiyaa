@@ -23,16 +23,16 @@ import com.google.gwt.user.client.ui.SourcesClickEvents;
 import com.google.gwt.user.client.ui.SourcesFocusEvents;
 import com.google.gwt.user.client.ui.SourcesKeyboardEvents;
 import com.google.gwt.user.client.ui.Widget;
+import com.habitsoft.kiyaa.util.ClientLocalizedParser;
 import com.habitsoft.kiyaa.util.DateParseException;
 import com.habitsoft.kiyaa.util.FocusGroup;
-import com.habitsoft.kiyaa.util.LocalizedParser;
 
 public class DatePicker extends FlowPanel implements SourcesChangeEvents, SourcesClickEvents, SourcesKeyboardEvents, SourcesFocusEvents, HasText, HasFocus {
 
 	Calendar calendar = new Calendar();
 	PopupPanel popup = new PopupPanel(true, false);
 	boolean showing;
-	LocalizedParser dateParser;
+	ClientLocalizedParser dateParser;
 	boolean hideOnSelect=true;
 	boolean showOnFocus;
 	DateTimeFormat dateFormat = DateTimeFormat.getMediumDateFormat();
@@ -229,11 +229,11 @@ public class DatePicker extends FlowPanel implements SourcesChangeEvents, Source
 		return dateFormat.format(calendar.getDate());
 	}
 	
-	public LocalizedParser getDateParser() {
+	public ClientLocalizedParser getDateParser() {
 		return dateParser;
 	}
 
-	public void setDateParser(LocalizedParser dateParser) {
+	public void setDateParser(ClientLocalizedParser dateParser) {
 		this.dateParser = dateParser;
 	}
 
@@ -353,6 +353,7 @@ public class DatePicker extends FlowPanel implements SourcesChangeEvents, Source
 
     public void setDateFormat(DateTimeFormat dateFormat) {
         this.dateFormat = dateFormat;
+        dateParser.setDateFormat(dateFormat);
     }
 
     public boolean isOptional() {

@@ -17,6 +17,8 @@ import com.google.gwt.i18n.client.impl.CurrencyList;
 public class ClientLocalizedParser implements LocalizedParser {
     private static NumberConstants nc = GWT.create(NumberConstants.class);
     private static String stripTrailingZeroesRegex = nc.decimalSeparator().replaceAll("\\.", "\\\\.")+"?0*([^0-9]*)$";
+    private DateTimeFormat dateFormat = DateTimeFormat.getMediumDateFormat();
+    private DateTimeFormat shortDateFormat = DateTimeFormat.getShortDateFormat();
 
     public String formatCurrency(long amount, String currencyCode, boolean international, boolean showGroupings) {
         int decimalPlaces = getDecimalPlaces(currencyCode);
@@ -43,7 +45,7 @@ public class ClientLocalizedParser implements LocalizedParser {
     }
 
     public String formatDate(Date date, boolean shortFormat) {
-        return (shortFormat?DateTimeFormat.getShortDateFormat():DateTimeFormat.getMediumDateFormat()).format(date);
+        return (shortFormat?shortDateFormat:dateFormat).format(date);
     }
 
     public String formatDecimal(double val, boolean showSeperators) {
@@ -67,7 +69,15 @@ public class ClientLocalizedParser implements LocalizedParser {
     }
 
     public Date parseDate(String dateString) throws DateParseException {
-        return DateTimeFormat.getShortDateFormat().parse(dateString);
+        try {
+            return dateFormat.parse(dateString);
+        } catch(IllegalArgumentException badDate) {
+        }
+        try {
+            return shortDateFormat.parse(dateString);
+        } catch(IllegalArgumentException badDate) {
+            throw new DateParseException("Failed to parse date ("+badDate.getLocalizedMessage()+")");
+        }
     }
 
     public double parseDecimal(String val) throws NumberFormatException {
@@ -80,6 +90,22 @@ public class ClientLocalizedParser implements LocalizedParser {
         } catch(NumberFormatException nfe) {
             return parseDecimal(val)/100.0;
         }
+    }
+
+    public DateTimeFormat getDateFormat() {
+        return dateFormat;
+    }
+
+    public void setDateFormat(DateTimeFormat dateFormat) {
+        this.dateFormat = dateFormat;
+    }
+
+    public DateTimeFormat getShortDateFormat() {
+        return shortDateFormat;
+    }
+
+    public void setShortDateFormat(DateTimeFormat shortDateFormat) {
+        this.shortDateFormat = shortDateFormat;
     }
 
 }
