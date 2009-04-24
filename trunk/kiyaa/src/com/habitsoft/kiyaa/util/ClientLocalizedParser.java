@@ -71,12 +71,12 @@ public class ClientLocalizedParser implements LocalizedParser {
     public Date parseDate(String dateString) throws DateParseException {
         try {
             return dateFormat.parse(dateString);
-        } catch(IllegalArgumentException badDate) {
-        }
-        try {
-            return shortDateFormat.parse(dateString);
-        } catch(IllegalArgumentException badDate) {
-            throw new DateParseException("Failed to parse date ("+badDate.getLocalizedMessage()+")");
+        } catch(Exception badDate1) {
+            try {
+                return shortDateFormat.parse(dateString);
+            } catch(Exception badDate) {
+                throw new DateParseException("Failed to parse date ("+badDate1.getLocalizedMessage()+")");
+            }
         }
     }
 
