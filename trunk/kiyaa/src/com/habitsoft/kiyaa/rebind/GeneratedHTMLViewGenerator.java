@@ -246,15 +246,20 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 } else {
                     return toActionCtor()+".perform("+callbackExpr+");";
                 }
-            } else if(loadAfter) {
-                // Not async, and no load before
-                return (action==null?"":action+" ")+viewExpr+".load("+callbackExpr+");";
-            } else if(callbackOptional) {
-                // Not async, no load before, no save after
-                return action==null?"":action;
             } else {
-                // Not async, no load before, no save after
-                return (action==null?"":action+" ")+callbackExpr+".onSuccess(null);";
+                String syncAction=action;
+                if(syncAction == null) syncAction = "";
+                else syncAction = "try { "+syncAction+" } catch(Throwable t) { "+callbackExpr+".onFailure(t); return; }";
+                if(loadAfter) {
+                    // Not async, and no load before
+                    return syncAction+viewExpr+".load("+callbackExpr+");";
+                } else if(callbackOptional) {
+                    // Not async, no load before, no save after
+                    return syncAction;
+                } else {
+                    // Not async, no load before, no save after, still have to call the callback, though.
+                    return syncAction+callbackExpr+".onSuccess(null);";
+                }
             }
         }
 
@@ -884,7 +889,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             	        return;
             		sw.println("public void load(AsyncCallback callback) {");
             		sw.indent();
-            		sw.println("init();");
+            		sw.println("try { init(); } catch(Throwable t) { callback.onFailure(t); return; }");
                     sw.println("callback = new AsyncCallbackProxy(callback) { public void onSuccess(Object result) { loadImpl(callback); } };");
             		for(String load : earlyLoads) {
             		    sw.println(load);
@@ -906,9 +911,9 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 sw.println("public void "+name+"(final AsyncCallback callback) {");
                 sw.indent();
                 if(loadMethod == null)
-                    sw.println("init();");
+                    sw.println("try { init(); } catch(Throwable t) { callback.onFailure(t); return; }");
                 if(loadMethod != null && loadMethod.getParameters().length == 0)
-                    sw.println("init(); super.load();");
+                    sw.println("try { init(); super.load(); } catch(Throwable t) { callback.onFailure(t); return; }");
                 if(nothingToLoad) {
                 	sw.println("callback.onSuccess(null);");
                 } else {
