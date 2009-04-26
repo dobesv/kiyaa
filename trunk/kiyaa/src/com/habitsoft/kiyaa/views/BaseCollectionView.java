@@ -266,12 +266,24 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 	    if(modelsChanged) {
 	        modelsChanged = false;
             loadModels(callback);
+	    } else if(collection == null) {
+	        refreshModels(callback);
 	    } else {
 	        load(startOffset, increment, callback);
 	    }
 	}
 	
-	protected void startLoadingModels(AsyncCallbackGroup group) {
+	private void refreshModels(AsyncCallback<Void> callback) {
+	    AsyncCallbackGroup group = new AsyncCallbackGroup();
+	    startLoadingModels(group);
+	    for(int row=0; row < items.size(); row++) {
+	        loadItem(row, group);
+	    }
+	    finishLoadingModels(group);
+	    group.ready(callback);
+    }
+
+    protected void startLoadingModels(AsyncCallbackGroup group) {
 	    
 	}
 
@@ -364,7 +376,6 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
     }
 	
 	private void showLoadedModels(T[] models, final int offset, final int limit, AsyncCallback callback) {
-		// Hide during update to avoid annoying jitter
 		try {
 			if(selectedRow >= offset && selectedRow < (offset+limit)) {
 				selectRow(-1);
