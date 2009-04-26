@@ -1,7 +1,6 @@
 package com.habitsoft.kiyaa.widgets;
 
 import java.util.HashMap;
-import java.util.NoSuchElementException;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.DOM;
@@ -94,7 +93,7 @@ public class ComplexHTMLPanel extends ComplexPanel {
     public void add(Widget widget, String id) {
         Element elem = getElementById(id);
         if (elem == null) {
-            throw new NoSuchElementException(id);
+            throw new IllegalArgumentException("Id " + id + " not found in the template");
         }
 
         super.add(widget, elem);
