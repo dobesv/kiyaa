@@ -263,10 +263,11 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             }
         }
 
-        public String toActionCtor(String viewExpr) {
-            if(action == null) {
-                return "new ViewAction(null, "+viewExpr+", "+saveBefore+", "+loadAfter+")";
-            } else return toActionCtor();
+        public String toViewAction(String viewExpr) {
+            if(saveBefore || loadAfter)
+                return "new ViewAction("+toActionCtor()+", "+viewExpr+", "+saveBefore+", "+loadAfter+")";
+            else
+                return toActionCtor();
         }
         private String toActionCtor() {
             String actionObj = object ? action
@@ -745,9 +746,9 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 sw.println("}");
                 
                 sw.println("boolean didInit=false;");
-                sw.println("private void init() {");
+                sw.println(myClass.getName()+" init() {");
                 sw.indent();
-                sw.println("if(didInit) return;");
+                sw.println("if(didInit) return this;");
             	if(hasHtml) {
             		if(useInnerHTML) {
 	                    sw.println("panel.setTemplate(TEMPLATE);");
@@ -762,6 +763,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 // }
                 if (!subviewClass)
                     generateAttributes(rootElement, baseType, "this");
+                sw.println("return this;");
                 sw.outdent();
                 sw.println("}");
             }
@@ -1381,11 +1383,11 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                         }
                     }
                     if (canLoad) {
-                        subviewLoads.add(viewExpr + ".load(group.member(\""+myClass.getName()+"."+id+".load()\"));");
+                        subviewLoads.add(viewExpr + ".load(group.member());");
                     }
                     if (!readOnly) {
                         if (canSave)
-                            saves.add(viewExpr + ".save(group.member(\""+myClass.getName()+"."+id+".save()\"));");
+                            saves.add(viewExpr + ".save(group.member());");
                     }
                     if(canLoad) {
                     	clearFields.add(viewExpr + ".clearFields();");
@@ -1474,7 +1476,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 						logger.log(TreeLogger.ERROR, "Async setters do not support for Actions yet.", null);
 						throw new UnableToCompleteException();
 					}
-				    sw.println(attributeAccessors.setter + "(" + action.toActionCtor(getRootView(false)) + ");");
+				    sw.println(attributeAccessors.setter + "(" + action.toViewAction(getRootView(false)) + ");");
 				} else if (path != null &&
 					        attributeAccessors.type.equals(getType(Value.class.getName()))
 					        && (valueExpr = getFieldValue(path)) != null) {
@@ -1703,7 +1705,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 			protected void generateAttributeLoadSave(JClassType type, ExpressionInfo attributeAccessors, ExpressionInfo pathAccessors,
 				boolean readOnly, boolean constant, boolean earlyLoad)
 				throws UnableToCompleteException {
-				String loadExpr = attributeAccessors.asyncCopyStatement(pathAccessors, "group.member(\""+attributeAccessors.setterString()+" load\")", true);
+				String loadExpr = attributeAccessors.asyncCopyStatement(pathAccessors, "group.member()", true);
 				// Put the value into the widget on load()
 				//if(attributeAccessors.getter != null && attributeAccessors.getType().equals(getType(String.class.getName())) && pathAccessors.getter != null) {
 					// It turns out that calling setText() and setValue to the same value is a high-cost operation
@@ -1871,8 +1873,8 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                             generateField(fieldName, getType(View.class.getName()));
                             sw.println(fieldName + " = " + createViewExpr + ";");
 							sw.println(name + ".setWidget("+fieldName+".getViewWidget());");
-							subviewLoads.add(fieldName + ".load(group.member(\""+fieldName+".load()\"));");
-                            saves.add(fieldName + ".save(group.member(\""+fieldName+".save()\"));");
+							subviewLoads.add(fieldName + ".load(group.member());");
+                            saves.add(fieldName + ".save(group.member());");
                             clearFields.add(fieldName + ".clearFields();");
                         } else if (findMethod(type, "setView", 1, false) != null
                         	 || (elem.getAttribute("with-model") != null && findMethod(type, "setView", 1, false) != null)) {
@@ -1959,7 +1961,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 //					}
 //				} else {
 					String className = addSubviewClass(elem);
-					createViewExpr = "new "+className+"("+myClass.getQualifiedSourceName()+".this)";
+					createViewExpr = "new "+className+"("+myClass.getQualifiedSourceName()+".this).init()";
 //				}
 				if(factory)
 					createViewExpr = "new ViewFactory() { public View createView() { return "+createViewExpr+"; } }";
