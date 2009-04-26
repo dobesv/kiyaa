@@ -6,6 +6,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import com.google.gwt.i18n.client.LocalizableResource;
+
 /**
  * A combination of Dictionary and Constants - this allows us to
  * put some constants in the page, and still use them with statically
@@ -42,7 +44,7 @@ import java.lang.annotation.Target;
  * this is the only practical way to load data from another site - by 
  * requesting a javascript file with that data in it.
  */
-public interface DictionaryConstants {
+public interface DictionaryConstants extends LocalizableResource {
     /**
      * Specifies the name of the javascript variable containing the
      * name of the dictionary to use.  If this is not specified,
@@ -118,17 +120,6 @@ public interface DictionaryConstants {
     @Target(ElementType.METHOD)
     @Documented
     public @interface DefaultStringValue {
-      String value();
-    }
-
-    /**
-     * The key used for lookup of translated strings.  If not present, the
-     * key will be generated based on the {@code @GenerateKeysUsing} annotation,
-     * or the unqualified method name if it is not present.
-     */
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.METHOD)
-    public @interface Key {
       String value();
     }
 
