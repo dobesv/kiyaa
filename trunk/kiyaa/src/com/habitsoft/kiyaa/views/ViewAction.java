@@ -33,23 +33,29 @@ public class ViewAction extends Action {
 	 * Tell the view to save, then perform the action, then load.
 	 */
 	public static void performOnView(final Action action, final View view, boolean saveBefore, boolean loadAfter, AsyncCallback<Void> callback) {
-		if(loadAfter) {
-			callback = new AsyncCallbackProxy(callback) {
-				@Override
-				public void onSuccess(Object result) {
-				    // ViewSaveLoadManager.getInstance().load(view, callback);
-				    view.load(callback);
-				}
-			};
-		}
-		if(action != null)
-			callback = action.performOnSuccess(callback);
-		if(saveBefore) {
-		    view.save(callback);
-		    //ViewSaveLoadManager.getInstance().save(view, callback);
-		} else {
-			callback.onSuccess(null);
-		}
+	    try {
+    		if(loadAfter) {
+    			callback = new AsyncCallbackProxy(callback) {
+    				@Override
+    				public void onSuccess(Object result) {
+    				    // ViewSaveLoadManager.getInstance().load(view, callback);
+    				    view.load(callback);
+    				}
+    			};
+    		}
+    		if(action != null) {
+    		    if(saveBefore)
+    		        view.save(action.performOnSuccess(callback));
+    		    else
+    		        action.perform(callback);
+    		} else if(saveBefore) {
+    		    view.save(callback);
+    		} else {
+    			callback.onSuccess(null);
+    		}
+	    } catch(Throwable t) {
+	        callback.onFailure(t);
+	    }
 	}
 	
 	/**
