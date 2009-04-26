@@ -1,7 +1,6 @@
 package com.habitsoft.kiyaa.views;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.DOM;
@@ -23,7 +22,7 @@ public class ListView extends BaseCollectionView {
 
 	FlowPanel flow = new FlowPanel();
 	ViewFactory viewFactory;
-	ArrayList views = new ArrayList();
+	ArrayList<ModelView> views = new ArrayList();
 	String rowClass=null;
 	String rowStyle=null;
 	View emptyContent;
@@ -164,16 +163,14 @@ public class ListView extends BaseCollectionView {
 	@Override
 	public void clearFields() {
 		super.clearFields();
-		for (Iterator i = views.iterator(); i.hasNext();) {
-			View view = (View) i.next();
+        for (View view : views) {
 			view.clearFields();
 		}
 	}
 
 	public void save(AsyncCallback callback) {
 		AsyncCallbackGroup group = new AsyncCallbackGroup();
-		for (Iterator i = views.iterator(); i.hasNext();) {
-			View view = (View) i.next();
+        for (View view : views) {
 			view.save(group.member());
 		}
 		group.ready(callback);
@@ -185,8 +182,7 @@ public class ListView extends BaseCollectionView {
 			@Override
 			public void onSuccess(Object result) {
 				AsyncCallbackGroup group = new AsyncCallbackGroup();
-				for (Iterator i = views.iterator(); i.hasNext();) {
-					View view = (View) i.next();
+				for (View view : views) {
 					view.load(group.member());
 				}
 				if(emptyContent != null)
