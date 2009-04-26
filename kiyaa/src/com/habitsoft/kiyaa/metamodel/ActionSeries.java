@@ -15,9 +15,10 @@ public class ActionSeries extends Action {
 	public ActionSeries() {
 	}
 
-	public ActionSeries(Action action1, Action action2) {
-		add(action1);
-		add(action2);
+	public ActionSeries(Action... actions) {
+	    for(Action a : actions) {
+	        this.actions.add(a);
+	    }
 	}
 	
 	public void add(Action action) {

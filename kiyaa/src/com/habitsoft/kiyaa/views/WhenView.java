@@ -26,6 +26,7 @@ public class WhenView extends SimplePanel implements View, TakesElementName {
 	boolean shouldShow;
 	View view;
 	String placeholderHtml;
+	boolean wait;
 	
 	public WhenView() {
 	    this(null, null);
@@ -56,6 +57,10 @@ public class WhenView extends SimplePanel implements View, TakesElementName {
 	 * if it is not supposed to be shown.
 	 */
 	public void setTest(boolean truth) {
+	    if(!wait) {
+	        if(truth) showView();
+	        else hideView();
+	    }
 		setVisible(shouldShow = truth);
 	}
 	
@@ -100,26 +105,41 @@ public class WhenView extends SimplePanel implements View, TakesElementName {
 				view = viewFactory.createView();
 				
 			}
-			view.load(new AsyncCallbackProxy(callback) {
-				@Override
-				public void onSuccess(Object result) {
-					// View may have become null while we waited, for whatever reason
-					if(view != null && getWidget() != view.getViewWidget())
-						setWidget(view.getViewWidget());
-					super.onSuccess(result);
-				}
-			});
+			if(wait) {
+    			view.load(new AsyncCallbackProxy(callback) {
+    				@Override
+    				public void onSuccess(Object result) {
+    				    if(shouldShow)
+    				        showView();
+    					super.onSuccess(result);
+    				}
+    				
+    				@Override
+    				public void onFailure(Throwable caught) {
+                        if(shouldShow)
+                            showView();
+    				    super.onFailure(caught);
+    				}
+    			});
+			} else {
+			    view.load(callback);
+                showView();
+			}
 		} else {
-			if(view != null) {
-				view.getViewWidget().removeFromParent();
-				view = null;
-			}
-			if(placeholderHtml != null) {
-				DOM.setInnerHTML(getElement(), placeholderHtml);
-			}
+			hideView();
 			callback.onSuccess(null);
 		}
 	}
+
+    protected void hideView() {
+        if(view != null) {
+        	view.getViewWidget().removeFromParent();
+        	view = null;
+        }
+        if(placeholderHtml != null) {
+        	DOM.setInnerHTML(getElement(), placeholderHtml);
+        }
+    }
 
 	/**
 	 * Proxy the save() call to the view, if it's current existing.
@@ -154,4 +174,23 @@ public class WhenView extends SimplePanel implements View, TakesElementName {
 			placeholderHtml = "&nbsp;";
 		}
 	}
+
+    protected void showView() {
+        if(view != null && getWidget() != view.getViewWidget())
+        	setWidget(view.getViewWidget());
+    }
+
+    /**
+     * If true, the view is not attached to the DOM until it is done loading,
+     * to avoid the "incremental re-layout" look.
+     * 
+     * If false, the view is shown immediately.
+     */
+    public boolean isWait() {
+        return wait;
+    }
+
+    public void setWait(boolean wait) {
+        this.wait = wait;
+    }
 }
