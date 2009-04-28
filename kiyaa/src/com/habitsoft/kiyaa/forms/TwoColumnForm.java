@@ -1,7 +1,6 @@
 package com.habitsoft.kiyaa.forms;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
@@ -159,9 +158,8 @@ public class TwoColumnForm extends ComplexPanel implements View {
 	}
 	
 	public void clearFields() {
-		for (Iterator<Row> i = rows.iterator(); i.hasNext();) {
-			View view = i.next().getView();
-			view.clearFields();
+	    for (Row row : rows) {
+            row.getView().clearFields();
 		}
 	}
 
@@ -171,16 +169,16 @@ public class TwoColumnForm extends ComplexPanel implements View {
 
 	public void load(AsyncCallback callback) {
 		AsyncCallbackGroup group = new AsyncCallbackGroup();
-		for (Iterator<Row> i = rows.iterator(); i.hasNext();) {
-			i.next().load(group.member());
+		for (Row row : rows) {
+			row.load(group.member());
 		}
 		group.ready(callback);
 	}
 
 	public void save(AsyncCallback callback) {
 		AsyncCallbackGroup group = new AsyncCallbackGroup();
-		for (Iterator<Row> i = rows.iterator(); i.hasNext();) {
-			i.next().save(group.member());
+		for (Row row : rows) {
+            row.save(group.member());
 		}
 		group.ready(callback);
 	}
