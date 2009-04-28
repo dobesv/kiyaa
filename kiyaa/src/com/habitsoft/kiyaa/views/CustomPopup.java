@@ -107,6 +107,9 @@ public class CustomPopup<T> implements PopupListener {
                 		if(callback != null)
                 			callback.onSuccess(null);
             		}
+        	    } else {
+                    if(callback != null)
+                        callback.onSuccess(null);
         	    }
             } else {
                 hidePopup();
