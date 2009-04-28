@@ -4,7 +4,6 @@ import com.google.gwt.dom.client.AnchorElement;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.ButtonBase;
-import com.google.gwt.user.client.ui.ClickListenerCollection;
 import com.google.gwt.user.client.ui.SourcesClickEvents;
 import com.habitsoft.kiyaa.util.FocusGroup;
 
@@ -14,7 +13,6 @@ import com.habitsoft.kiyaa.util.FocusGroup;
  * without triggering a security warning.
  */
 public class Anchor extends ButtonBase implements SourcesClickEvents {
-	ClickListenerCollection clickListeners;
 	AnchorElement anchor;
     FocusGroup focusGroup;
 	
