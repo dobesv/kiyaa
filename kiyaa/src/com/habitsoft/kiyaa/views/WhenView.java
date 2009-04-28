@@ -176,7 +176,11 @@ public class WhenView extends SimplePanel implements View, TakesElementName {
 	}
 
     protected void showView() {
-        if(view != null && getWidget() != view.getViewWidget())
+        if(view == null) {
+            if(viewFactory == null)
+                return;
+            view = viewFactory.createView();
+        } else if(getWidget() != view.getViewWidget())
         	setWidget(view.getViewWidget());
     }
 
