@@ -1,7 +1,6 @@
 package com.habitsoft.kiyaa.forms;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.FieldSetElement;
@@ -171,8 +170,8 @@ public class TwoRowForm extends ComplexPanel implements View {
 		addRow();
 	}
 	public void clearFields() {
-		for (Iterator<Field> i = fields.iterator(); i.hasNext();) {
-			View view = i.next().getView();
+		for (Field field : fields) {
+			View view = field.getView();
 			view.clearFields();
 		}
 	}
@@ -183,16 +182,16 @@ public class TwoRowForm extends ComplexPanel implements View {
 
 	public void load(AsyncCallback callback) {
 		AsyncCallbackGroup group = new AsyncCallbackGroup();
-		for (Iterator<Field> i = fields.iterator(); i.hasNext();) {
-			i.next().load(group.member());
+        for (Field field : fields) {
+			field.load(group.member());
 		}
 		group.ready(callback);
 	}
 
 	public void save(AsyncCallback callback) {
 		AsyncCallbackGroup group = new AsyncCallbackGroup();
-		for (Iterator<Field> i = fields.iterator(); i.hasNext();) {
-			i.next().save(group.member());
+        for (Field field : fields) {
+			field.save(group.member());
 		}
 		group.ready(callback);
 	}
