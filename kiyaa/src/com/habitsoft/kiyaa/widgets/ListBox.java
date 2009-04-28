@@ -2,7 +2,6 @@ package com.habitsoft.kiyaa.widgets;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -32,7 +31,7 @@ public class ListBox extends com.google.gwt.user.client.ui.ListBox {
 	protected boolean optional;
 	protected String nullLabel="";
 	protected HashMap actions = new HashMap();
-	protected ArrayList actionLabels = new ArrayList();
+	protected ArrayList<String> actionLabels = new ArrayList();
 	protected Object[] models;
 	protected Object pendingSelectedModel;
 	protected FocusGroup focusGroup;
@@ -183,8 +182,7 @@ public class ListBox extends com.google.gwt.user.client.ui.ListBox {
     				setSelectedIndex(getItemCount()-1);
     			}
     		}
-    		for (Iterator i = actionLabels.iterator(); i.hasNext();) {
-    			String label = (String) i.next();
+    		for (String label : actionLabels) {
     			this.addItem(label);
     		}
 		}
