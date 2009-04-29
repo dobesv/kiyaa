@@ -612,6 +612,8 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 	public int getMaxPageNumber() {
 	    if(totalItems == -1)
 	        return -1;
+	    else if(totalItems == 0)
+	        return 1;
 	    else
 	        return (totalItems+increment-1)/increment;
 	}
