@@ -570,7 +570,11 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 
 	@Override
 	protected UIObject getRowUIObject(int row) {
-		return (UIObject)rowPanels.get(row);
+		try {
+		    return (UIObject)rowPanels.get(row);
+		} catch(IndexOutOfBoundsException e) {
+		    return null;
+		}
 	}
 	@Override
 	protected Element getScrollElement() {

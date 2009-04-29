@@ -18,6 +18,7 @@ import com.google.gwt.user.client.ui.SourcesChangeEvents;
 import com.google.gwt.user.client.ui.SourcesFocusEvents;
 import com.google.gwt.user.client.ui.SourcesPopupEvents;
 import com.google.gwt.user.client.ui.TextBoxBase;
+import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.client.ui.TextBoxBase.TextAlignConstant;
 import com.habitsoft.kiyaa.util.FocusGroup;
@@ -120,8 +121,11 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 		    if(selectable) {
     			searching = false;
     			table.setSelectedIndex(newIndex);
-    			if(newIndex >= 0)
-    				container.ensureVisible(table.getRowUIObject(newIndex));
+    			if(newIndex >= 0) {
+    				final UIObject rowWidget = table.getRowUIObject(newIndex);
+    				if(rowWidget != null)
+    				    container.ensureVisible(rowWidget);
+    			}
 		    }
 		}
 
