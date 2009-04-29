@@ -6,6 +6,7 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.habitsoft.kiyaa.util.AsyncCallbackProxy;
+import com.habitsoft.kiyaa.widgets.Feedback;
 
 /**
  * Utility view that takes a view as a parameter and shows it.  This
@@ -64,7 +65,8 @@ public class DynamicView implements View {
 				@Override
 				public void onFailure(Throwable caught) {
                     Log.error("Error loading view "+view, caught);
-					onSuccess(null);
+                    displayError(caught);
+					super.onSuccess(null);
 				}
 			});
 		} else {
@@ -100,4 +102,10 @@ public class DynamicView implements View {
 	public void setLoadingImage(String src) {
 		setLoadingHtml("<img src=\""+src+"\"/>");
 	}
+
+    private void displayError(Throwable caught) {
+        Feedback fb = new Feedback();
+        fb.showError(caught);
+        wrapper.setWidget(fb);
+    }
 }
