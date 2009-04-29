@@ -1,5 +1,6 @@
 package com.habitsoft.kiyaa.views;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -62,8 +63,8 @@ public class DynamicView implements View {
 				
 				@Override
 				public void onFailure(Throwable caught) {
-                    show();
-					super.onFailure(caught);
+                    Log.error("Error loading view "+view, caught);
+					onSuccess(null);
 				}
 			});
 		} else {
@@ -73,7 +74,13 @@ public class DynamicView implements View {
 
 	public void save(AsyncCallback callback) {
 		if(view != null) {
-			view.save(callback);
+			view.save(new AsyncCallbackProxy(callback) {
+			    @Override
+			    public void onFailure(Throwable caught) {
+			        Log.error("Error saving view "+view, caught);
+			        super.onSuccess(null);
+			    }
+			});
 		} else {
 			callback.onSuccess(null);
 		}
