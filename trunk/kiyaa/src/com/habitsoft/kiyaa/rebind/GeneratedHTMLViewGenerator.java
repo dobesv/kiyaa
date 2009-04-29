@@ -2014,7 +2014,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 					if (parameter.getType().equals(getType(Action.class.getName()))
 				        && (pathAccessors == null || !pathAccessors.hasGetter()) 
 				        && (action = getAction(value)) != null) {
-						paramString = action.toActionCtor();
+						paramString = action.toViewAction(getRootView(true));
 					} else if (parameter.getType().equals(getType(Value.class.getName()))
 						        && (valueExpr = getFieldValue(path)) != null) {
 						paramString = valueExpr;
