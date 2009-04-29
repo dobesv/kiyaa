@@ -100,12 +100,14 @@ public class Feedback extends FlowPanel {
 	}
 	
 	/**
-	 * 
-	 * @param timeout Message disappears automatically after this many millisenconds
 	 */
-	public void negativeFeedback(String text, Collection<Action> actions, int timeout) {
-		setText(FeedbackType.NEGATIVE, text, actions, null, timeout);
+	public void showError(Throwable caught) {
+		setText(FeedbackType.NEGATIVE, caught.getLocalizedMessage()==null?caught.toString():caught.getLocalizedMessage(), null, null, 0);
 	}
+	
+    public void showError(String message) {
+        setText(FeedbackType.NEGATIVE, message, null, null, 0);
+    }
 	
 	/**
 	 * 
@@ -147,4 +149,5 @@ public class Feedback extends FlowPanel {
                 this.addStyleDependentName(feedbackType.name().toLowerCase());
         }
     }
+
 }
