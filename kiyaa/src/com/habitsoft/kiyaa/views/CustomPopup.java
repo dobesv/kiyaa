@@ -407,7 +407,7 @@ public class CustomPopup<T> implements PopupListener {
     }
 
     protected void ensureSelectedIndexIsVisible() {
-    	if(table.getSelectedIndex() >= 0) {
+    	if(table.getSelectedIndex() >= 0  && table.getRowCount() > 0) {
     		final UIObject rowUIObject = table.getRowUIObject(table.getSelectedIndex());
     		if(rowUIObject != null)
     		    container.ensureVisible(rowUIObject);
