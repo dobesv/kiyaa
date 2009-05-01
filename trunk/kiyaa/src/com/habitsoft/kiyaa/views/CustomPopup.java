@@ -499,6 +499,7 @@ public class CustomPopup<T> implements PopupListener {
         //GWT.log("Filtering...", null);
         AsyncCallback<Void> callback = new AsyncCallback<Void>() {
             public void onSuccess(Void result) {
+                loadTable(AsyncCallbackFactory.defaultNewInstance());
             }
             public void onFailure(Throwable caught) {
                 GWT.log("Filter operation failed", caught);
