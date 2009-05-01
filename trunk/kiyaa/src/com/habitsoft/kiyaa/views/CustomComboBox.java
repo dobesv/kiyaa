@@ -199,7 +199,7 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 		
 		if(searchable) {
 		    searching = true;
-		    applyFilter();
+		    applyFilter(true);
 		}
         
 		showPopup(new AsyncCallback<Void>() {
