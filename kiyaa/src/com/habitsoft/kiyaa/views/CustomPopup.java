@@ -48,7 +48,7 @@ public class CustomPopup<T> implements PopupListener {
     private Timer filterOperation = new Timer() {
     		@Override
     		public void run() {
-    			applyFilter();
+    			applyFilter(true);
     		}
     	};
     protected boolean popupShowing = false;
@@ -262,8 +262,8 @@ public class CustomPopup<T> implements PopupListener {
     }
 
     private void updateModelsInTable() {
-    	applyFilter();
-    	table.setModels(models);
+    	applyFilter(false);
+        table.setModels(models);
     }
 
     public void addChangeListener(ChangeListener listener) {
@@ -352,8 +352,8 @@ public class CustomPopup<T> implements PopupListener {
     				if(restoreFilterActionLabel != null)
     				    restoreFilterActionLabel.setVisible(true);
     				removeFilterActionLabel.setVisible(false);
-    				applyFilter();
-    				table.load(callback);
+    				applyFilter(true);
+    				callback.onSuccess(null);
     			}
     		}, new Value() {
     			public void getValue(AsyncCallback callback) {
@@ -361,6 +361,7 @@ public class CustomPopup<T> implements PopupListener {
     			}
     			public void setValue(Object newValue, AsyncCallback callback) {
     				applyDefaultFilter = ((Boolean)newValue).booleanValue();
+                    applyFilter(true);
     				callback.onSuccess(null);
     			}
     		}, false);
@@ -375,8 +376,8 @@ public class CustomPopup<T> implements PopupListener {
                     if(removeFilterActionLabel != null)
                         removeFilterActionLabel.setVisible(true);
                     restoreFilterActionLabel.setVisible(false);
-    				applyFilter();
-    				table.load(callback);
+    				applyFilter(true);
+    				callback.onSuccess(null);
     			}
     		}, new Value() {
     			public void getValue(AsyncCallback callback) {
@@ -384,7 +385,7 @@ public class CustomPopup<T> implements PopupListener {
     			}
     			public void setValue(Object newValue, AsyncCallback callback) {
     				applyDefaultFilter = !((Boolean)newValue).booleanValue();
-    				applyFilter();
+    				applyFilter(true);
     				callback.onSuccess(null);
     			}
     		}, false);
@@ -492,14 +493,18 @@ public class CustomPopup<T> implements PopupListener {
         return null;
     }
 
-    protected void applyFilter() {
+    protected void applyFilter(final boolean loadTable) {
         // Don't apply the filter if we haven't created the table
         if(table == null)
             return;
         //GWT.log("Filtering...", null);
-        AsyncCallback<Void> callback = new AsyncCallback<Void>() {
+        AsyncCallback<Void> callback = 
+            new AsyncCallback<Void>() {
             public void onSuccess(Void result) {
-                loadTable(AsyncCallbackFactory.defaultNewInstance());
+                if(loadTable) {
+                    GWT.log("Loading table in applyFilter()", null);
+                    loadTable(AsyncCallbackFactory.defaultNewInstance());
+                }
             }
             public void onFailure(Throwable caught) {
                 GWT.log("Filter operation failed", caught);
