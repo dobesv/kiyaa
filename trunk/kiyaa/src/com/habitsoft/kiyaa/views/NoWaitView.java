@@ -37,7 +37,7 @@ public class NoWaitView implements View {
 				super.onFailure(caught);
 			}
 		};
-		view.load(new AsyncCallbackWithTimeout(loadInProgress));
+		view.load(new AsyncCallbackWithTimeout(loadInProgress, view));
 	}
 
 	public void save(final AsyncCallback callback) {

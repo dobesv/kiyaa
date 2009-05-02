@@ -17,9 +17,9 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 public class AsyncCallbackWithTimeout<T> extends AsyncCallbackProxy<T> {
 	boolean complete;
 	Timer timer;
-	Exception timeout;
-	public AsyncCallbackWithTimeout(AsyncCallback<T> callback, int timeoutMillis) {
-		super(callback);
+	Error timeout;
+	public AsyncCallbackWithTimeout(AsyncCallback<T> callback, int timeoutMillis, Object marker) {
+		super(callback, marker);
 		timer = new Timer() {
 			@Override
 			public void run() {
@@ -29,8 +29,8 @@ public class AsyncCallbackWithTimeout<T> extends AsyncCallbackProxy<T> {
 		timer.schedule(timeoutMillis);
 		timeout = new TimeOutException();
 	}
-	public AsyncCallbackWithTimeout(AsyncCallback<T> callback) {
-		this(callback, 120000);
+	public AsyncCallbackWithTimeout(AsyncCallback<T> callback, Object marker) {
+		this(callback, 120000, marker);
 	}
 	@Override
 	public void onFailure(Throwable caught) {
@@ -56,7 +56,7 @@ public class AsyncCallbackWithTimeout<T> extends AsyncCallbackProxy<T> {
 		}
 	}
 
-	static class TimeOutException extends Exception {
+	static class TimeOutException extends Error {
 		private static final long serialVersionUID = 1L;
 		TimeOutException() {
 			super("An operation timed out; this may be caused by a slow or unreliable network connection, a server outage, or a bug.");
