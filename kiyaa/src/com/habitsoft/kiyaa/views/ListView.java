@@ -12,7 +12,6 @@ import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
 import com.habitsoft.kiyaa.util.AsyncCallbackGroup;
-import com.habitsoft.kiyaa.util.AsyncCallbackProxy;
 import com.habitsoft.kiyaa.util.HoverStyleHandler;
 
 /**
@@ -177,21 +176,20 @@ public class ListView extends BaseCollectionView {
 	}
 	
 	@Override
-	public void load(AsyncCallback callback) {
-		super.load(new AsyncCallbackProxy(callback) {
-			@Override
-			public void onSuccess(Object result) {
-				AsyncCallbackGroup group = new AsyncCallbackGroup();
-				for (View view : views) {
-					view.load(group.member());
-				}
-				if(emptyContent != null)
-					emptyContent.load(group.member());
-				group.ready(callback);
-			}
-		});
+	protected void startLoadingModels(AsyncCallbackGroup group) {
 	}
-
+	
+	@Override
+	protected void finishLoadingModels(AsyncCallbackGroup group) {
+        if(emptyContent != null)
+            emptyContent.load(group.member());
+	}
+	
+	@Override
+	protected void loadItem(int i, AsyncCallbackGroup group) {
+	    views.get(i).load(group.member());
+	}
+	
 	@Override
 	protected UIObject getRowUIObject(int row) {
 	    if(row < views.size())
