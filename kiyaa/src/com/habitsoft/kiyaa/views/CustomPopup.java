@@ -444,7 +444,7 @@ public class CustomPopup<T> implements PopupListener {
     	        @Override
                 public void onSuccess(T[] result) {
     	            setModels(result);
-    	            if(table != null) GWT.log("loading table in custom popup.load() (async models)", null);
+    	            //if(table != null) GWT.log("loading table in custom popup.load() (async models)", null);
     	            loadTable(callback);
     	        }
     	    });
@@ -502,7 +502,7 @@ public class CustomPopup<T> implements PopupListener {
             new AsyncCallback<Void>() {
             public void onSuccess(Void result) {
                 if(loadTable) {
-                    GWT.log("Loading table in applyFilter()", null);
+                    //GWT.log("Loading table in applyFilter()", null);
                     loadTable(AsyncCallbackFactory.defaultNewInstance());
                 }
             }
