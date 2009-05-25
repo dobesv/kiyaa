@@ -1,17 +1,18 @@
 package com.habitsoft.kiyaa.widgets;
 
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.ui.FocusListener;
-import com.google.gwt.user.client.ui.KeyboardListener;
-import com.google.gwt.user.client.ui.Widget;
 import com.habitsoft.kiyaa.util.FocusGroup;
 
 
-public class TextBox extends com.google.gwt.user.client.ui.TextBox {
+public class TextBox extends com.google.gwt.user.client.ui.TextBox implements FocusHandler, BlurHandler {
 	boolean autoTrim=true;
 	String innerHelp=null;
-	FocusListener focusListener;
 	boolean helpShowing=false;
 	FocusGroup focusGroup;
 	boolean focusNextOnEnter=true;
@@ -27,6 +28,8 @@ public class TextBox extends com.google.gwt.user.client.ui.TextBox {
 	public TextBox() {
 		super();
 		setStylePrimaryName("ui-textbox");
+        addFocusHandler(this);
+        addBlurHandler(this);
 	}
 	
 	String currentText="";
@@ -75,32 +78,14 @@ public class TextBox extends com.google.gwt.user.client.ui.TextBox {
     public void setInnerHelp(String innerHelp) {
         String oldInnerHelp = this.innerHelp;
         this.innerHelp = innerHelp;
-        if(innerHelp != null && oldInnerHelp == null) {
-            if(focusListener == null) {
-                focusListener = new FocusListener() {
-                    public void onLostFocus(Widget sender) {
-                        String text = getText();
-                        if(text == null || text.length() == 0) {
-                            showHelp();
-                        }
-                    }
-                    public void onFocus(Widget sender) {
-                        if(helpShowing) {
-                            hideHelp();
-                            setCursorPos(0);
-                        }
-                    }
-                };                
-            }
-            addFocusListener(focusListener);
+        if(innerHelp != null) {
             if(helpShowing)
                 super.setText(innerHelp);
             else if(currentText == null || currentText.length() == 0)
                 showHelp();
-        } else if(innerHelp == null && oldInnerHelp != null) {
+        } else if(oldInnerHelp != null) {
             if(helpShowing)
                 hideHelp();
-            removeFocusListener(focusListener);
         }
     }
 	
@@ -121,7 +106,7 @@ public class TextBox extends com.google.gwt.user.client.ui.TextBox {
         if(focusNextOnEnter 
             && focusGroup != null
             && DOM.eventGetType(event) == Event.ONKEYPRESS
-            && DOM.eventGetKeyCode(event) == KeyboardListener.KEY_ENTER) {
+            && event.getKeyCode() == KeyCodes.KEY_ENTER) {
             if(DOM.eventGetAltKey(event) || DOM.eventGetMetaKey(event) || DOM.eventGetCtrlKey(event) || DOM.eventGetShiftKey(event))
                 focusGroup.focusNextButton();
             else
@@ -129,5 +114,19 @@ public class TextBox extends com.google.gwt.user.client.ui.TextBox {
         }
     }
 
-	
+    @Override
+    public void onFocus(FocusEvent event) {
+        if(helpShowing) {
+            hideHelp();
+            setCursorPos(0);
+        }
+    }
+
+    @Override
+    public void onBlur(BlurEvent event) {
+        String text = getText();
+        if(text == null || text.length() == 0) {
+            showHelp();
+        }
+    }
 }
