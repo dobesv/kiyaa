@@ -180,4 +180,15 @@ public abstract class GwtEJBWrapperServlet<T> extends RemoteServiceServlet {
 		}
 	}
 
+	/**
+	 * Glassfish doesn't like a null exception parameter to log
+	 */
+	@Override
+	public void log(String message, Throwable t) {
+	    if(t == null) {
+	        log(message);
+	    } else {
+	        super.log(message, t);
+	    }
+	}
 }
