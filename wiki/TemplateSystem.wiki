@@ -103,6 +103,8 @@ As you've seen by now the expressions have 3 formats:
 
  # ${ ... } contains an expression which is read when the view loads and copied into the target property on the widget
  # #{ ... } extends the behavior of ${ ... } by additionally copying the value back out of the widget to the given expression when the view saves.
+ # %{ ... } is a variation of ${ ... } that only runs once, when the view is created.  Use this for constant values to avoid re-setting them on every load
+ # @{ ... } is a variation of ${ ... } that loads the value "early" - that is, values with @{ ... } are set before values with ${ ... }.  Use this for the condition of k:when to get the view to show up without waiting for other parts of the view to load.
 
 But wait ... there's more!  Here are some more of the features supported:
 
