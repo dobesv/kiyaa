@@ -1,0 +1,13 @@
+<module>
+
+	<!-- Inherit the core Web Toolkit stuff.                  -->
+	<inherits name='com.google.gwt.user.User'/>
+
+    <inherits name='com.habitsoft.kiyaa.Forms'/>
+    <inherits name='com.habitsoft.kiyaa.Metamodel'/>
+    <inherits name='com.habitsoft.kiyaa.Util'/>
+    <inherits name='com.habitsoft.kiyaa.Views'/>
+    <inherits name='com.habitsoft.kiyaa.Widgets'/>
+    <inherits name='com.habitsoft.kiyaa.Caching'/>
+    
+</module>

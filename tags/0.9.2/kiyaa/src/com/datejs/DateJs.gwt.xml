@@ -1,0 +1,10 @@
+<module>
+
+	<!-- Inherit the core Web Toolkit stuff.                  -->
+	<inherits name='com.google.gwt.user.User'/>
+
+    <!-- TODO: Load locale-specific version -->
+    <script src="date.js"/>
+    <public path="Datejs-all/build"/>
+    
+</module>

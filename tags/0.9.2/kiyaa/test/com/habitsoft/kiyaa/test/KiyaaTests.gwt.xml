@@ -1,0 +1,11 @@
+<module>
+
+	<!-- Inherit the core Web Toolkit stuff.                  -->
+	<inherits name='com.google.gwt.user.User'/>
+    <inherits name='com.google.gwt.junit.JUnit'/>
+    <inherits name='com.habitsoft.kiyaa.Kiyaa'/>
+    
+    <source path="client"/>
+    <source path="util"/>
+    
+</module>
