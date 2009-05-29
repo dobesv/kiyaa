@@ -201,13 +201,15 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
         final boolean async;
         final boolean saveBefore;
         final boolean loadAfter;
+        final String targetView;
         
-        private ActionInfo(String action, boolean object, boolean async, boolean saveBefore, boolean loadAfter) {
+        private ActionInfo(String action, boolean object, boolean async, String targetView, boolean saveBefore, boolean loadAfter) {
             this.action = action;
             this.object = object;
             this.async = async;
             this.saveBefore = saveBefore;
             this.loadAfter = loadAfter;
+            this.targetView = targetView;
         }
         
         /**
@@ -232,15 +234,14 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
         }
         
         /**
-         * @param viewExpr View to execute the action on
          * @param callbackExpr AsyncCallback to return errors or success to
          * @param callbackOptional True if the callback expression doesn't have to be called (i.e. group.member() or AsyncCallbackFactory.defaultNewInstance() calls)
          * @return one or more statements separated by a semicolon to execute this action.
          */
-        public String toString(String viewExpr, String callbackExpr, boolean callbackOptional) {
+        public String toString(String callbackExpr, boolean callbackOptional) {
             if(object || async || saveBefore) {
                 if(saveBefore || loadAfter) {
-                    return "ViewAction.performOnView("+(action==null?"null":toActionCtor())+", "+viewExpr+", "+saveBefore+", "+loadAfter+", "+callbackExpr+");";
+                    return "ViewAction.performOnView("+(action==null?"null":toActionCtor())+", "+targetView+", "+saveBefore+", "+loadAfter+", "+callbackExpr+");";
                 } else if(action == null) {
                     return "";
                 } else {
@@ -252,7 +253,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 else syncAction = "try { "+syncAction+" } catch(Throwable t) { "+callbackExpr+".onFailure(t); return; }";
                 if(loadAfter) {
                     // Not async, and no load before
-                    return syncAction+viewExpr+".load("+callbackExpr+");";
+                    return syncAction+targetView+".load("+callbackExpr+");";
                 } else if(callbackOptional) {
                     // Not async, no load before, no save after
                     return syncAction;
@@ -263,9 +264,9 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             }
         }
 
-        public String toViewAction(String viewExpr) {
+        public String toViewAction() {
             if(saveBefore || loadAfter)
-                return "new ViewAction("+toActionCtor()+", "+viewExpr+", "+saveBefore+", "+loadAfter+")";
+                return "new ViewAction("+toActionCtor()+", "+targetView+", "+saveBefore+", "+loadAfter+")";
             else
                 return toActionCtor();
         }
@@ -1471,12 +1472,12 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				    throw new UnableToCompleteException();
 				} else if (attributeAccessors.type.equals(getType(Action.class.getName()))
 					        && (pathAccessors == null || !pathAccessors.hasGetter()) 
-					        && (action = getAction(value)) != null) {
+					        && (action = getAction(value, false)) != null) {
 					if(attributeAccessors.setter==null) {
 						logger.log(TreeLogger.ERROR, "Async setters do not support for Actions yet.", null);
 						throw new UnableToCompleteException();
 					}
-				    sw.println(attributeAccessors.setter + "(" + action.toViewAction(getRootView(false)) + ");");
+                    sw.println(attributeAccessors.setter + "(" + action.toViewAction() + ");");
 				} else if (path != null &&
 					        attributeAccessors.type.equals(getType(Value.class.getName()))
 					        && (valueExpr = getFieldValue(path)) != null) {
@@ -1610,7 +1611,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				    		" that implements SourcesChangeEvents.", null);
 				    throw new UnableToCompleteException();
 				}
-				ActionInfo actionExpr = getAction(value);
+				ActionInfo actionExpr = getAction(value, true);
 				if(actionExpr == null) {
 				    logger.log(TreeLogger.ERROR, "Unable to find action for "+value+" for an onchange handler", null);
 				    throw new UnableToCompleteException();
@@ -1626,7 +1627,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				    		" that implements SourcesFocusEvents.", null);
 				    throw new UnableToCompleteException();
 				}
-				ActionInfo actionExpr = getAction(value);
+				ActionInfo actionExpr = getAction(value, true);
 				if(actionExpr == null) {
 				    logger.log(TreeLogger.ERROR, "Unable to find action for "+value+" for an onfocus handler", null);
 				    throw new UnableToCompleteException();
@@ -1635,7 +1636,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				sw.indent();
 				sw.println("public void " + "onFocus(Widget sender)" + " {");
 				sw.indent();
-				sw.println(actionExpr.toString(getRootView(true), "AsyncCallbackFactory.defaultNewInstance()", true));
+				sw.println(actionExpr.toString("AsyncCallbackFactory.defaultNewInstance()", true));
 				sw.outdent();
 				sw.println("}");
 				sw.println("public void " + "onLostFocus(Widget sender)" + " { }");
@@ -1651,7 +1652,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				    		" that implements SourcesFocusEvents.", null);
 				    throw new UnableToCompleteException();
 				}
-				ActionInfo actionExpr = getAction(value);
+				ActionInfo actionExpr = getAction(value, true);
 				if(actionExpr == null) {
 				    logger.log(TreeLogger.ERROR, "Unable to find action for "+value+" for an onblur handler", null);
 				    throw new UnableToCompleteException();
@@ -1660,7 +1661,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				sw.indent();
 				sw.println("public void " + "onLostFocus(Widget sender)" + " {");
 				sw.indent();
-				sw.println(actionExpr.toString(getRootView(true), "AsyncCallbackFactory.defaultNewInstance()", true));
+				sw.println(actionExpr.toString("AsyncCallbackFactory.defaultNewInstance()", true));
 				sw.outdent();
 				sw.println("}");
 				sw.println("public void " + "onFocus(Widget sender)" + " { }");
@@ -1676,7 +1677,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				    		" that implements SourceClickEvents.", null);
 				    throw new UnableToCompleteException();
 				}
-				ActionInfo actionExpr = getAction(value);
+				ActionInfo actionExpr = getAction(value, true);
 				if(actionExpr == null) {
 				    logger.log(TreeLogger.ERROR, "Unable to find action for "+value
 				        +" for an onclick handler", null);
@@ -1692,7 +1693,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
     			    		" that implements SourcesKeyEvents.", null);
     			    throw new UnableToCompleteException();
     			}
-    			ActionInfo actionExpr = getAction(value);
+    			ActionInfo actionExpr = getAction(value, true);
     			if(actionExpr == null) {
     			    logger.log(TreeLogger.ERROR, "Unable to find action for "+value
     			        +" for a onPressXXX handler", null);
@@ -1754,7 +1755,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 	sw.println("if("+condition+")");
                 	sw.indent();
                 }
-                sw.println(action.toString(getRootView(true), "AsyncCallbackFactory.defaultNewInstance()", true));
+                sw.println(action.toString("AsyncCallbackFactory.defaultNewInstance()", true));
                 if(condition != null)
                 	sw.outdent();
                 sw.outdent();
@@ -2013,8 +2014,8 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 					ActionInfo action;
 					if (parameter.getType().equals(getType(Action.class.getName()))
 				        && (pathAccessors == null || !pathAccessors.hasGetter()) 
-				        && (action = getAction(value)) != null) {
-						paramString = action.toViewAction(getRootView(true));
+				        && (action = getAction(value, true)) != null) {
+						paramString = action.toViewAction();
 					} else if (parameter.getType().equals(getType(Value.class.getName()))
 						        && (valueExpr = getFieldValue(path)) != null) {
 						paramString = valueExpr;
@@ -2123,8 +2124,22 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             	throw new Error("Generator is not an inner class of the root view !?!?");
             }
             
-			ActionInfo getAction(final String expr) throws UnableToCompleteException {
-				return getAction(expr, true, true);
+			ActionInfo getAction(String expr, boolean innerClass) throws UnableToCompleteException {
+                final Matcher matcher = Pattern.compile("^on\\s+([^:]+):\\s*(.*)$").matcher(expr);
+                final String targetView;
+                if(matcher.matches()) {
+                    final ExpressionInfo targetViewExpr = findAccessors(matcher.group(1), innerClass, false);
+                    if(targetViewExpr == null || !targetViewExpr.hasSynchronousGetter()) {
+                        logger.log(TreeLogger.ERROR, "Unable to resolve target view expression '"+matcher.group(1)+"' for action '"+expr+"'", null);
+                        throw new UnableToCompleteException();
+                    }
+                    targetView = targetViewExpr.getter;
+                    expr = matcher.group(2);
+                } else {
+                    targetView = getRootView(innerClass);
+                }
+			    
+				return getAction(expr, targetView, true, true);
 			}
 
 			/**
@@ -2138,12 +2153,12 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 			 * Actions starting with ';' won't save before running; actions ending with ';' won't load after
 			 * running.  This can be used to avoid full save/load cycles when save/load is slow or unnecessary.
 			 */
-            protected ActionInfo getAction(String path, boolean saveBefore, boolean loadAfter) throws UnableToCompleteException {
+            protected ActionInfo getAction(String path, String targetView, boolean saveBefore, boolean loadAfter) throws UnableToCompleteException {
             	if((path.startsWith("${") || path.startsWith("#{") || path.startsWith("%{") || path.startsWith("@{")) && path.endsWith("}")) {
             		path = path.substring(2, path.length()-1);
                     ExpressionInfo expr = findAccessors(path, true, false);
                     if(expr != null && expr.hasSynchronousGetter())
-                		return new ActionInfo(expr.getGetter(), true, true, saveBefore, loadAfter);
+                		return new ActionInfo(expr.getGetter(), true, true, targetView, saveBefore, loadAfter);
                     logger.log(TreeLogger.ERROR, "Unable to resolve action variable at path "+path, null);
                     throw new UnableToCompleteException();
             	}
@@ -2155,7 +2170,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             		loadAfter = false;
             		path = path.substring(0, path.length()-1).trim();
             	}
-            	String actionKey = path+","+saveBefore+","+loadAfter;
+            	String actionKey = path+","+saveBefore+","+targetView+","+loadAfter;
             	ActionInfo existing = actions.get(actionKey);
                 if (existing != null)
                     return existing;
@@ -2163,17 +2178,17 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 if(actionSeries.length > 1) {
                 	ArrayList<String> actionList = new ArrayList<String>();
                 	for (int i = 0; i < actionSeries.length; i++) {
-                		ActionInfo action = getAction(actionSeries[i], false, false);
+                		ActionInfo action = getAction(actionSeries[i], targetView, false, false);
                 		if(action.getAction() != null)
                 		    actionList.add(action.toActionCtor());
                 	}
                 	String ctor = "new ActionSeries("+StringUtils.join(actionList, ",\n\t\t\t")+")";
-                    return new ActionInfo(ctor, true, true, saveBefore, loadAfter);
+                    return new ActionInfo(ctor, true, true, targetView, saveBefore, loadAfter);
                 }
 
-                if("".equals(path)) {
+                if("".equals(path) || "null".equals(path)) {
 	                //sw.println("final Action " + actionName + " = new ViewAction(null, "+rootView+", "+saveBefore+", "+loadAfter+");");
-                	return new ActionInfo(null, true, true, saveBefore, loadAfter);
+                	return new ActionInfo(null, true, true, targetView, saveBefore, loadAfter);
                 }
                 
                 String[] args = null;
@@ -2204,9 +2219,9 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 		throw new UnableToCompleteException();
                 	}
                 	if(lvalue.asyncSetter == null && rvalue.asyncGetter == null) {
-                        return new ActionInfo(lvalue.copyStatement(rvalue), false, false, saveBefore, loadAfter);
+                        return new ActionInfo(lvalue.copyStatement(rvalue), false, false, targetView, saveBefore, loadAfter);
                 	} else {
-                	    return new ActionInfo(lvalue.asyncCopyStatement(rvalue, "callback", false), false, true, saveBefore, loadAfter);
+                	    return new ActionInfo(lvalue.asyncCopyStatement(rvalue, "callback", false), false, true, targetView, saveBefore, loadAfter);
                 	}
                 } else {
                     int objectPathEnd = preargs.lastIndexOf('.');
@@ -2308,9 +2323,9 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                     }
                     if (asyncMethod) {
                         return new ActionInfo(methodCall + "(" + joinWithCommas(0, args) + (args.length > 0 ? ", " : "")
-                            + "callback);", false, true, saveBefore, loadAfter);
+                            + "callback);", false, true, targetView, saveBefore, loadAfter);
                     } else {
-                        return new ActionInfo(methodCall + "(" + joinWithCommas(0, args) + ");", false, false, saveBefore, loadAfter);
+                        return new ActionInfo(methodCall + "(" + joinWithCommas(0, args) + ");", false, false, targetView, saveBefore, loadAfter);
                     }
                 }
             }
