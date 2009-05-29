@@ -126,10 +126,40 @@ Specific attributes, as well as some widget or view properties are considered to
 
 You can usually get more information about the event (like `onKeyPress`) from `Event.getCurrentEvent()`, as long as the save() implementation for your view completes without returning to the main event loop.
 
-Notes:
- * You can specify multiple actions (potentially asynchronous ones) seperated with semicolons and they'll be run serially until the end, or a failure
- * Actions can be an assignment or a setter method call to update fields in the object
- * Actions can call methods on objects and pass parameters which must be fetched asynchronously - the engine used to evaluate EL is used on all parts of the action.
+=== Action Syntax ===
+
+An action can be the name of a method to call, for example:
+
+onclick='sayHello()'
+
+The method can take parameters, and the parameters may be expressions or even asynchronous properties:
+
+onclick='sayHello(labels.helloWorld)'
+
+You can also chain multiple actions together using semicolons, they will be run in order until the end, or one of them fails:
+
+onclick="sayHello() ; sayGoodbye()'
+
+You can use assignments as part of an action to set a property:
+
+onclick='name = "Bob" ; sayHello(name)'
+
+You can also define an empty action to simply refresh the view:
+
+onclick=''
+
+Or use the word 'null' as a no-op:
+
+onclick='null'
+
+Putting a semicolon at the beginning of an action tells kiyaa NOT to save the view before running the action, and a semicolon at the end indicates that load should NOT be run after the action:
+
+onclick='; doSomethingWithoutRefreshingTheView() ;'
+
+To refresh a different view than the one currently being defined, use the "on _view_: ..." prefix:
+
+onclick='on parentView: doSomethingThatAffectsDataInTheParentView'
+onclick='on childView: doSomethingThatOnlyAffectsDataInTheChildView'
 
 == Defining Views inside Panels ==
 
