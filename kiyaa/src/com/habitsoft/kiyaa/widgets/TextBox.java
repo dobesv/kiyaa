@@ -1,6 +1,5 @@
 package com.habitsoft.kiyaa.widgets;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
@@ -58,7 +57,6 @@ public class TextBox extends com.google.gwt.user.client.ui.TextBox implements Fo
 
     private void showHelp() {
 	    if(!helpShowing) {
-	        GWT.log("showHelp("+innerHelp+")", new Exception());
 	        addStyleName("help-showing");
 	        helpShowing = true;
 	        super.setText(innerHelp);
@@ -123,7 +121,6 @@ public class TextBox extends com.google.gwt.user.client.ui.TextBox implements Fo
 
     @Override
     public void onFocus(FocusEvent event) {        
-        GWT.log("onFocus() text == "+getText()+" helpShowing == "+helpShowing, null);
         focused = true;
         if(helpShowing) {
             hideHelp();
@@ -135,7 +132,6 @@ public class TextBox extends com.google.gwt.user.client.ui.TextBox implements Fo
     public void onBlur(BlurEvent event) {
         focused = false;
         String text = getText();
-        GWT.log("onBlur() text == "+text+" helpShowing == "+helpShowing, null);
         if(text == null || text.length() == 0) {
             showHelp();
         }
