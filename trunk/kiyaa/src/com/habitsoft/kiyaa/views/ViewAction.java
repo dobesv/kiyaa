@@ -35,13 +35,7 @@ public class ViewAction extends Action {
 	public static void performOnView(final Action action, final View view, boolean saveBefore, boolean loadAfter, AsyncCallback<Void> callback) {
 	    try {
     		if(loadAfter) {
-    			callback = new AsyncCallbackProxy(callback) {
-    				@Override
-    				public void onSuccess(Object result) {
-    				    // ViewSaveLoadManager.getInstance().load(view, callback);
-    				    view.load(callback);
-    				}
-    			};
+    			callback = loadViewOnSuccess(view, callback);
     		}
     		if(action != null) {
     		    if(saveBefore)
@@ -57,6 +51,16 @@ public class ViewAction extends Action {
 	        callback.onFailure(t);
 	    }
 	}
+    public static AsyncCallback<Void> loadViewOnSuccess(final View view, AsyncCallback<Void> callback) {
+        callback = new AsyncCallbackProxy(callback) {
+        	@Override
+        	public void onSuccess(Object result) {
+        	    // ViewSaveLoadManager.getInstance().load(view, callback);
+        	    view.load(callback);
+        	}
+        };
+        return callback;
+    }
 	
 	/**
 	 * Wrapper for perform on view that always saves and loads the view, since that is the most common case.
