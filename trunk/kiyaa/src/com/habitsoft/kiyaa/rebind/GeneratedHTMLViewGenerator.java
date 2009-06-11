@@ -715,6 +715,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 new JParameter(setter, fieldType, fieldName);
                 memberDecls.add(setter + "{ this." + fieldName + " = " + fieldName + "; }");
                 memberDecls.add(fieldType.getQualifiedSourceName() + " " + fieldName + ";");
+                flushMethodsCache(this.myClass);
             }
 
             protected void generateConstructor(Element rootElement) throws UnableToCompleteException {
@@ -1138,6 +1139,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                             // new JParameter(new JMethod(myClass,
                             // "set"+capitalize(myModelVarName), 0, 0, 0, 0),
                             // myModelClass, myModelVarName);
+                            flushMethodsCache(myClass);
                         }
     
                         viewElem.addAttribute(new Attribute("id", id));
@@ -1288,7 +1290,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                         setter.setReturnType(JPrimitiveType.VOID);
                         new JParameter(setter, fieldType, id);
                         memberDecls.add(setter + "{ panel.setText(\"" + id + "\", " + id + "); }");
-                        methodsListCache.remove(this.myClass.toString());
+                        flushMethodsCache(myClass);
                         
                         //System.out.println("Using string build expression: "+stringBuildExpr+" for "+text);
                 		ExpressionInfo expr = findAccessors(stringBuildExpr.toString(), true, true);
@@ -1297,7 +1299,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 			throw new UnableToCompleteException();
                 		}
                         //System.out.println("Got getter: "+expr.getter);
-                		ExpressionInfo textExpr = findAccessors(id, false, false);
+                		ExpressionInfo textExpr = new ExpressionInfo(id, setter.getName(), fieldType);
                 		if(textExpr == null) throw new Error("Weird, couldn't find the field I just added: "+id+" to hold text for "+stringBuildExpr+" even though I added a method "+setter+" and a field "+field+"?");
                 		if((expr.isConstant() || areConstant) && expr.hasSynchronousGetter()) {
                 			sw.println(textExpr.copyStatement(expr));
@@ -2239,7 +2241,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                         methodName = preargs.substring(objectPathEnd+1);
                         ExpressionInfo accessors = findAccessors(objectPath, true, false);
                         if (accessors == null || !accessors.hasSynchronousGetter() || accessors.type == null) {
-                            logger.log(TreeLogger.ERROR, "Can't find any object for " + path, null);
+                            logger.log(TreeLogger.ERROR, "Can't find any object for " + objectPath + " for action "+ path, null);
                             return null;
                         }
                         getter = accessors.getterExpr();
@@ -3246,7 +3248,10 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
               }
               return cachedOverridableMethods;
         }
-
+        public void flushMethodsCache(JClassType inType) {
+            methodsListCache.remove(inType.toString());
+        }
+        
 		protected String converter(final String inExpr, final JType inType, final JType outType)
                         throws UnableToCompleteException {
             JPrimitiveType primitiveType;
