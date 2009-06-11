@@ -51,7 +51,7 @@ public class ViewAction extends Action {
 	        callback.onFailure(t);
 	    }
 	}
-    public static AsyncCallback<Void> loadViewOnSuccess(final View view, AsyncCallback<Void> callback) {
+    public static AsyncCallback<Void> loadViewOnSuccess(final View view, AsyncCallback callback) {
         callback = new AsyncCallbackProxy(callback) {
         	@Override
         	public void onSuccess(Object result) {
