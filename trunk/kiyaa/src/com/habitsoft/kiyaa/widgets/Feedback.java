@@ -10,6 +10,7 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.habitsoft.kiyaa.metamodel.Action;
 import com.habitsoft.kiyaa.util.AsyncCallbackFactory;
+import com.habitsoft.kiyaa.util.AsyncCallbackProxy;
 
 public class Feedback extends FlowPanel {
     public enum FeedbackType {
@@ -154,6 +155,24 @@ public class Feedback extends FlowPanel {
             if(feedbackType != null)
                 this.addStyleDependentName(feedbackType.name().toLowerCase());
         }
+    }
+
+    public AsyncCallback busyCallback(final String busyText, final String successText, AsyncCallback callback) {
+        busy(busyText);
+        callback = new AsyncCallbackProxy(callback) {
+            @Override
+            public void onSuccess(Object result) {
+                positiveFeedback(successText, null, 0);
+                super.onSuccess(result);
+            }
+            
+            @Override
+            public void onFailure(Throwable caught) {
+                showError(caught);
+                super.onFailure(caught);
+            }
+        };
+        return callback;
     }
 
 }
