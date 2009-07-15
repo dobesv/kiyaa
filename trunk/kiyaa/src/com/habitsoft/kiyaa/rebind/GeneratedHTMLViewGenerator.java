@@ -2,6 +2,7 @@ package com.habitsoft.kiyaa.rebind;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -423,7 +424,12 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 if (!f.exists()) {
                     logger.log(TreeLogger.WARN, "Looking for template as a file with path " + f.getPath()
                                     + " failed; looking for template as a resource with path " + templatePath, null);
-                    d = b.build(getClass().getResourceAsStream(templatePath));
+                    final InputStream resourceAsStream = getClass().getResourceAsStream(templatePath);
+                    try {
+                        d = b.build(resourceAsStream);
+                    } finally {
+                        resourceAsStream.close();
+                    }
                 } else {
                     d = b.build(f);
                 }
