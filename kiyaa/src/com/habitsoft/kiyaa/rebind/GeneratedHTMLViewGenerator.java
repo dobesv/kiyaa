@@ -59,6 +59,7 @@ import com.habitsoft.kiyaa.views.ModelView;
 import com.habitsoft.kiyaa.views.TakesElementName;
 import com.habitsoft.kiyaa.views.View;
 import com.habitsoft.kiyaa.views.ViewFactory;
+import com.habitsoft.kiyaa.views.GeneratedHTMLView.TemplatePath;
 import com.habitsoft.xhtml.dtds.FailingEntityResolver;
 import com.habitsoft.xhtml.dtds.XhtmlEntityResolver;
 import com.sun.facelets.util.Classpath;
@@ -383,6 +384,14 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             
             rootClassGenerator = new ClassGenerator();
             String templatePath = getClassMetadata(baseType, baseType, "kiyaa.template");
+            if(templatePath == null) {
+                //System.out.println("Checking for TemplatePath annotation on "+baseType);
+                final TemplatePath annotation = baseType.getAnnotation(TemplatePath.class);
+                if(annotation != null) {
+                    templatePath = annotation.value();
+                    //System.out.println("Found TemplatePath annotation on "+baseType+" with value "+templatePath);
+                }
+            }
             if (templatePath == null) {
                 templatePath = getSimpleClassName(baseType, ".") + ".xhtml";
             }
