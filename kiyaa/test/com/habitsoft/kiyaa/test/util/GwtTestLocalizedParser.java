@@ -6,7 +6,7 @@ import com.habitsoft.kiyaa.util.CurrencyParseException;
 import com.habitsoft.kiyaa.util.DifferentCurrencyCodeProvided;
 import com.habitsoft.kiyaa.util.LocalizedParser;
 
-public class TestLocalizedParser extends GWTTestCase {
+public class GwtTestLocalizedParser extends GWTTestCase {
 
     /**
      * Test whether the currency formattings done by GWT are what we expect.

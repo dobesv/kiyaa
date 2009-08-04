@@ -5,15 +5,15 @@ import java.util.Locale;
 import junit.framework.TestCase;
 
 import com.habitsoft.kiyaa.server.ServerLocalizedParser;
-import com.habitsoft.kiyaa.test.util.TestLocalizedParser;
+import com.habitsoft.kiyaa.test.util.GwtTestLocalizedParser;
 
 public class TestServerLocalizedParser extends TestCase {
 
     public void testCurrencyFormatting() throws Exception {
         ServerLocalizedParser parser = new ServerLocalizedParser(Locale.US);
-        TestLocalizedParser.assertEquals("$1.23", parser.formatCurrency(123, "USD", false, false));
-        TestLocalizedParser.assertEquals(-123, parser.parseCurrency("($1.23)", "USD"));
-        TestLocalizedParser.assertEquals(123, parser.parseCurrency("$1.23", "USD"));
+        GwtTestLocalizedParser.assertEquals("$1.23", parser.formatCurrency(123, "USD", false, false));
+        GwtTestLocalizedParser.assertEquals(-123, parser.parseCurrency("($1.23)", "USD"));
+        GwtTestLocalizedParser.assertEquals(123, parser.parseCurrency("$1.23", "USD"));
         /* None of these are supported - the parser is very strict
         assertEquals(123, parser.parseCurrency("$-1.23", "USD"));
         assertEquals(123, parser.parseCurrency("$1.23", "USD"));
@@ -34,6 +34,6 @@ public class TestServerLocalizedParser extends TestCase {
     }
     
     public void testPercentages() {
-        TestLocalizedParser.testPercentages(new ServerLocalizedParser(Locale.US));
+        GwtTestLocalizedParser.testPercentages(new ServerLocalizedParser(Locale.US));
     }
 }

@@ -3,7 +3,7 @@ package com.habitsoft.kiyaa.test.util;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.habitsoft.kiyaa.util.MathUtil;
 
-public class TestMathUtil extends GWTTestCase {
+public class GwtTestMathUtil extends GWTTestCase {
 
     public void testRounding() {
         assertEquals(5L, MathUtil.round(5.0));
