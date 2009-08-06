@@ -59,6 +59,7 @@ import com.habitsoft.kiyaa.views.ModelView;
 import com.habitsoft.kiyaa.views.TakesElementName;
 import com.habitsoft.kiyaa.views.View;
 import com.habitsoft.kiyaa.views.ViewFactory;
+import com.habitsoft.kiyaa.views.GeneratedHTMLView.ActionMethod;
 import com.habitsoft.kiyaa.views.GeneratedHTMLView.TemplatePath;
 import com.habitsoft.xhtml.dtds.FailingEntityResolver;
 import com.habitsoft.xhtml.dtds.XhtmlEntityResolver;
@@ -2337,6 +2338,12 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                         methodCall = methodName;
                     } else {
                         methodCall = getter + "." + methodName;
+                    }
+                    
+                    final ActionMethod annotation = actionMethod.getAnnotation(ActionMethod.class);
+                    if(annotation != null) {
+                        saveBefore = annotation.saveBefore();
+                        loadAfter = annotation.loadAfter();
                     }
                     if (asyncMethod) {
                         return new ActionInfo(methodCall + "(" + joinWithCommas(0, args) + (args.length > 0 ? ", " : "")
