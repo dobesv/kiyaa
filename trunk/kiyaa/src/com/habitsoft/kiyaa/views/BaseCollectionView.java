@@ -605,8 +605,23 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 		return (totalItems != -1) && (startOffset + increment >= totalItems);
 	}
 	
+	/**
+	 * Get 1-relative page number.
+	 */
 	public int getPageNumber() {
 	    return 1 + startOffset/increment;
+	}
+	
+    /**
+     * Set 1-relative page number.
+     */
+	public void setPageNumber(int pageNumber) {
+	    // pageNumber = 1 + startOffset/increment
+	    // pageNumber - 1 = startOffset/increment
+	    // (pageNumber - 1)*increment = startOffer
+	    int lastPage = getMaxPageNumber();
+	    if(lastPage > 0 && lastPage < pageNumber) pageNumber = lastPage;
+	    startOffset = Math.max(0, (pageNumber - 1)*increment);
 	}
 	
 	public int getMaxPageNumber() {
