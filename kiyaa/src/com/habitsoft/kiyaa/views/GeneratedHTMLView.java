@@ -18,5 +18,17 @@ public abstract interface GeneratedHTMLView extends View {
         String value();
     }
 
+    /**
+     * Annotation for an a method used as an action in a template
+     * to specify whether to saveBefore and loadAfter.  By default
+     * both are true.
+     */
+    @Retention(RetentionPolicy.CLASS)
+    @Target(value=ElementType.TYPE)
+    public @interface ActionMethod {
+        boolean saveBefore() default true;
+        boolean loadAfter() default true;
+    }
+    
 
 }
