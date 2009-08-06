@@ -24,7 +24,7 @@ public abstract interface GeneratedHTMLView extends View {
      * both are true.
      */
     @Retention(RetentionPolicy.CLASS)
-    @Target(value=ElementType.TYPE)
+    @Target(value=ElementType.METHOD)
     public @interface ActionMethod {
         boolean saveBefore() default true;
         boolean loadAfter() default true;
