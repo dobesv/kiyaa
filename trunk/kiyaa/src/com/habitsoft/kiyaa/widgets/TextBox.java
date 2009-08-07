@@ -40,7 +40,7 @@ public class TextBox extends com.google.gwt.user.client.ui.TextBox implements Fo
 		if(text != null && text.equals(currentText))
 			return;
         currentText = text;
-		if(innerHelp != null && (text == null || text.length()==0)) {
+		if(innerHelp != null && (text == null || text.length()==0) && !focused) {
 		    showHelp();
 		} else if(helpShowing) {
 		    hideHelp();
