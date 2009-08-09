@@ -12,7 +12,47 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
  * This is very useful when performing a bunch of independent async 
  * operations that you don't need the specific value from, just the
  * final success/failure result. 
- */
+ * 
+ * eg:
+ <code>
+
+     		AsyncCallbackGroup group = new AsyncCallbackGroup();
+    		
+			getService().getSiteTitle(getSiteName(), new AsyncCallbackGroupMember<String>(group) {
+				@Override
+				public void onSuccess(String param) {
+					setTitle(param);
+					super.onSuccess(param);
+				}
+			});
+
+    		...
+    		
+		    group.ready(new AsyncCallbackProxy(callback) {
+			@Override
+			public void onSuccess(Object result) {
+				...
+			}
+ </code>
+  *
+  * If you want to keep multiple results around you can also do:
+ <code>
+        AsyncCallbackGroup g = new AsyncCallbackGroup();
+
+        final AsyncCallbackGroupResultCachingMember<X> x = new AsyncCallbackGroupResultCachingMember<X>(g); 
+        final AsyncCallbackGroupResultCachingMember<Y> y = new AsyncCallbackGroupResultCachingMember<Y>(g); 
+
+        controller.getService().getX(controller.getToken(), x.getId(), x);
+        controller.getService().getY(controller.getToken(), x.getId(), y);
+
+	    group.ready(new AsyncCallbackProxy(callback) {
+		@Override
+		public void onSuccess(Object result) {
+			x.getResult();
+			y.getResult();
+		}
+ </code>
+  */
 public class AsyncCallbackGroup {
 	
 	int pending = 0;
@@ -32,11 +72,11 @@ public class AsyncCallbackGroup {
         this.marker = marker;
     }
 	
-	public void addPending() {
+	void addPending() {
 		pending++;
 	}
 	
-	public void addFailure(Throwable caught) {
+	void addFailure(Throwable caught) {
         if(marker != null && (caught instanceof Error || caught instanceof RuntimeException)) try {
             Log.error("At "+marker.toString(), caught);
         } catch(Exception e) { }	    
@@ -44,7 +84,7 @@ public class AsyncCallbackGroup {
 		removePending();
 	}
 
-	public void addSuccess(Object result) {
+	void addSuccess(Object result) {
 		removePending();
 	}
 
@@ -59,12 +99,13 @@ public class AsyncCallbackGroup {
 		onComplete();
 	}
 	
+	/** Supply a callback to be used when all of the member callbacks have completed. The callback param will be passed back to the callback in onsuccess.*/
 	public void ready(AsyncCallback callback, Object callbackParam) {
 		this.callback = callback;
 		this.callbackParam = callbackParam;
 		ready();
 	}
-	
+	/** Supply a callback to be used when all of the member callbacks have completed. */
 	public void ready(AsyncCallback callback) {
 		this.callback = callback;
 		ready();
@@ -79,6 +120,7 @@ public class AsyncCallbackGroup {
 			});
 		}
 	}
+    /** If you don't care what the results are you can use this so that you wait until they arrive. */
     public AsyncCallback member(Object marker) {
         if(marker != null) {
             return new AsyncCallbackGroupMember(this, marker);
@@ -86,7 +128,7 @@ public class AsyncCallbackGroup {
             return member();
         }
     }
-
+    /** If you don't care what the results are you can use this so that you wait until they arrive. */
 	public AsyncCallback member() {
 		if(sharedMember == null) {
 			sharedMember = new AsyncCallbackGroupMember(this);
@@ -95,9 +137,9 @@ public class AsyncCallbackGroup {
 			addPending();
 			return sharedMember;
 		}
-		
 	}
-	public void onComplete() {
+	
+	protected void onComplete() {
         try {
             if(complete) Log.error("AsyncCallbackGroup completed twice; at "+marker, new Error());
         } catch(Exception e) { }
