@@ -19,6 +19,16 @@
                 http://gwt-maven.googlecode.com/svn/trunk/mavenrepo/
             </url>
 		</pluginRepository>
+       <pluginRepository>
+          <id>no-repo-jars</id>
+          <name>repo for jars that do not come from a repository</name>
+          <url>file://${project.basedir}/../booksProject/repo</url>
+      </pluginRepository>
+       <pluginRepository>
+          <id>no-repo-jars-yxj-win</id>
+          <name>repo for jars that do not come from a repository</name>
+          <url>file://C:/dev/clarity/workspace3/mavenrepo</url>
+      </pluginRepository>      		
 	</pluginRepositories>
 	<repositories>
 		<repository>
