@@ -7,7 +7,7 @@ public class ProfilingCallback<T> extends AsyncCallbackProxy<T> {
     final long start = System.currentTimeMillis();
     final String method;
     
-    public ProfilingCallback(AsyncCallback delegate, String method) {
+    public ProfilingCallback(AsyncCallback<T> delegate, String method) {
         super(delegate);
         this.method = method;
     }
