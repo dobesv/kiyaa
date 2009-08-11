@@ -14,7 +14,7 @@ public class ChildrenByTypeKey<E extends Enum> implements Comparable<ChildrenByT
 	}
 	public int compareTo(ChildrenByTypeKey other) {
 		int cmp = parentId.compareTo(other.parentId);
-		if(cmp == 0) cmp = type.compareTo(other.type);
+		if(cmp == 0) cmp = type==null?other.type==null?0:-1:other.type==null?1:type.compareTo(other.type);
 		return cmp;
 	}
 }
