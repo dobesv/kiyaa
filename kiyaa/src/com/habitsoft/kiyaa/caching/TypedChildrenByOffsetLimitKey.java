@@ -14,7 +14,8 @@ public class TypedChildrenByOffsetLimitKey<T, E extends Enum> extends ChildrenBy
 	
 	@Override
 	public int compareTo(ChildrenByOffsetLimitKey<T> other) {
-		int cmp = type.compareTo(((TypedChildrenByOffsetLimitKey)other).type);
+	    TypedChildrenByOffsetLimitKey x = (TypedChildrenByOffsetLimitKey)other;
+		int cmp = type==null?x.type==null?0:-1:x.type==null?1:type.compareTo(x.type);
 		if(cmp == 0) return super.compareTo(other);
 		return cmp;
 	}
