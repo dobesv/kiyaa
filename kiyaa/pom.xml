@@ -14,6 +14,7 @@
 	<properties>
 		<target.dir>target</target.dir>
 		<gwt.version>1.7.0</gwt.version>
+ 	    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 	
 	<dependencies>
@@ -122,17 +123,13 @@
 	    <resources>
  	      <resource>
 	        <directory>src</directory>
-	        <includes>
-	          <include>**/*.properties</include>
-	        </includes>
+	        <excludes><exclude>**/.svn</exclude></excludes>
 	      </resource>
 	    </resources> 
 	    <testResources>
  	      <testResource>
 	        <directory>test</directory>
-	        <includes>
-	          <include>**/*.properties</include>
-	        </includes>
+	        <excludes><exclude>**/.svn</exclude></excludes>
 	      </testResource>
 	    </testResources>
 	     
@@ -170,7 +167,6 @@
 		        <executions>
 		          <execution>
 		            <goals>
-		              <goal>resources</goal>
 		              <goal>test</goal>
 		            </goals>
 		          </execution>
