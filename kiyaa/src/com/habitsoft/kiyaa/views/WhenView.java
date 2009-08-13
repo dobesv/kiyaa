@@ -27,6 +27,7 @@ public class WhenView extends SimplePanel implements View, TakesElementName {
 	View view;
 	String placeholderHtml;
 	boolean wait;
+	String debugId;
 	
 	public WhenView() {
 	    this(null, null);
@@ -102,8 +103,7 @@ public class WhenView extends SimplePanel implements View, TakesElementName {
 					callback.onSuccess(null);
 					return;
 				}
-				view = viewFactory.createView();
-				
+				createView();
 			}
 			if(wait) {
     			view.load(new AsyncCallbackProxy(callback) {
@@ -130,6 +130,12 @@ public class WhenView extends SimplePanel implements View, TakesElementName {
 			callback.onSuccess(null);
 		}
 	}
+
+    private void createView() {
+        view = viewFactory.createView();
+        if(debugId != null)
+            view.getViewWidget().ensureDebugId(debugId);
+    }
 
     protected void hideView() {
         if(view != null) {
@@ -179,7 +185,8 @@ public class WhenView extends SimplePanel implements View, TakesElementName {
         if(view == null) {
             if(viewFactory == null)
                 return;
-            view = viewFactory.createView();
+            createView();
+            setWidget(view.getViewWidget());
         } else if(getWidget() != view.getViewWidget())
         	setWidget(view.getViewWidget());
     }
@@ -196,5 +203,13 @@ public class WhenView extends SimplePanel implements View, TakesElementName {
 
     public void setWait(boolean wait) {
         this.wait = wait;
+    }
+    
+    @Override
+    protected void onEnsureDebugId(String baseID) {
+        debugId = baseID;
+        if(getWidget() != null) {
+            getWidget().ensureDebugId(debugId);
+        }
     }
 }
