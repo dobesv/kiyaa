@@ -363,4 +363,11 @@ public class DatePicker extends FlowPanel implements SourcesChangeEvents, Source
     public void setOptional(boolean optional) {
         this.optional = optional;
     }
+    
+    @Override
+    protected void onEnsureDebugId(String baseID) {
+        super.onEnsureDebugId(baseID);
+        textbox.ensureDebugId(baseID+"-text");
+        calendarIcon.ensureDebugId(baseID+"-icon");
+    }
 }

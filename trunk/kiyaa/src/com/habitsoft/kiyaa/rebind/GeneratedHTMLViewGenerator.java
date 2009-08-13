@@ -698,21 +698,28 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 			private void generatePanel() {
 				if(hasHtml) {
                     sw.println("protected ComplexHTMLPanel panel = new ComplexHTMLPanel();");
-                    sw.println("protected void addView(String id, View view) {");
-                    sw.indentln("panel.replace(view.getViewWidget(), id);");
-                    sw.println("}");
                     sw.println("protected void addWidget(String id, Widget widget) {");
-                    sw.indentln("panel.replace(widget, id);");
+                    sw.indentln("panel.replace(maybeEnsureDebugId(id, widget), id);");
                     sw.println("}");
+                    
                 } else {
                     sw.println("protected FlowPanel panel = new FlowPanel();");
-                    sw.println("protected void addView(String id, View view) {");
-                    sw.indentln("panel.add(view.getViewWidget());");
-                    sw.println("}");
                     sw.println("protected void addWidget(String id, Widget widget) {");
-                    sw.indentln("panel.add(widget);");
+                    sw.indentln("panel.add(maybeEnsureDebugId(id, widget));");
                     sw.println("}");
                 }
+                sw.println("protected <T extends View> T maybeEnsureDebugId(String id, T view) { maybeEnsureDebugId(id, view.getViewWidget()); return view; }");
+                sw.println("protected Widget maybeEnsureDebugId(String id, Widget widget) {");
+                sw.indent();
+                sw.println("String panelId = panel.getElement().getId();");
+                sw.println("if(panelId != null && panelId.startsWith(UIObject.DEBUG_ID_PREFIX))");
+                sw.indentln("widget.ensureDebugId(panelId.substring(UIObject.DEBUG_ID_PREFIX.length())+'-'+id);");
+                sw.println("return widget;");
+                sw.outdent();
+                sw.println("}");
+                sw.println("protected void addView(String id, View view) {");
+                sw.indentln("addWidget(id, view.getViewWidget());");
+                sw.println("}");
                 sw.println("public Widget getViewWidget() {");
                 sw.indentln("return panel;");
                 sw.println("}");
@@ -1145,7 +1152,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                         }
                         JClassType tagClass = getTagClass(elem);
                         Element viewElem = new Element(XHTML_NAMESPACE.equals(elem.getNamespaceURI())?elem.getLocalName():"div", XHTML_NAMESPACE);
-                        String id = elem.getAttributeValue("id");
+                        String id = identifier(elem.getAttributeValue("id"));
                         if (id == null)
                             id = "view" + insertedViews.size();
                         else {
@@ -1884,20 +1891,29 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 	if(!found_setter) {
                         boolean factory = findMethod(type, "setViewFactory", 1, false)!=null;
                         boolean widget = !factory && findMethod(type, "setWidget", 1, false)!=null;
-                    	String createViewExpr = generateCreateSubview(elem, factory, false);
+                        
+                        String fieldName = "sv"+memberDecls.size();
+                        String id = elem.getAttributeValue("id");
+                        if(id == null) {
+                            id = fieldName;
+                        }
+                    	String createViewExpr = generateCreateSubview(elem, factory, false, id);
+                        final boolean modelView = elem.getAttribute("with-model") != null;
+                        generateField(fieldName, getType(factory?ViewFactory.class.getName():
+                                                          //widget?Widget.class.getName():
+                                                          modelView?ModelView.class.getName():
+                                                          View.class.getName()));
+                        sw.println(fieldName + " = " + createViewExpr + ";");
 						if (factory) {
-                            sw.println(name + ".setViewFactory("+createViewExpr+");");
+                            sw.println(name + ".setViewFactory("+fieldName+");");
 						} else if(widget) {
-						    String fieldName = "subviewInPanel"+memberDecls.size();
-                            generateField(fieldName, getType(View.class.getName()));
-                            sw.println(fieldName + " = " + createViewExpr + ";");
 							sw.println(name + ".setWidget("+fieldName+".getViewWidget());");
 							subviewLoads.add(fieldName + ".load(group.member());");
                             saves.add(fieldName + ".save(group.member());");
                             clearFields.add(fieldName + ".clearFields();");
                         } else if (findMethod(type, "setView", 1, false) != null
-                        	 || (elem.getAttribute("with-model") != null && findMethod(type, "setView", 1, false) != null)) {
-                            sw.println(name + ".setView("+createViewExpr+");");                        	
+                        	 || (modelView && findMethod(type, "setView", 1, false) != null)) {
+                            sw.println(name + ".setView("+fieldName+");");                        	
                         } else if(childElems.size() > 0){
                             logger.log(TreeLogger.WARN,
                                 "Discarding child elements of "
@@ -1919,10 +1935,11 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
              * @param elem
              * @param factory If true, return an expression of type ViewFactory
              * @param widget If true, return an expression of type Widget
+             * @param id ID of the element, used for debug IDs
              * @return
              * @throws UnableToCompleteException
              */
-			private String generateCreateSubview(Element elem, boolean factory, boolean widget) throws UnableToCompleteException {
+			private String generateCreateSubview(Element elem, boolean factory, boolean widget, String id) throws UnableToCompleteException {
 				assert !(factory && widget);
 				
 				// TODO In order to resurrect this feature, I need to get the simple views to support load/save
@@ -1980,7 +1997,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 //					}
 //				} else {
 					String className = addSubviewClass(elem);
-					createViewExpr = "new "+className+"("+myClass.getQualifiedSourceName()+".this).init()";
+					createViewExpr = "maybeEnsureDebugId(\""+id+"\", new "+className+"("+myClass.getQualifiedSourceName()+".this)).init()";
 //				}
 				if(factory)
 					createViewExpr = "new ViewFactory() { public View createView() { return "+createViewExpr+"; } }";
@@ -2005,7 +2022,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 						String withModel = elem.getAttributeValue("with-model");
 						if(withModel != null)
 							childElem.addAttribute(new Attribute("with-model", withModel));
-				        paramString = generateCreateSubview(childElem, isViewFactory, isWidget);
+				        paramString = generateCreateSubview(childElem, isViewFactory, isWidget, parameterName);
 					} else if((isString || asyncSetter || setter) && childElem.getValue().trim().length() > 0) {
 						paramString = '"'+escape(childElem.getValue().trim())+'"';
 					} else {
@@ -2197,7 +2214,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 	ArrayList<String> actionList = new ArrayList<String>();
                 	for (int i = 0; i < actionSeries.length; i++) {
                 		ActionInfo action = getAction(actionSeries[i], targetView, false, false);
-                		if(action.getAction() != null)
+                		if(action != null && action.getAction() != null)
                 		    actionList.add(action.toActionCtor());
                 	}
                 	String ctor = "new ActionSeries("+StringUtils.join(actionList, ",\n\t\t\t")+")";
@@ -2438,7 +2455,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 
                 //System.out.println("findAccessors("+inType+", '"+expr+"', '"+path+"', "+matchAsync+")");
                 String[] splitPath = smartSplit(path, '.', 2);
-                String name = splitPath[0].trim();
+                String name = splitPath[0];
                 if (name.length() == 0) {
                     return null;
                 }
@@ -2472,9 +2489,9 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                         // Check for an empty parameter list
                         if(args.length == 1 && args[0].length() == 0)
                             args = new String[0];
-                        getterMethodName = name.substring(0, openIdx);
+                        getterMethodName = identifier(name.substring(0, openIdx));
                     } else {
-                        getterMethodName = name;
+                        getterMethodName = identifier(name);
                         args = new String[0];
                     }
                     JClassType objectType = inType;
@@ -2561,6 +2578,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             	} else {
             		// No array or function specifier, so look for a normal property
                     String baseExpr = (expr.equals("this") ? "" : expr + ".");
+                    name = identifier(name);
                     String getterName = "get" + capitalize(name);
                     String setterName = "set" + capitalize(name);
                     JMethod getterMethod = findMethod(inType, getterName, 0, matchAsync);
@@ -3127,6 +3145,14 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             if (superclass == null)
                 return false;
             return implementsInterface(superclass, iface);
+        }
+
+        public String identifier(String id) {
+            if(id == null) return null;
+            id = id.trim().replaceAll("[^A-Za-z0-9_]+", "_");
+            if(Character.isUpperCase(id.charAt(0)))
+                id = Character.toLowerCase(id.charAt(0))+id.substring(1);
+            return id;
         }
 
         public String replaceGroupMember(String expr, String newCallback) {
