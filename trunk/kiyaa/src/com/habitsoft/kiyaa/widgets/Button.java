@@ -141,4 +141,9 @@ public class Button extends ComplexPanel implements HasText, HasHTML, SourcesFoc
             group.add(button);
     }
 	
+    @Override
+    protected void onEnsureDebugId(String baseID) {
+        super.ensureDebugId(baseID+"-wrapper");
+        button.ensureDebugId(baseID);
+    }
 }
