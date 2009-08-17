@@ -172,4 +172,13 @@
 		    </plugin>
 		</plugins>
 	</build>
+	
+  <repositories>
+       <repository>
+          <id>no-repo-jars</id>
+          <name>repo for jars that do not come from a repository</name>
+          <url>file://${project.basedir}/maven-repo</url>
+      </repository>
+  </repositories>	
+  	
 </project>
