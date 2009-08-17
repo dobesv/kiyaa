@@ -192,7 +192,12 @@
        <id>maven2-mirrors.ibiblio.org</id>
        <name>ibiblio.org</name>
        <url>http://mirrors.ibiblio.org/pub/mirrors/maven2/</url>
-     </repository>           
+     </repository> 
+     <repository>
+     	<id>maven.ow2.org</id>
+     	<name>maven.ow2.org</name>
+     	<url>http://maven.ow2.org/maven2/</url>
+     </repository>          
   </repositories>	
   	
 </project>
