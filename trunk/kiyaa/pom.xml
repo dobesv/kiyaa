@@ -12,7 +12,7 @@
 	<name>kiyaa GWT library</name>
 	
 	<properties>
-		<target.dir>target</target.dir>
+		<target.dir>.target</target.dir>
 		<gwt.version>1.7.0</gwt.version>
  	    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
@@ -68,8 +68,6 @@
 			<groupId>com.habitsoft</groupId>
 			<artifactId>html-dtd-cache</artifactId>
 			<version>1.0-SNAPSHOT</version>
-			<scope>system</scope>
-			<systemPath>C:\dev\clarity\workspace2\kiyaa\lib\xhtml-dtds-cache.jar</systemPath>
 		</dependency>
 		<dependency>
 			<groupId>xom</groupId>
