@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project-modules id="moduleCoreId" project-version="1.5.0">
-    <wb-module deploy-name="kiyaa">
-        <wb-resource deploy-path="/gwt/com.habitsoft.kiyaa.KiyaaTests" source-path="/bin.gwt/com.habitsoft.kiyaa.KiyaaTests"/>
-        <wb-resource deploy-path="/" source-path="/src"/>
-        <wb-resource deploy-path="/" source-path="/test"/>
-    </wb-module>
-</project-modules>
