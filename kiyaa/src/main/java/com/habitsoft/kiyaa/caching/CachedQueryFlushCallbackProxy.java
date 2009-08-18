@@ -16,11 +16,11 @@ import com.habitsoft.kiyaa.util.AsyncCallbackProxy;
  * operation fails, the data is assumed to not be invalidated.
  * 
  */
-public class CachedQueryFlushCallbackProxy extends AsyncCallbackProxy {
+public class CachedQueryFlushCallbackProxy<K,V> extends AsyncCallbackProxy<V> {
 	class CacheKey {
-		final CacheMap cache;
+		final CacheMap<K,V> cache;
 		final Object key;
-		private CacheKey(Object key, CacheMap cache) {
+		private CacheKey(Object key, CacheMap<K,V> cache) {
 			this.key = key;
 			this.cache = cache;
 		}
@@ -29,8 +29,6 @@ public class CachedQueryFlushCallbackProxy extends AsyncCallbackProxy {
 			if (this == obj)
 				return true;
 			if (obj == null)
-				return false;
-			if (!(obj instanceof CacheKey))
 				return false;
 			final CacheKey other = (CacheKey) obj;
 			if (cache == null) {
@@ -45,7 +43,7 @@ public class CachedQueryFlushCallbackProxy extends AsyncCallbackProxy {
 				return false;
 			return true;
 		}
-		public CacheMap getCache() {
+		public CacheMap<K,V> getCache() {
 			return cache;
 		}
 		public Object getKey() {
@@ -61,43 +59,43 @@ public class CachedQueryFlushCallbackProxy extends AsyncCallbackProxy {
 		}
 		
 	}
-	final ArrayList<CacheMap> caches = new ArrayList<CacheMap>();
+	final ArrayList<CacheMap<K,V>> caches = new ArrayList<CacheMap<K,V>>();
 	
-	final ArrayList<GlobalCachedQuery> globalQueries = new ArrayList();
+	final ArrayList<GlobalCachedQuery<V>> globalQueries = new ArrayList<GlobalCachedQuery<V>>();
 	final HashSet<CacheKey> keys = new HashSet<CacheKey>();
-	public CachedQueryFlushCallbackProxy(AsyncCallback callback, CacheMap cache) {
+	public CachedQueryFlushCallbackProxy(AsyncCallback<V> callback, CacheMap<K,V> cache) {
 		super(callback);
 		caches.add(cache);
 	}
 
-	public CachedQueryFlushCallbackProxy(AsyncCallback callback, CacheMap map, Object key) {
+	public CachedQueryFlushCallbackProxy(AsyncCallback<V> callback, CacheMap<K,V> map, K key) {
 		super(callback);
 		keys.add(new CacheKey(key, map));
 	}
 
-	public CachedQueryFlushCallbackProxy(AsyncCallback callback, GlobalCachedQuery query) {
+	public CachedQueryFlushCallbackProxy(AsyncCallback<V> callback, GlobalCachedQuery<V> query) {
 		super(callback);
 		globalQueries.add(query);
 	}
 	
-	public void addCache(CacheMap cache) {
+	public void addCache(CacheMap<K,V> cache) {
 		caches.add(cache);
 	}
 	
-	public void addGlobalQuery(GlobalCachedQuery query) {
+	public void addGlobalQuery(GlobalCachedQuery<V> query) {
 		globalQueries.add(query);
 	}
 	
-	public void addKey(CacheMap map, Object key) {
+	public void addKey(CacheMap<K,V> map, Object key) {
 		keys.add(new CacheKey(key, map));
 	}
 	
 	@Override
-	public void onSuccess(Object result) {
-		for(CacheMap cache : caches) {
+	public void onSuccess(V result) {
+		for(CacheMap<K,V> cache : caches) {
 			cache.clear();
 		}
-		for(GlobalCachedQuery query : globalQueries) {
+		for(GlobalCachedQuery<V> query : globalQueries) {
 			query.flush();
 		}
 		for(CacheKey entry : keys) {
