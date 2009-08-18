@@ -16,11 +16,11 @@ import com.habitsoft.kiyaa.util.AsyncCallbackProxy;
  * operation fails, the data is assumed to not be invalidated.
  * 
  */
-public class CachedQueryFlushCallbackProxy<K,V> extends AsyncCallbackProxy<V> {
+public class CachedQueryFlushCallbackProxy<T> extends AsyncCallbackProxy<T> {
 	class CacheKey {
-		final CacheMap<K,V> cache;
+		final CacheMap<?,?> cache;
 		final Object key;
-		private CacheKey(Object key, CacheMap<K,V> cache) {
+		private CacheKey(Object key, CacheMap<?,?> cache) {
 			this.key = key;
 			this.cache = cache;
 		}
@@ -43,7 +43,7 @@ public class CachedQueryFlushCallbackProxy<K,V> extends AsyncCallbackProxy<V> {
 				return false;
 			return true;
 		}
-		public CacheMap<K,V> getCache() {
+		public CacheMap<?,?> getCache() {
 			return cache;
 		}
 		public Object getKey() {
@@ -59,43 +59,43 @@ public class CachedQueryFlushCallbackProxy<K,V> extends AsyncCallbackProxy<V> {
 		}
 		
 	}
-	final ArrayList<CacheMap<K,V>> caches = new ArrayList<CacheMap<K,V>>();
+	final ArrayList<CacheMap<?,?>> caches = new ArrayList<CacheMap<?,?>>();
 	
-	final ArrayList<GlobalCachedQuery<V>> globalQueries = new ArrayList<GlobalCachedQuery<V>>();
+	final ArrayList<GlobalCachedQuery<?>> globalQueries = new ArrayList<GlobalCachedQuery<?>>();
 	final HashSet<CacheKey> keys = new HashSet<CacheKey>();
-	public CachedQueryFlushCallbackProxy(AsyncCallback<V> callback, CacheMap<K,V> cache) {
+	public CachedQueryFlushCallbackProxy(AsyncCallback<?> callback, CacheMap<?,?> cache) {
 		super(callback);
 		caches.add(cache);
 	}
 
-	public CachedQueryFlushCallbackProxy(AsyncCallback<V> callback, CacheMap<K,V> map, K key) {
+	public CachedQueryFlushCallbackProxy(AsyncCallback<?> callback, CacheMap<?,?> map, Object key) {
 		super(callback);
 		keys.add(new CacheKey(key, map));
 	}
 
-	public CachedQueryFlushCallbackProxy(AsyncCallback<V> callback, GlobalCachedQuery<V> query) {
+	public CachedQueryFlushCallbackProxy(AsyncCallback<?> callback, GlobalCachedQuery<?> query) {
 		super(callback);
 		globalQueries.add(query);
 	}
 	
-	public void addCache(CacheMap<K,V> cache) {
+	public void addCache(CacheMap<?,?> cache) {
 		caches.add(cache);
 	}
 	
-	public void addGlobalQuery(GlobalCachedQuery<V> query) {
+	public void addGlobalQuery(GlobalCachedQuery<?> query) {
 		globalQueries.add(query);
 	}
 	
-	public void addKey(CacheMap<K,V> map, Object key) {
+	public void addKey(CacheMap<?,?> map, Object key) {
 		keys.add(new CacheKey(key, map));
 	}
 	
 	@Override
-	public void onSuccess(V result) {
-		for(CacheMap<K,V> cache : caches) {
+	public void onSuccess(T result) {
+		for(CacheMap<?,?> cache : caches) {
 			cache.clear();
 		}
-		for(GlobalCachedQuery<V> query : globalQueries) {
+		for(GlobalCachedQuery<?> query : globalQueries) {
 			query.flush();
 		}
 		for(CacheKey entry : keys) {

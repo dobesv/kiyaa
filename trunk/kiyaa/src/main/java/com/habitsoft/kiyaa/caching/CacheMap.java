@@ -43,22 +43,22 @@ public class CacheMap<K,V> extends TreeMap<K,CachedQuery<V>> {
 		return getOrCreateQuery(key).fetch(callback);
 	}
 
-	public AsyncCallback<V> flusher(AsyncCallback<V> callback) {
-		if(callback instanceof CachedQueryFlushCallbackProxy<?,?>) {
+	public <T> AsyncCallback<T> flusher(AsyncCallback<T> callback) {
+		if(callback instanceof CachedQueryFlushCallbackProxy<?>) {
 			// Not sure how to get around this one ...
-			((CachedQueryFlushCallbackProxy<K,V>)callback).addCache(this);
+			((CachedQueryFlushCallbackProxy<T>)callback).addCache(this);
 			return callback;
 		} else {
-			return new CachedQueryFlushCallbackProxy<K, V>(callback, this);
+			return new CachedQueryFlushCallbackProxy<T>(callback, this);
 		}
 	}
 	
-	public AsyncCallback<V> flusher(K key, AsyncCallback<V> callback) {
-		if(callback instanceof CachedQueryFlushCallbackProxy<?,?>) {
-			((CachedQueryFlushCallbackProxy<K, V>)callback).addKey(this, key);
+	public <T> AsyncCallback<T> flusher(K key, AsyncCallback<T> callback) {
+		if(callback instanceof CachedQueryFlushCallbackProxy<?>) {
+			((CachedQueryFlushCallbackProxy<T>)callback).addKey(this, key);
 			return callback;
 		} else {
-			return new CachedQueryFlushCallbackProxy<K,V>(callback, this, key);
+			return new CachedQueryFlushCallbackProxy<T>(callback, this, key);
 		}
 	}
 
