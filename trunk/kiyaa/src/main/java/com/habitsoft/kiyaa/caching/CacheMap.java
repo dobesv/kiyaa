@@ -13,7 +13,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 
 public class CacheMap<K,V> extends TreeMap<K,CachedQuery<V>> {
 	private static final long serialVersionUID = 1L;
-    private static final ArrayList<CacheMap> allCaches = new ArrayList();
+    private static final ArrayList<CacheMap<?,?>> allCaches = new ArrayList<CacheMap<?,?>>();
 	private static final Timer timer = new Timer() {
 	    @Override
 	    public void run() {
@@ -39,43 +39,44 @@ public class CacheMap<K,V> extends TreeMap<K,CachedQuery<V>> {
 	 * Returns null if a cached result was returned to the
 	 * given callback, otherwise a callback is returned.
 	 */
-	public AsyncCallback<V> fetch(K key, AsyncCallback callback) {
+	public AsyncCallback<V> fetch(K key, AsyncCallback<V> callback) {
 		return getOrCreateQuery(key).fetch(callback);
 	}
 
-	public AsyncCallback flusher(AsyncCallback callback) {
-		if(callback instanceof CachedQueryFlushCallbackProxy) {
-			((CachedQueryFlushCallbackProxy)callback).addCache(this);
+	public AsyncCallback<V> flusher(AsyncCallback<V> callback) {
+		if(callback instanceof CachedQueryFlushCallbackProxy<?,?>) {
+			// Not sure how to get around this one ...
+			((CachedQueryFlushCallbackProxy<K,V>)callback).addCache(this);
 			return callback;
 		} else {
-			return new CachedQueryFlushCallbackProxy(callback, this);
+			return new CachedQueryFlushCallbackProxy<K, V>(callback, this);
 		}
 	}
 	
-	public AsyncCallback flusher(K key, AsyncCallback callback) {
-		if(callback instanceof CachedQueryFlushCallbackProxy) {
-			((CachedQueryFlushCallbackProxy)callback).addKey(this, key);
+	public AsyncCallback<V> flusher(K key, AsyncCallback<V> callback) {
+		if(callback instanceof CachedQueryFlushCallbackProxy<?,?>) {
+			((CachedQueryFlushCallbackProxy<K, V>)callback).addKey(this, key);
 			return callback;
 		} else {
-			return new CachedQueryFlushCallbackProxy(callback, this, key);
+			return new CachedQueryFlushCallbackProxy<K,V>(callback, this, key);
 		}
 	}
 
 	public void flushExpired() {
-		for (Iterator i = entrySet().iterator(); i.hasNext();) {
-			Map.Entry entry = (Map.Entry)i.next(); 
-			CachedQuery query = (CachedQuery) entry.getValue();
+		for (Iterator<Map.Entry<K,CachedQuery<V>>> i = entrySet().iterator(); i.hasNext();) {
+			Map.Entry<K,CachedQuery<V>> entry = (Map.Entry<K,CachedQuery<V>>)i.next(); 
+			CachedQuery<V> query = (CachedQuery<V>) entry.getValue();
 			if(query.isExpired()) {
 				i.remove();
 			}
 		}
 	}
 	
-	protected CachedQuery getOrCreateQuery(K key) {
-		CachedQuery query = (CachedQuery)get(key);
+	protected CachedQuery<V> getOrCreateQuery(K key) {
+		CachedQuery<V> query = (CachedQuery<V>)get(key);
 		if(query == null) {
 			//GWT.log("Cache miss on "+key, null);
-			query = new CachedQuery(refreshInterval);
+			query = new CachedQuery<V>(refreshInterval);
 			put(key, query);
 		} else if(query.isExpired()) {
 			//GWT.log("Expired cache entry on "+key, null);
@@ -84,11 +85,12 @@ public class CacheMap<K,V> extends TreeMap<K,CachedQuery<V>> {
 	}
 
 	public void store(K key, V obj) {
-		getOrCreateQuery(key).store(obj);
+		CachedQuery<V> q = getOrCreateQuery(key);
+		q.store(obj);
 	}
 	
 	public Object tryFetch(K key) {
-		CachedQuery query = (CachedQuery)get(key);
+		CachedQuery<?> query = (CachedQuery<?>)get(key);
 		if(query == null) {
 			return null;
 		}
@@ -96,18 +98,18 @@ public class CacheMap<K,V> extends TreeMap<K,CachedQuery<V>> {
 	}
 
     public static void flushAllCaches() {
-        for(CacheMap map : allCaches) {
+        for(CacheMap<?,?> map : allCaches) {
             map.clear();
         }
     }
 
     public static void flushAllExpired() {
-        for(CacheMap map : allCaches) {
+        for(CacheMap<?,?> map : allCaches) {
             map.flushExpired();
         }
     }
 
-    public static ArrayList<CacheMap> getAllCaches() {
+    public static ArrayList<CacheMap<?,?>> getAllCaches() {
         return allCaches;
     }
 }
