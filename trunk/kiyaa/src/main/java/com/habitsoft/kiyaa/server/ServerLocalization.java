@@ -371,7 +371,7 @@ public class ServerLocalization {
             impl.addConstructor(ctor);
             ctor.setBody("super($1);");
             
-            System.out.println("impl name is "+impl.getName()+" iface name is "+ifaceName);
+            //System.out.println("impl name is "+impl.getName()+" iface name is "+ifaceName);
             Class<T> implClass = impl.toClass();
             T instance = implClass.getConstructor(ResourceBundle.class).newInstance(resBundle);
             
