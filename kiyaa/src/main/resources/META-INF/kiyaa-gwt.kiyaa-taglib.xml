@@ -108,4 +108,9 @@
         <tag-name>iframe</tag-name>
         <tag-class>Frame</tag-class>
     </tag>
+    <tag>
+        <tag-name>richtextarea</tag-name>
+        <tag-class>RichTextArea</tag-class>
+        <content-attribute>hTML</content-attribute>
+    </tag>
 </kiyaa-taglib>
