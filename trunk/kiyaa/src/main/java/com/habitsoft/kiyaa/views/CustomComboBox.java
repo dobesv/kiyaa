@@ -104,8 +104,10 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 	            }
 			} else if(keyCode == KEY_RIGHT || keyCode == KEY_LEFT) {
 			} else if(Character.isLetterOrDigit(keyCode) || keyCode == KEY_BACKSPACE || keyCode == KEY_DELETE) {
-			    if(searchable)
+			    if(searchable) {
 			        applySearchTextOperation.schedule(250);
+			        applySearchTextOperationPending = true;
+			    }
 			}
 		}
 		
@@ -132,9 +134,11 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 	}
     NameValueAdapter<T> alternateNameValueAdapter = null;
 	
+    private boolean applySearchTextOperationPending=false;
 	private Timer applySearchTextOperation = new Timer() {
 		@Override
 		public void run() {
+			applySearchTextOperationPending = false;
 			applySearchText();
 		}
 	};
@@ -627,5 +631,13 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
         if(textbox instanceof TextBox) {
             ((TextBox)textbox).setInnerHelp(helpText);
         }
+    }
+    
+    @Override
+    public void save(AsyncCallback<Void> callback) {
+    	if(applySearchTextOperationPending) {
+    		applySearchTextOperation.run();
+    	}
+    	super.save(callback);
     }
 }

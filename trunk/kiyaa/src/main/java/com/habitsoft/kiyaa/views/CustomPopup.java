@@ -45,9 +45,11 @@ public class CustomPopup<T> implements PopupListener {
     private View emptyContent;
     protected boolean selectable = true;
     protected boolean clickable = false;
+    private boolean filterOperationPending=false;
     private Timer filterOperation = new Timer() {
     		@Override
     		public void run() {
+    			filterOperationPending = false;
     			applyFilter(true);
     		}
     	};
@@ -424,6 +426,7 @@ public class CustomPopup<T> implements PopupListener {
     	// Calling schedule will re-schedule the timer; any pending event is cancelled first,
     	// then the timer will run after 250ms.  Basically we want to only run the timer after
     	// the user stops typing for a little bit.
+    	filterOperationPending=true;
     	filterOperation.schedule(250);
     }
 
@@ -462,8 +465,11 @@ public class CustomPopup<T> implements PopupListener {
     }
 
     public void save(AsyncCallback<Void> callback) {
+    	if(filterOperationPending) {
+    		filterOperation.run();
+    	}
     	if(table != null) {
-    		table.save(callback);
+    		table.save(callback);    		
     	} else {
     		callback.onSuccess(null);
     	}
