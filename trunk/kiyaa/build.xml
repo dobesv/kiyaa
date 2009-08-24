@@ -64,4 +64,8 @@
 		    	 uri="antlib:org.apache.ivy.ant"
 			     classpath="lib/ivy-2.1.0-rc2.jar"/> 
 	</target>
+		
+	<target name="retrieve-deps">
+		<ivy:retrieve sync="true" pattern="lib/[conf]/[artifact].[ext]"/>
+	</target>
 </project>
