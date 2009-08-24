@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ====================================================================== 
+     Aug 22, 2009 9:37:14 PM                                                        
+
+     kiyaa    
+     Library for GWT with many features
+                   
+     dobes                                                                
+     ====================================================================== -->
+<project name="kiyaa" default="publish" xmlns:ivy="antlib:org.apache.ivy.ant">
+	<property name="kiyaa.version" value="0.9.3"/>
+	<property name="gwt.version" value="1.7.0"/>
+	<property name="publish.target" value="local"/>
+	
+    <description>
+            Library for GWT with many features
+    </description>
+	
+	<path id="compile.libs">
+		<fileset dir="lib"/>
+	</path>
+
+	<target name="publish" depends="jar">
+		<ivy:publish resolver="${publish.target}" pubrevision="${kiyaa.version}" conf="deploy" artifactspattern="[artifact]-[revision].[ext]" overwrite="true"/>
+	</target>
+		
+    <!-- ================================= 
+          target: jar              
+         ================================= -->
+    <target name="jar" depends="compile" description="Library for GWT with many features">
+        <jar destfile="kiyaa-${kiyaa.version}.jar">
+        	<fileset dir="target/classes"/>
+        	<fileset dir="src/main/java">
+        		<exclude name="**/server/**"/>
+        		<exclude name="**/rebind/**"/>
+        		<exclude name="**/com/sun/**"/>
+        		<exclude name="**/test/**"/>
+        	</fileset>
+        	<fileset dir="src/main/resources"/>
+        </jar>
+    </target>
+
+    <!-- - - - - - - - - - - - - - - - - - 
+          target: compile                      
+         - - - - - - - - - - - - - - - - - -->
+    <target name="compile" depends="resolve-deps">
+    	<!-- Remove class files if the java sources change -->
+    	<dependset>
+    		<srcfileset dir="src/main/java" includes="**/*.java"/>
+    		<targetfileset dir="target/classes" includes="**/*.class"/>
+    	</dependset>
+    	
+    	<ivy:cachepath pathid="classpath.compile" conf="gwt-compile" />
+    	<mkdir dir="target/classes"/>
+    	<javac srcdir="src/main/java"
+         destdir="target/classes"
+         debug="on"
+    	 classpathref="classpath.compile"/>
+    	
+    </target>
+
+	<target name="resolve-deps">
+		<taskdef resource="org/apache/ivy/ant/antlib.xml"
+		    	 uri="antlib:org.apache.ivy.ant"
+			     classpath="lib/ivy-2.1.0-rc2.jar"/> 
+	</target>
+</project>
