@@ -21,14 +21,19 @@
 	</path>
 
 	<target name="publish" depends="jar">
-		<ivy:publish resolver="${publish.target}" pubrevision="${kiyaa.version}" conf="deploy" artifactspattern="[artifact]-[revision].[ext]" overwrite="true"/>
+		<ivy:publish resolver="${publish.target}"
+			         pubrevision="${kiyaa.version}"
+			         conf="deploy" 
+			         artifactspattern="build/[artifact]-[revision].[ext]"
+			         update="true"
+			         overwrite="true"/>
 	</target>
 		
     <!-- ================================= 
           target: jar              
          ================================= -->
     <target name="jar" depends="compile" description="Library for GWT with many features">
-        <jar destfile="kiyaa-${kiyaa.version}.jar">
+        <jar destfile="build/kiyaa-${kiyaa.version}.jar">
         	<fileset dir="build/classes"/>
         	<fileset dir="src/main/java">
         		<exclude name="**/server/**"/>
