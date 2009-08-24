@@ -29,7 +29,7 @@
          ================================= -->
     <target name="jar" depends="compile" description="Library for GWT with many features">
         <jar destfile="kiyaa-${kiyaa.version}.jar">
-        	<fileset dir="bin/classes"/>
+        	<fileset dir="build/classes"/>
         	<fileset dir="src/main/java">
         		<exclude name="**/server/**"/>
         		<exclude name="**/rebind/**"/>
@@ -47,13 +47,13 @@
     	<!-- Remove class files if the java sources change -->
     	<dependset>
     		<srcfileset dir="src/main/java" includes="**/*.java"/>
-    		<targetfileset dir="bin/classes" includes="**/*.class"/>
+    		<targetfileset dir="build/classes" includes="**/*.class"/>
     	</dependset>
     	
     	<ivy:cachepath pathid="classpath.compile" conf="gwt-compile" />
-    	<mkdir dir="bin/classes"/>
+    	<mkdir dir="build/classes"/>
     	<javac srcdir="src/main/java"
-         destdir="bin/classes"
+         destdir="build/classes"
          debug="on"
     	 classpathref="classpath.compile"/>
     	
