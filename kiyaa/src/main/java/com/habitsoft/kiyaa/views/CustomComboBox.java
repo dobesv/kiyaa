@@ -43,13 +43,13 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 		}
 
 		public void onLostFocus(Widget sender) {
-			searching = false;
-			textboxHasFocus = false;
-			
 			// If the popup is showing, maybe they clicked on something in the popup (like the scroll bar) and that's why we lost focus.
 			// However, if they've tabbed away we want to hide the popup.
 			if(!popupShowing) 
 			    onTabEnterOrLostFocus(false);
+			
+			searching = false;
+			textboxHasFocus = false;
 		}
 	}
 	
@@ -106,7 +106,6 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 			} else if(Character.isLetterOrDigit(keyCode) || keyCode == KEY_BACKSPACE || keyCode == KEY_DELETE) {
 			    if(searchable) {
 			        applySearchTextOperation.schedule(250);
-			        applySearchTextOperationPending = true;
 			    }
 			}
 		}
@@ -134,12 +133,10 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 	}
     NameValueAdapter<T> alternateNameValueAdapter = null;
 	
-    private boolean applySearchTextOperationPending=false;
 	private Timer applySearchTextOperation = new Timer() {
 		@Override
 		public void run() {
-			applySearchTextOperationPending = false;
-			applySearchText();
+			applySearchText(true);
 		}
 	};
 
@@ -191,7 +188,7 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 		textbox.addStyleName(style);
 	}
 
-	private void applySearchText() {
+	private void applySearchText(boolean showPopup) {
 		// Select any exact match for the search string, if there is one; otherwise select nothing
 		final String text = getText();
 		
@@ -206,14 +203,16 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 		    applyFilter(true);
 		}
         
-		showPopup(new AsyncCallback<Void>() {
-			public void onFailure(Throwable caught) {
-				GWT.log("showPopup() failed in typing handler", caught);
-			}
-			public void onSuccess(Void arg0) {
-				searching = true;
-			}
-		});
+		if(showPopup) {
+			showPopup(new AsyncCallback<Void>() {
+				public void onFailure(Throwable caught) {
+					GWT.log("showPopup() failed in typing handler", caught);
+				}
+				public void onSuccess(Void arg0) {
+					searching = true;
+				}
+			});
+		}
 	}
 
 	@Override
@@ -635,9 +634,8 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
     
     @Override
     public void save(AsyncCallback<Void> callback) {
-    	if(applySearchTextOperationPending) {
-    		applySearchTextOperation.run();
-    	}
+		applySearchTextOperation.cancel();
+		applySearchText(false);
     	super.save(callback);
     }
 }
