@@ -3,26 +3,21 @@
      Aug 22, 2009 9:37:14 PM                                                        
 
      kiyaa    
-     Library for GWT with many features
+     Toolkit and library for GWT with many features
                    
      dobes                                                                
      ====================================================================== -->
 <project name="kiyaa" default="publish" xmlns:ivy="antlib:org.apache.ivy.ant">
-	<property name="kiyaa.version" value="0.9.3"/>
 	<property name="gwt.version" value="1.7.0"/>
 	<property name="publish.target" value="local"/>
 	
     <description>
-            Library for GWT with many features
+            Toolkit &amp; library for GWT with many features
     </description>
 	
-	<path id="compile.libs">
-		<fileset dir="lib"/>
-	</path>
-
 	<target name="publish" depends="jar">
 		<ivy:publish resolver="${publish.target}"
-			         pubrevision="${kiyaa.version}"
+			         pubrevision="${ivy.revision}"
 			         conf="deploy" 
 			         artifactspattern="build/[artifact]-[revision].[ext]"
 			         update="true"
@@ -33,7 +28,7 @@
           target: jar              
          ================================= -->
     <target name="jar" depends="compile" description="Library for GWT with many features">
-        <jar destfile="build/kiyaa-${kiyaa.version}.jar">
+        <jar destfile="build/${ivy.module}-${ivy.revision}.jar">
         	<fileset dir="build/classes"/>
         	<fileset dir="src/main/java">
         		<exclude name="**/server/**"/>

@@ -4,7 +4,8 @@
     <info
         organisation="com.habitsoft"
         module="kiyaa"
-        status="integration">
+        status="integration"
+        revision="0.9.3">
 	</info>
 	<configurations>
 		<conf name="deploy" description="Dependencies needed to run during deployment"/>
