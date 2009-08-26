@@ -18,10 +18,10 @@
 	<target name="publish" depends="jar">
 		<ivy:publish resolver="${publish.target}"
 			         pubrevision="${ivy.revision}"
-			         conf="deploy" 
 			         artifactspattern="build/[artifact]-[revision].[ext]"
 			         update="true"
-			         overwrite="true"/>
+			         overwrite="true"
+			         forcedeliver="true"/>
 	</target>
 		
     <!-- ================================= 
@@ -59,6 +59,11 @@
     	
     </target>
 
+	<target name="output-dep-tree" depends="resolve-deps">
+    	<mkdir dir="build/deps"/>
+		<ivy:report todir="build/deps"/>
+	</target>
+	
 	<target name="resolve-deps">
 		<taskdef resource="org/apache/ivy/ant/antlib.xml"
 		    	 uri="antlib:org.apache.ivy.ant"
