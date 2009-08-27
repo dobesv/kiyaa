@@ -10,18 +10,18 @@
 	<configurations>
 		<conf name="deploy" description="Dependencies needed to run during deployment"/>
 		<conf name="compile" extends="deploy" description="Deps needed for compilation, but not necessarily for deployment"/>
-		<conf name="gwt-compile" extends="compile" description="Compiling GWT code"/>
+		<conf name="test" extends="compile" description="Deps needed for testing"/>
 	</configurations>
 	<dependencies defaultconf="deploy->*" defaultconfmapping="*">
-		<dependency org="com.google.gwt" name="gwt-user" rev="1.7.0" conf="compile,gwt-compile->*"/>
-		<dependency org="com.google.gwt" name="gwt-dev" rev="1.7.0" conf="compile,gwt-compile->*">
-			<!-- <artifact name="gwt-dev" type="zip" m:classifier="windows-libs" conf="gwt-compile"/> -->
+		<dependency org="com.google.gwt" name="gwt-user" rev="1.7.0" conf="compile->*"/>
+		<dependency org="com.google.gwt" name="gwt-dev" rev="1.7.0" conf="compile->*">
+			<!-- <artifact name="gwt-dev" type="zip" m:classifier="windows-libs" conf="compile"/> -->
 			<artifact name="gwt-dev" type="jar" m:classifier="windows"/>
 		</dependency>
-		<dependency org="com.google.code.gwt-log" name="gwt-log" rev="2.6.0" conf="gwt-compile,deploy->*"/>
+		<dependency org="com.google.code.gwt-log" name="gwt-log" rev="2.6.0" conf="compile,deploy->*"/>
 		
 		<dependency org="com.google.gwt" name="gwt-servlet" rev="1.7.0"/>
-		<dependency org="xom" name="xom" rev="1.1" conf="gwt-compile"/>
+		<dependency org="xom" name="xom" rev="1.1" conf="compile"/>
 		<dependency org="commons-lang" name="commons-lang" rev="2.4"></dependency>
 		<dependency org="com.habitsoft" name="xhtml-dtds" rev="1.0">
 			<artifact name="xhtml-dtds-cache" conf="*" url="http://java-xhtml-cache-dtds-entityresolver.googlecode.com/files/xhtml-dtds-cache.jar"/>
