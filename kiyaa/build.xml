@@ -15,10 +15,18 @@
             Toolkit &amp; library for GWT with many features
     </description>
 	
-	<target name="publish" depends="jar">
+    <target name="version">
+		<tstamp>
+			<format property="now" pattern="yyyyMMddHHmmss"/>
+		</tstamp>
+        <property name="ivy.new.revision" value="${ivy.revision}.${now}"/>
+    </target>
+	
+	<target name="publish" depends="jar,version">
 		<ivy:publish resolver="${publish.target}"
-			         pubrevision="${ivy.revision}"
-			         artifactspattern="build/[artifact]-[revision].[ext]"
+			         revision="${ivy.revision}"
+			         pubrevision="${ivy.new.revision}"
+			         artifactspattern="build/[artifact]-${ivy.revision}.[ext]"
 			         update="true"
 			         overwrite="true"
 			         forcedeliver="true"/>
@@ -50,7 +58,7 @@
     		<targetfileset dir="build/classes" includes="**/*.class"/>
     	</dependset>
     	
-    	<ivy:cachepath pathid="classpath.compile" conf="gwt-compile" />
+    	<ivy:cachepath pathid="classpath.compile" conf="compile" />
     	<mkdir dir="build/classes"/>
     	<javac srcdir="src/main/java"
          destdir="build/classes"
