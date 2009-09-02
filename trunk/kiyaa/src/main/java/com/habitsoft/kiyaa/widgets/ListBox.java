@@ -196,8 +196,16 @@ public class ListBox extends com.google.gwt.user.client.ui.ListBox {
 		return nameValueAdapter;
 	}
 
-	public void setNameValueAdapter(NameValueAdapter nameValueAdaptor) {
-		this.nameValueAdapter = nameValueAdaptor;
+	public void setNameValueAdapter(NameValueAdapter nameValueAdapter) {
+		if(nameValueAdapter != this.nameValueAdapter) {
+			this.nameValueAdapter = nameValueAdapter;
+			if(models != null) {
+				GWT.log("Warning: it's better to set the nameValueAdapter on a ListBox before setting the models, to avoid recalculating the list contents", null);
+				//  Force a refresh of the list
+				this.models = null;
+				setModels(models);
+			}
+		}
 	}
 
 	public void addAction(String label, Action action) {
