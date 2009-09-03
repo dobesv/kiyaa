@@ -104,9 +104,7 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 	            }
 			} else if(keyCode == KEY_RIGHT || keyCode == KEY_LEFT) {
 			} else if(Character.isLetterOrDigit(keyCode) || keyCode == KEY_BACKSPACE || keyCode == KEY_DELETE) {
-			    if(searchable) {
-			        applySearchTextOperation.schedule(250);
-			    }
+		        applySearchTextOperation.schedule(250);
 			}
 		}
 		
@@ -188,28 +186,28 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 		textbox.addStyleName(style);
 	}
 
-	private void applySearchText(boolean showPopup) {
+	private void applySearchText(boolean fromTyping) {
 		// Select any exact match for the search string, if there is one; otherwise select nothing
 		final String text = getText();
 		
-		final String value = nameValueMap.get(text.toLowerCase());
+		final String value = text==null?null:nameValueMap.get(text.toLowerCase());
 		if(!searchable && value == null)
 		    return; // Only take exact matches if searchable is off
 		// GWT.log("Selecting value "+value+" based on text "+text.toLowerCase(), null);
 		selectValue(value, null, false);
 		
-		if(searchable) {
-		    searching = true;
-		    applyFilter(true);
-		}
-        
-		if(showPopup) {
+		if(fromTyping) {
+			if(searchable) {
+			    searching = true;
+			    applyFilter(true);
+			}
+	        
 			showPopup(new AsyncCallback<Void>() {
 				public void onFailure(Throwable caught) {
 					GWT.log("showPopup() failed in typing handler", caught);
 				}
 				public void onSuccess(Void arg0) {
-					searching = true;
+					searching = searchable;
 				}
 			});
 		}
