@@ -609,7 +609,7 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 	 * Get 1-relative page number.
 	 */
 	public int getPageNumber() {
-	    return 1 + startOffset/increment;
+	    return increment == 0?1:1 + startOffset/increment;
 	}
 	
     /**
