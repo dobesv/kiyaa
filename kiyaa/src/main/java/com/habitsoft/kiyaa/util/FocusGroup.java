@@ -3,6 +3,7 @@ package com.habitsoft.kiyaa.util;
 import java.util.ArrayList;
 import java.util.TreeMap;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.user.client.Command;
@@ -67,9 +68,13 @@ public class FocusGroup extends ArrayList<Widget> implements FocusListener, Sour
     public void focus(Widget target) {
         if(target == null)
             return;
-        ((HasFocus)target).setFocus(true);
-        if(target instanceof TextBoxBase) {
-            ((TextBoxBase)target).selectAll();
+        try {
+	        ((HasFocus)target).setFocus(true);
+	        if(target instanceof TextBoxBase) {
+	            ((TextBoxBase)target).selectAll();
+	        }
+        } catch(Exception e) {
+        	GWT.log("Error setting focus to "+target, e);
         }
     }
     public void focus() {
