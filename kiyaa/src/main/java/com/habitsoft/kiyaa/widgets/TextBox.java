@@ -71,6 +71,11 @@ public class TextBox extends com.google.gwt.user.client.ui.TextBox implements Fo
 		if(autoTrim) currentText = currentText.trim();
 		return currentText;
 	}
+    @Override
+    public void selectAll() {
+    	if(currentText != null)
+    		super.selectAll();
+    }
 
     public String getInnerHelp() {
         return innerHelp;
