@@ -53,7 +53,7 @@ public class CustomPopup<T> implements PopupListener {
     	};
     protected boolean popupShowing = false;
     private boolean applyDefaultFilter = true;
-    static final ModelFilter NOOP_FILTER = new ModelFilter() {
+    public static final ModelFilter NOOP_FILTER = new ModelFilter() {
         public boolean includes(Object model) {
             return true;
         }
