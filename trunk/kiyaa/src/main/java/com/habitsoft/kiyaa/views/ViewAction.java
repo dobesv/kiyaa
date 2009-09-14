@@ -19,6 +19,8 @@ public class ViewAction extends Action {
 		this.saveBefore = saveBefore;
 		this.loadAfter = loadAfter;
 		this.action = action;
+		if(action != null)
+			setLabel(action.getLabel());
 	}
 	public ViewAction(Action action, View view) {
 		this(action, view, true, true);
