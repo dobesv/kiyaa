@@ -157,11 +157,11 @@ public class Feedback extends FlowPanel {
         }
     }
 
-    public AsyncCallback busyCallback(final String busyText, final String successText, AsyncCallback callback) {
+    public <T> AsyncCallback<T> busyCallback(final String busyText, final String successText, AsyncCallback<T> callback) {
         busy(busyText);
-        callback = new AsyncCallbackProxy(callback) {
+        callback = new AsyncCallbackProxy<T>(callback) {
             @Override
-            public void onSuccess(Object result) {
+            public void onSuccess(T result) {
                 positiveFeedback(successText, null, 0);
                 super.onSuccess(result);
             }
