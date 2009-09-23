@@ -189,6 +189,10 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 	private void applySearchText(boolean fromTyping) {
 		// Select any exact match for the search string, if there is one; otherwise select nothing
 		final String text = getText();
+
+		if (text == null) {
+			return;
+		}
 		
 		final String value = text==null?null:nameValueMap.get(text.toLowerCase());
 		if(!searchable && value == null)
