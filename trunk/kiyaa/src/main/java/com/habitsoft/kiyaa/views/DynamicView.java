@@ -1,6 +1,7 @@
 package com.habitsoft.kiyaa.views;
 
 import com.allen_sauer.gwt.log.client.Log;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -46,11 +47,11 @@ public class DynamicView implements View {
 		return wrapper;
 	}
 
-	public void load(AsyncCallback callback) {
+	public void load(AsyncCallback<Void> callback) {
 		if(view != null) {
-			view.load(new AsyncCallbackProxy(callback) {
+			view.load(new AsyncCallbackProxy<Void>(callback) {
 				@Override
-				public void onSuccess(Object result) {
+				public void onSuccess(Void result) {
 					show();
 					super.onSuccess(result);
 				}
@@ -74,9 +75,9 @@ public class DynamicView implements View {
 		}
 	}
 
-	public void save(AsyncCallback callback) {
+	public void save(AsyncCallback<Void> callback) {
 		if(view != null) {
-			view.save(new AsyncCallbackProxy(callback) {
+			view.save(new AsyncCallbackProxy<Void>(callback) {
 			    @Override
 			    public void onFailure(Throwable caught) {
 			        Log.error("Error saving view "+view, caught);
@@ -106,6 +107,7 @@ public class DynamicView implements View {
     private void displayError(Throwable caught) {
         Feedback fb = new Feedback();
         fb.showError(caught);
+        GWT.getUncaughtExceptionHandler().onUncaughtException(caught);
         wrapper.setWidget(fb);
     }
 }
