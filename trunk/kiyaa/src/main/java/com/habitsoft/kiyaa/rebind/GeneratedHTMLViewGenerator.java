@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -30,6 +31,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
@@ -47,6 +49,7 @@ import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
 import com.google.gwt.i18n.client.Constants;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.SourcesChangeEvents;
 import com.google.gwt.user.client.ui.SourcesClickEvents;
@@ -554,16 +557,17 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             HashMap values = new HashMap();
             HashMap<String,ActionInfo> actions = new HashMap();
             ArrayList<String> ctor = new ArrayList();
-            ArrayList<String> memberDecls = new ArrayList();
-            ArrayList<String> calculations = new ArrayList();
-            ArrayList<String> asyncProxies = new ArrayList();
-            ArrayList<String> earlyLoads = new ArrayList();
-            ArrayList<String> earlyAsyncLoads = new ArrayList();
-            ArrayList<String> loads = new ArrayList();
-            ArrayList<String> asyncLoads = new ArrayList();
-            ArrayList<String> subviewLoads = new ArrayList();
-            ArrayList<String> saves = new ArrayList();
-            ArrayList<String> clearFields = new ArrayList();
+            ArrayList<String> memberDecls = new ArrayList<String>();
+            ArrayList<String> calculations = new ArrayList<String>();
+            ArrayList<String> asyncProxies = new ArrayList<String>();
+            ArrayList<String> earlyLoads = new ArrayList<String>();
+            ArrayList<String> earlyAsyncLoads = new ArrayList<String>();
+            ArrayList<String> loads = new ArrayList<String>();
+            ArrayList<String> asyncLoads = new ArrayList<String>();
+            ArrayList<String> subviewLoads = new ArrayList<String>();
+            ArrayList<String> saves = new ArrayList<String>();
+            ArrayList<String> clearFields = new ArrayList<String>();
+            LinkedHashSet<String> fieldNames = new LinkedHashSet<String>();
             //ArrayList<String> setModels = new ArrayList();
             ArrayList<Element> subviewClasses = new ArrayList();
             JClassType myModelClass;
@@ -658,11 +662,24 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 // the code to insert widgets into it
                 sw.println("public void addFields() {");
                 sw.indent();
+                sw.println("try {");
+                sw.indent();
                 
                 parseTree(rootElement);
                 for (SubviewInfo subviewInfo : subviews) {
                     generateSubview(subviewInfo);
 				}
+                sw.println("} catch(Throwable t) {");
+                sw.indent();
+                sw.println("String whichField;");
+                sw.print("if(!didInit) whichField = \"before didInit\";");
+                for (String field : fieldNames) {
+                    sw.println("else if("+field+" == null) whichField = \"before "+field+"\";");
+                }
+                sw.println("else whichField = \"after "+(fieldNames.isEmpty()?"didInit":"last field")+"\";");
+                sw.println("throw new Error(\""+myClass.getName()+".addFields() threw an exception \"+whichField+\": \"+t, t);");
+                sw.outdent();
+                sw.println("}");
                 sw.outdent();
                 sw.println("}");
 
@@ -696,27 +713,34 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             }
 
 			private void generatePanel() {
+				String rootView = getRootView(false);
 				if(hasHtml) {
                     sw.println("protected ComplexHTMLPanel panel = new ComplexHTMLPanel();");
                     sw.println("protected void addWidget(String id, Widget widget) {");
-                    sw.indentln("panel.replace(maybeEnsureDebugId(id, widget), id);");
+                    sw.indentln("panel.replace("+rootView+".maybeEnsureDebugId(id, widget), id);");
                     sw.println("}");
                     
                 } else {
                     sw.println("protected FlowPanel panel = new FlowPanel();");
                     sw.println("protected void addWidget(String id, Widget widget) {");
-                    sw.indentln("panel.add(maybeEnsureDebugId(id, widget));");
+                    sw.indentln("panel.add("+rootView+".maybeEnsureDebugId(id, widget));");
                     sw.println("}");
                 }
-                sw.println("protected <T extends View> T maybeEnsureDebugId(String id, T view) { maybeEnsureDebugId(id, view.getViewWidget()); return view; }");
-                sw.println("protected Widget maybeEnsureDebugId(String id, Widget widget) {");
-                sw.indent();
-                sw.println("String panelId = panel.getElement().getId();");
-                sw.println("if(panelId != null && panelId.startsWith(UIObject.DEBUG_ID_PREFIX))");
-                sw.indentln("widget.ensureDebugId(panelId.substring(UIObject.DEBUG_ID_PREFIX.length())+'-'+id);");
-                sw.println("return widget;");
-                sw.outdent();
-                sw.println("}");
+				if(!subviewClass) {
+	                sw.println("protected <T extends View> T maybeEnsureDebugId(String id, T view) { maybeEnsureDebugId(id, view.getViewWidget()); return view; }");
+	                sw.println("protected Widget maybeEnsureDebugId(String id, Widget widget) {");
+	                sw.indent();
+	                sw.println("try {");
+	                sw.indent();
+	                sw.println("String panelId = panel.getElement().getId();");
+	                sw.println("if(panelId != null && panelId.startsWith(UIObject.DEBUG_ID_PREFIX))");
+	                sw.indentln("widget.ensureDebugId(panelId.substring(UIObject.DEBUG_ID_PREFIX.length())+'-'+id);");
+	                sw.outdent();
+	                sw.println("} catch(Throwable t) {com.allen_sauer.gwt.log.client.Log.warn(\"ensureDebugId failed on \"+widget+\": \"+t);}");
+	                sw.println("return widget;");
+	                sw.outdent();
+	                sw.println("}");
+				}
                 sw.println("protected void addView(String id, View view) {");
                 sw.indentln("addWidget(id, view.getViewWidget());");
                 sw.println("}");
@@ -738,6 +762,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 new JParameter(setter, fieldType, fieldName);
                 memberDecls.add(setter + "{ this." + fieldName + " = " + fieldName + "; }");
                 memberDecls.add(fieldType.getQualifiedSourceName() + " " + fieldName + ";");
+                fieldNames.add(fieldName);
                 flushMethodsCache(this.myClass);
             }
 
@@ -774,6 +799,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 sw.println(myClass.getName()+" init() {");
                 sw.indent();
                 sw.println("if(didInit) return this;");
+                sw.println("didInit = true;");
             	if(hasHtml) {
             		if(useInnerHTML) {
 	                    sw.println("panel.setTemplate(TEMPLATE);");
@@ -781,8 +807,8 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 	                    sw.println("panel.setDomTemplate(generateDomTree());");
 	                }
                 }
-                sw.println("didInit = true;");
                 sw.println("addFields();");
+                
                 // if(!usesModel && subviewClass) {
                 // sw.println("setModel(null, null);");
                 // }
@@ -1997,7 +2023,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 //					}
 //				} else {
 					String className = addSubviewClass(elem);
-					createViewExpr = "maybeEnsureDebugId(\""+id+"\", new "+className+"("+myClass.getQualifiedSourceName()+".this)).init()";
+					createViewExpr = getRootView(factory)+".maybeEnsureDebugId(\""+id+"\", new "+className+"("+myClass.getQualifiedSourceName()+".this)).init()";
 //				}
 				if(factory)
 					createViewExpr = "new ViewFactory() { public View createView() { return "+createViewExpr+"; } }";
