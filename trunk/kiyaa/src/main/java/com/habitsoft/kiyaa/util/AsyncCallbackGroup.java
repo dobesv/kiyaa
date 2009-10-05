@@ -153,5 +153,12 @@ public class AsyncCallbackGroup {
 			callback = null;
 		}
 	}
+
+	/**
+	 * Check whether any group members are still pending.  Returns true if there are.
+	 */
+	public boolean isPending() {
+		return pending > 0;
+	}
 	
 }
