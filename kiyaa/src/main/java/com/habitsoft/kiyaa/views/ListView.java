@@ -167,10 +167,10 @@ public class ListView extends BaseCollectionView {
 		}
 	}
 
-	public void save(AsyncCallback callback) {
+	public void save(AsyncCallback<Void> callback) {
 		AsyncCallbackGroup group = new AsyncCallbackGroup();
         for (View view : views) {
-			view.save(group.member());
+			view.save(group.<Void>member());
 		}
 		group.ready(callback);
 	}
@@ -182,12 +182,12 @@ public class ListView extends BaseCollectionView {
 	@Override
 	protected void finishLoadingModels(AsyncCallbackGroup group) {
         if(emptyContent != null)
-            emptyContent.load(group.member());
+            emptyContent.load(group.<Void>member());
 	}
 	
 	@Override
 	protected void loadItem(int i, AsyncCallbackGroup group) {
-	    views.get(i).load(group.member());
+	    views.get(i).load(group.<Void>member());
 	}
 	
 	@Override

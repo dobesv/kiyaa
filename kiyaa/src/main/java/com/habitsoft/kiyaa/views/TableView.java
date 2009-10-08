@@ -152,7 +152,7 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 		private void loadViews(AsyncCallback callback) {
 			AsyncCallbackGroup group = new AsyncCallbackGroup();
 			for(ModelView view: views) {
-				view.load(group.member());
+				view.load(group.<Void>member());
 			}
 			group.ready(callback);
 		}
@@ -160,7 +160,7 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 			if(visible) {
     			AsyncCallbackGroup group = new AsyncCallbackGroup();
     			for(ModelView view: views) {
-    				view.save(group.member());
+    				view.save(group.<Void>member());
     			}
     			group.ready(callback);
 			} else {
@@ -181,7 +181,7 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 		
 		public void checkVisible(AsyncCallbackGroup group) {
 			if(test != null) {
-    			test.getValue(new AsyncCallbackProxy<Boolean>(group.member()) {
+    			test.getValue(new AsyncCallbackProxy<Boolean>(group.<Boolean>member()) {
     				@Override
     				public void onSuccess(Boolean result) {
     					if(result) {
@@ -197,13 +197,13 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 		public void load(int row, AsyncCallbackGroup group) {
 			if(visible) {
 				ModelView view = views.get(row);
-				view.load(group.member());
+				view.load(group.<Void>member());
 			}
 		}
 		public void save(int row, AsyncCallbackGroup group) {
 			if(visible) {
 				ModelView view = views.get(row);
-				view.save(group.member());
+				view.save(group.<Void>member());
 			}
 		}
 		boolean isLast() {
@@ -560,11 +560,11 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 			column.save(group.member());
 		}
 		if(navigation != null && navigation.getViewWidget().isVisible())
-		    navigation.save(group.member());
+		    navigation.save(group.<Void>member());
         if(bottomNavigation != null && bottomNavigation.getViewWidget().isVisible())
-            bottomNavigation.save(group.member());
+            bottomNavigation.save(group.<Void>member());
 		if(emptyContent != null && emptyContent.getViewWidget().isVisible())
-		    emptyContent.save(group.member());
+		    emptyContent.save(group.<Void>member());
 		group.ready(callback);
 	}
 
@@ -688,13 +688,13 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 		boolean empty = items.isEmpty() && startOffset == 0;
 		//table.setVisible(!empty);
 		if(navigation != null &&  group != null)
-			navigation.load(group.member());
+			navigation.load(group.<Void>member());
 		if(bottomNavigation != null && group != null)
-		    bottomNavigation.load(group.member());		    
+		    bottomNavigation.load(group.<Void>member());		    
 		if(emptyContent != null) {
 			emptyContent.getViewWidget().setVisible(empty);
 			if(empty && group != null)
-			    emptyContent.load(group.member());
+			    emptyContent.load(group.<Void>member());
 		}
 		if(empty) addStyleName("empty");
 		else removeStyleName("empty");
@@ -772,6 +772,6 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
     protected void finishLoadingModels(AsyncCallbackGroup group) {
         checkEmpty(group);
         if(footer != null)
-            footer.load(group.member());
+            footer.load(group.<Void>member());
     }
 }

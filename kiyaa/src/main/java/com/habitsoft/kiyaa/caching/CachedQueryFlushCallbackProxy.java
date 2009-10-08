@@ -63,17 +63,17 @@ public class CachedQueryFlushCallbackProxy<T> extends AsyncCallbackProxy<T> {
 	
 	final ArrayList<GlobalCachedQuery<?>> globalQueries = new ArrayList<GlobalCachedQuery<?>>();
 	final HashSet<CacheKey> keys = new HashSet<CacheKey>();
-	public CachedQueryFlushCallbackProxy(AsyncCallback<?> callback, CacheMap<?,?> cache) {
+	public CachedQueryFlushCallbackProxy(AsyncCallback<T> callback, CacheMap<?,?> cache) {
 		super(callback);
 		caches.add(cache);
 	}
 
-	public CachedQueryFlushCallbackProxy(AsyncCallback<?> callback, CacheMap<?,?> map, Object key) {
+	public CachedQueryFlushCallbackProxy(AsyncCallback<T> callback, CacheMap<?,?> map, Object key) {
 		super(callback);
 		keys.add(new CacheKey(key, map));
 	}
 
-	public CachedQueryFlushCallbackProxy(AsyncCallback<?> callback, GlobalCachedQuery<?> query) {
+	public CachedQueryFlushCallbackProxy(AsyncCallback<T> callback, GlobalCachedQuery<?> query) {
 		super(callback);
 		globalQueries.add(query);
 	}

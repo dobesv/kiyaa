@@ -32,10 +32,10 @@ public class CachedQuery<V> {
     
 	long expiry=0;
 	Throwable failure;
-	AsyncCallbackShared fetchInProgress;
+	AsyncCallbackShared<V> fetchInProgress;
 	final long refreshInterval;
 	V result;
-	
+	boolean inFetch;
 	
 	public CachedQuery(long refreshInterval) {
 		this.refreshInterval = refreshInterval;
@@ -56,27 +56,39 @@ public class CachedQuery<V> {
 			return saver(callback);
 		} else if(failure != null) {		    
 			if(callback != null) {
-			    final Throwable failureToReturn = failure;
-				DeferredCommand.addCommand(new Command() {
-					public void execute() {
-						callback.onFailure(failureToReturn);
-					}
-				});
+				if(inFetch) {
+				    final Throwable failureToReturn = failure;
+					DeferredCommand.addCommand(new Command() {
+						public void execute() {
+							callback.onFailure(failureToReturn);
+						}
+					});
+				} else {
+					inFetch=true;
+					callback.onFailure(failure);
+					inFetch=false;
+				}
 			}
 			return null;
 		} else {
 			//expiry = System.currentTimeMillis() + refreshInterval;
 			
-			// Run the onSuccess in a new call stack to more closely emulate the behavior of a server
-			// call.  Otherwise we get weird problems when the callback calls back to us in a cycle
-			// before we've cleaned up our state.
+			// Try to avoid cyclic callbacks - sometimes we'll call someone back and they'll
+			// call someone else back that tries to fetch this same thing from the cache.  This
+			// can result is very deep call stacks.
 		    final V resultToReturn = result;
 			if(callback != null) {
-				DeferredCommand.addCommand(new Command() {
-					public void execute() {
-						callback.onSuccess(resultToReturn);
-					}
-				});
+				if(inFetch) {
+					DeferredCommand.addCommand(new Command() {
+						public void execute() {
+							callback.onSuccess(resultToReturn);
+						}
+					});
+				} else {
+					inFetch = true;
+					callback.onSuccess(result);
+					inFetch = false;
+				}
 			}
 			return null;
 		}
@@ -103,7 +115,7 @@ public class CachedQuery<V> {
 	 * When calling a method which saves or creates a new object,
 	 * use "saver" to store the async result into this cache entry.
 	 */
-	public AsyncCallback saver(AsyncCallback callback) {
+	public AsyncCallback saver(AsyncCallback<V> callback) {
 		fetchInProgress = new AsyncCallbackShared<V>(callback) {
 			@Override
 			public void onFailure(Throwable caught) {
