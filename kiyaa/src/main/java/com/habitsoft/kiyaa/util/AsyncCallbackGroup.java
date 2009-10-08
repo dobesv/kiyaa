@@ -158,6 +158,7 @@ public class AsyncCallbackGroup {
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
 	protected void onComplete() {
         try {
             if(complete) Log.error("AsyncCallbackGroup completed twice; at "+marker, new Error());
