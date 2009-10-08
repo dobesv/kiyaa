@@ -10,8 +10,8 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.ComplexPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.habitsoft.kiyaa.metamodel.Value;
+import com.habitsoft.kiyaa.util.AsyncCallbackFilter;
 import com.habitsoft.kiyaa.util.AsyncCallbackGroup;
-import com.habitsoft.kiyaa.util.AsyncCallbackProxy;
 import com.habitsoft.kiyaa.views.View;
 
 /**
@@ -74,9 +74,9 @@ public class TwoRowForm extends ComplexPanel implements View {
 				visible = true;
 			}
 		}
-		public void load(AsyncCallback callback) {
+		public void load(AsyncCallback<Void> callback) {
 			if(test != null) {
-				test.getValue(new AsyncCallbackProxy<Boolean>(callback) {
+				test.getValue(new AsyncCallbackFilter<Boolean,Void>(callback) {
 					@Override
 					public void onSuccess(Boolean result) {
 						if(result) {
@@ -84,7 +84,7 @@ public class TwoRowForm extends ComplexPanel implements View {
 							view.load(callback);
 						} else {
 							hide();
-							super.onSuccess(null);
+							returnSuccess(null);
 						}
 					}
 				});
@@ -92,7 +92,7 @@ public class TwoRowForm extends ComplexPanel implements View {
 				view.load(callback);
 			}
 		}
-		public void save(AsyncCallback callback) {
+		public void save(AsyncCallback<Void> callback) {
 			if(visible)
 				view.save(callback);
 			else
@@ -183,7 +183,7 @@ public class TwoRowForm extends ComplexPanel implements View {
 	public void load(AsyncCallback callback) {
 		AsyncCallbackGroup group = new AsyncCallbackGroup();
         for (Field field : fields) {
-			field.load(group.member());
+			field.load(group.<Void>member());
 		}
 		group.ready(callback);
 	}
@@ -191,7 +191,7 @@ public class TwoRowForm extends ComplexPanel implements View {
 	public void save(AsyncCallback callback) {
 		AsyncCallbackGroup group = new AsyncCallbackGroup();
         for (Field field : fields) {
-			field.save(group.member());
+			field.save(group.<Void>member());
 		}
 		group.ready(callback);
 	}

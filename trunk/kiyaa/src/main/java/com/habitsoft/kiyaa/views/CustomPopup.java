@@ -22,6 +22,7 @@ import com.habitsoft.kiyaa.metamodel.Action;
 import com.habitsoft.kiyaa.metamodel.ActionSeries;
 import com.habitsoft.kiyaa.metamodel.Value;
 import com.habitsoft.kiyaa.util.AsyncCallbackFactory;
+import com.habitsoft.kiyaa.util.AsyncCallbackFilter;
 import com.habitsoft.kiyaa.util.AsyncCallbackProxy;
 import com.habitsoft.kiyaa.util.ModelFilter;
 import com.habitsoft.kiyaa.util.ToStringNameValueAdapter;
@@ -309,7 +310,7 @@ public class CustomPopup<T> implements PopupListener {
     		actionTests.add(new Action() {
     			@Override
     			public void perform(AsyncCallback<Void> callback) {
-    				test.getValue(new AsyncCallbackProxy<Boolean>(callback) {
+    				test.getValue(new AsyncCallbackFilter<Boolean,Void>(callback) {
     					@Override
     					public void onSuccess(Boolean result) {
     					    if(widget.isVisible() != result) {
@@ -319,7 +320,7 @@ public class CustomPopup<T> implements PopupListener {
     					        else
     					            visibleActions.remove(action);
     					    }
-    						super.onSuccess(null);
+    						returnSuccess(null);
     					}
     				});
     			}
@@ -440,7 +441,7 @@ public class CustomPopup<T> implements PopupListener {
     		callback = actionTests.performOnSuccess(callback);
     	
     	if(modelsValue != null) {
-    	    modelsValue.getValue(new AsyncCallbackProxy<T[]>(callback) {
+    	    modelsValue.getValue(new AsyncCallbackFilter<T[],Void>(callback) {
     	        @Override
                 public void onSuccess(T[] result) {
     	            setModels(result);

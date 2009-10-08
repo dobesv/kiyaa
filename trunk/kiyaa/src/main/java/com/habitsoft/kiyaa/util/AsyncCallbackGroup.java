@@ -120,18 +120,37 @@ public class AsyncCallbackGroup {
 			});
 		}
 	}
-    /** If you don't care what the results are you can use this so that you wait until they arrive. */
-    public AsyncCallback member(Object marker) {
+    /** 
+     * If you don't care what the results are you can use this so that you wait until they arrive.
+     * 
+     * To get the right kind of callback, use the syntax:
+     * 
+     * group.<Void>member();
+     * group.<MyClass>member();
+     * 
+     * Etc..
+     */
+    public <T> AsyncCallback<T> member(Object marker) {
         if(marker != null) {
-            return new AsyncCallbackGroupMember(this, marker);
+            return new AsyncCallbackGroupMember<T>(this, marker);
         } else {
             return member();
         }
     }
-    /** If you don't care what the results are you can use this so that you wait until they arrive. */
-	public AsyncCallback member() {
+    /** 
+     * If you don't care what the results are you can use this so that you wait until they arrive.
+     * 
+     * To get the right kind of callback, use the syntax:
+     * 
+     * group.<Void>member();
+     * group.<MyClass>member();
+     * 
+     * Etc..
+     */
+	@SuppressWarnings("unchecked")
+	public <T> AsyncCallback<T> member() {
 		if(sharedMember == null) {
-			sharedMember = new AsyncCallbackGroupMember(this);
+			sharedMember = new AsyncCallbackGroupMember<T>(this);
 			return sharedMember;
 		} else {
 			addPending();

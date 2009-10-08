@@ -40,19 +40,19 @@ public class DockPanel extends com.google.gwt.user.client.ui.DockPanel implement
 	public Widget getViewWidget() {
 		return this;
 	}
-	public void load(AsyncCallback callback) {
+	public void load(AsyncCallback<Void> callback) {
 		AsyncCallbackGroup group = new AsyncCallbackGroup();
 		for (Iterator i = views.iterator(); i.hasNext();) {
 			View view = (View) i.next();
-			view.load(group.member());
+			view.load(group.<Void>member());
 		}
 		group.ready(callback);
 	}
-	public void save(AsyncCallback callback) {
+	public void save(AsyncCallback<Void> callback) {
 		AsyncCallbackGroup group = new AsyncCallbackGroup();
 		for (Iterator i = views.iterator(); i.hasNext();) {
 			View view = (View) i.next();
-			view.save(group.member());
+			view.save(group.<Void>member());
 		}
 		group.ready(callback);
 	}

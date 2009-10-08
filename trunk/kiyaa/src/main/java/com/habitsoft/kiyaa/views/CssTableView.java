@@ -79,7 +79,7 @@ public class CssTableView implements View, SourcesChangeEvents {
 			AsyncCallbackGroup group = new AsyncCallbackGroup();
 			for (int i = 0; i < views.length; i++) {
 				View view = views[i];
-				view.load(group.member());
+				view.load(group.<Void>member());
 			}
 			group.ready(callback);
 		}
@@ -88,7 +88,7 @@ public class CssTableView implements View, SourcesChangeEvents {
 			AsyncCallbackGroup group = new AsyncCallbackGroup();
 			for (int i = 0; i < views.length; i++) {
 				View view = views[i];
-				view.save(group.member());
+				view.save(group.<Void>member());
 			}
 			group.ready(callback);
 		}
