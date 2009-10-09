@@ -3,7 +3,7 @@ package com.habitsoft.kiyaa.util;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
-public abstract class RetryingOperation<T> extends AsyncCallbackProxy<T> {
+public abstract class RetryingOperation<T> extends AsyncCallbackDirectProxy<T> {
     final RetryController controller;
     int retriesSoFar=0;
     

@@ -6,7 +6,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.habitsoft.kiyaa.util.AsyncCallbackProxy;
+import com.habitsoft.kiyaa.util.AsyncCallbackDirectProxy;
 import com.habitsoft.kiyaa.widgets.Feedback;
 
 /**
@@ -49,7 +49,7 @@ public class DynamicView implements View {
 
 	public void load(AsyncCallback<Void> callback) {
 		if(view != null) {
-			view.load(new AsyncCallbackProxy<Void>(callback) {
+			view.load(new AsyncCallbackDirectProxy<Void>(callback) {
 				@Override
 				public void onSuccess(Void result) {
 					show();
@@ -77,7 +77,7 @@ public class DynamicView implements View {
 
 	public void save(AsyncCallback<Void> callback) {
 		if(view != null) {
-			view.save(new AsyncCallbackProxy<Void>(callback) {
+			view.save(new AsyncCallbackDirectProxy<Void>(callback) {
 			    @Override
 			    public void onFailure(Throwable caught) {
 			        Log.error("Error saving view "+view, caught);

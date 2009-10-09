@@ -19,7 +19,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.habitsoft.kiyaa.metamodel.ModelCollection;
 import com.habitsoft.kiyaa.util.AsyncCallbackGroup;
 import com.habitsoft.kiyaa.util.AsyncCallbackGroupMember;
-import com.habitsoft.kiyaa.util.AsyncCallbackProxy;
+import com.habitsoft.kiyaa.util.AsyncCallbackDirectProxy;
 import com.habitsoft.kiyaa.util.HoverStyleHandler;
 import com.habitsoft.kiyaa.util.ModelFilter;
 import com.habitsoft.kiyaa.widgets.ScrollAutoLoader.Loader;
@@ -414,7 +414,7 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 
 	public static AsyncCallback hideDuringUpdate(AsyncCallback callback, final Widget widget) {
 		DOM.setStyleAttribute(widget.getElement(), "visibility", "hidden");
-		callback = new AsyncCallbackProxy(callback) {
+		callback = new AsyncCallbackDirectProxy(callback) {
 			@Override
 			public void onSuccess(Object result) {
 				DOM.setStyleAttribute(widget.getElement(), "visibility", "visible");

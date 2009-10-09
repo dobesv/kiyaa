@@ -18,20 +18,20 @@ public class LoadView implements View {
 		return new HTML("");
 	}
 
-	public void load(AsyncCallback callback) {
-		from.getValue(new AsyncCallbackProxy(callback) {
+	public void load(AsyncCallback<Void> callback) {
+		from.getValue(new AsyncCallbackProxy<Object,Void>(callback) {
 			@Override
 			public void onSuccess(Object result) {
-				to.setValue(result, callback);
+				to.setValue(result, takeCallback());
 			}
 		});
 	}
 
-	public void save(AsyncCallback callback) {
-		to.getValue(new AsyncCallbackProxy(callback) {
+	public void save(AsyncCallback<Void> callback) {
+		to.getValue(new AsyncCallbackProxy<Object,Void>(callback) {
 			@Override
 			public void onSuccess(Object result) {
-				from.setValue(result, callback);
+				from.setValue(result, takeCallback());
 			}
 		});
 	}

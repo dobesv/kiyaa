@@ -17,6 +17,7 @@ import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
 import com.habitsoft.kiyaa.metamodel.Action;
 import com.habitsoft.kiyaa.metamodel.Value;
+import com.habitsoft.kiyaa.util.AsyncCallbackDirectProxy;
 import com.habitsoft.kiyaa.util.AsyncCallbackFactory;
 import com.habitsoft.kiyaa.util.AsyncCallbackGroup;
 import com.habitsoft.kiyaa.util.AsyncCallbackProxy;
@@ -131,19 +132,19 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 				visible = true;
 			}
 		}
-		public void load(AsyncCallback callback) {
+		public void load(AsyncCallback<Void> callback) {
 			if(test == null) {
 				loadViews(callback);
 			} else {
-				test.getValue(new AsyncCallbackProxy<Boolean>(callback) {
+				test.getValue(new AsyncCallbackProxy<Boolean,Void>(callback) {
 					@Override
 					public void onSuccess(Boolean result) {
 						if(result) {
-							loadViews(callback);
+							loadViews(takeCallback());
 							show();
 						} else {
 							hide();
-							super.onSuccess(null);
+							returnSuccess(null);
 						}
 					}
 				});
@@ -181,7 +182,7 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 		
 		public void checkVisible(AsyncCallbackGroup group) {
 			if(test != null) {
-    			test.getValue(new AsyncCallbackProxy<Boolean>(group.<Boolean>member()) {
+    			test.getValue(new AsyncCallbackDirectProxy<Boolean>(group.<Boolean>member()) {
     				@Override
     				public void onSuccess(Boolean result) {
     					if(result) {

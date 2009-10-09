@@ -4,6 +4,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.habitsoft.kiyaa.metamodel.Value;
+import com.habitsoft.kiyaa.util.AsyncCallbackDirectProxy;
 import com.habitsoft.kiyaa.util.AsyncCallbackProxy;
 
 /**
@@ -15,7 +16,7 @@ import com.habitsoft.kiyaa.util.AsyncCallbackProxy;
  */
 public class WithView implements View {
 
-	ModelView view;
+	ModelView<Object> view;
 	Value value;
 	
 	public void clearFields() {
@@ -29,16 +30,16 @@ public class WithView implements View {
 		return view.getViewWidget();
 	}
 
-	public void load(AsyncCallback callback) {
+	public void load(AsyncCallback<Void> callback) {
 		if(view != null) {
 			if(value != null) {
-				value.getValue(new AsyncCallbackProxy(callback) {
+				value.getValue(new AsyncCallbackProxy<Object,Void>(callback) {
 					@Override
 					public void onSuccess(Object result) {
-						view.setModel(result, new AsyncCallbackProxy(this.callback) {
+						view.setModel(result, new AsyncCallbackDirectProxy<Void>(takeCallback()) {
 							@Override
-							public void onSuccess(Object result) {
-								view.load(this.callback);
+							public void onSuccess(Void result) {
+								view.load(takeCallback());
 							}
 						});
 					}
@@ -51,7 +52,7 @@ public class WithView implements View {
 		}
 	}
 
-	public void save(AsyncCallback callback) {
+	public void save(AsyncCallback<Void> callback) {
 		if(view != null) {
 			view.save(callback);
 		} else {
@@ -71,7 +72,7 @@ public class WithView implements View {
 		this.value = value;
 	}
 
-	public void setView(ModelView view) {
+	public void setView(ModelView<Object> view) {
 		this.view = view;
 	}
 

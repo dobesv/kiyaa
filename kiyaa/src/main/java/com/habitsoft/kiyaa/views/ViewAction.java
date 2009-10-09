@@ -41,7 +41,7 @@ public class ViewAction extends Action {
     		}
     		if(action != null) {
     		    if(saveBefore)
-    		        view.save(action.performOnSuccess(callback));
+    		        view.save(action.<Void>performOnSuccess(callback));
     		    else
     		        action.perform(callback);
     		} else if(saveBefore) {
@@ -53,15 +53,14 @@ public class ViewAction extends Action {
 	        callback.onFailure(t);
 	    }
 	}
-    public static AsyncCallback<Void> loadViewOnSuccess(final View view, AsyncCallback callback) {
-        callback = new AsyncCallbackProxy(callback) {
+    public static <T> AsyncCallback<T> loadViewOnSuccess(final View view, AsyncCallback<Void> callback) {
+        return new AsyncCallbackProxy<T,Void>(callback) {
         	@Override
-        	public void onSuccess(Object result) {
+        	public void onSuccess(T result) {
         	    // ViewSaveLoadManager.getInstance().load(view, callback);
-        	    view.load(callback);
+        	    view.load(takeCallback());
         	}
         };
-        return callback;
     }
 	
 	/**
