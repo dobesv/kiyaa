@@ -31,7 +31,6 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
 
-import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
@@ -49,7 +48,6 @@ import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
 import com.google.gwt.i18n.client.Constants;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.SourcesChangeEvents;
 import com.google.gwt.user.client.ui.SourcesClickEvents;
@@ -241,7 +239,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
         
         /**
          * @param callbackExpr AsyncCallback to return errors or success to
-         * @param callbackOptional True if the callback expression doesn't have to be called (i.e. group.member() or AsyncCallbackFactory.defaultNewInstance() calls)
+         * @param callbackOptional True if the callback expression doesn't have to be called (i.e. group.<Void>member() or AsyncCallbackFactory.<Void>defaultNewInstance() calls)
          * @return one or more statements separated by a semicolon to execute this action.
          */
         public String toString(String callbackExpr, boolean callbackOptional) {
@@ -940,10 +938,10 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 if(baseClassLoads) {
             	    if(nothingToLoad)
             	        return;
-            		sw.println("public void load(AsyncCallback callback) {");
+            		sw.println("public void load(AsyncCallback<Void> callback) {");
             		sw.indent();
             		sw.println("try { init(); } catch(Throwable t) { callback.onFailure(t); return; }");
-                    sw.println("callback = new AsyncCallbackProxy(callback) { public void onSuccess(Object result) { loadImpl(callback); } };");
+                    sw.println("callback = new AsyncCallbackDirectProxy<Void>(callback) { public void onSuccess(Void result) { loadImpl(takeCallback()); } };");
             		for(String load : earlyLoads) {
             		    sw.println(load);
             		}
@@ -954,7 +952,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             		    for(String load : earlyAsyncLoads) {
             		        sw.println(load);
             		    }
-            		    sw.println("super.load(group.member());");
+            		    sw.println("super.load(group.<Void>member());");
             		    sw.println("group.ready(callback);");
             		}
                     sw.outdent();
@@ -993,9 +991,9 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                         }
                         sw.println("group.ready(callback);");
                     } else {
-                        sw.println("group.ready(new AsyncCallbackProxy(callback) {");
+                        sw.println("group.ready(new AsyncCallbackDirectProxy<Void>(callback) {");
                         sw.indent();
-                        sw.println("public void onSuccess(Object result) {");
+                        sw.println("public void onSuccess(Void result) {");
                         sw.indent();
                         sw.println("final AsyncCallbackGroup group = new AsyncCallbackGroup(\""+myClass.getName()+".load() (subviews)\");");
                         sw.println("try {");
@@ -1029,15 +1027,15 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 	if(saves.isEmpty())
                 		return;
             		name="saveImpl";
-            		sw.println("public void save(AsyncCallback callback) {");
+            		sw.println("public void save(AsyncCallback<Void> callback) {");
             		sw.indent();
-            		sw.println("super.save(new AsyncCallbackProxy(callback, \""+myClass.getName()+".save()\") { public void onSuccess(Object result) { "+name+"(this.callback); } });");
+            		sw.println("super.save(new AsyncCallbackDirectProxy<Void>(callback, \""+myClass.getName()+".save()\") { public void onSuccess(Void result) { "+name+"(takeCallback()); } });");
                     sw.outdent();
             		sw.println("}");
             	} else {
             		name = "save";
             	}
-                sw.println("public void "+name+"(final AsyncCallback callback) {");
+                sw.println("public void "+name+"(final AsyncCallback<Void> callback) {");
                 sw.indent();
                 if(saves.isEmpty()) {
                 	sw.println("callback.onSuccess(null);");
@@ -1356,9 +1354,9 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 		    if(expr.hasSynchronousGetter())
                 		        earlyLoads.add(textExpr.copyStatement(expr));
                 		    else
-                		        earlyAsyncLoads.add(textExpr.asyncCopyStatement(expr, "group.member()", true));
+                		        earlyAsyncLoads.add(textExpr.asyncCopyStatement(expr, "group.<Void>member()", true));
                 		} else {
-                			asyncLoads.add(textExpr.asyncCopyStatement(expr, "group.member()", true));
+                			asyncLoads.add(textExpr.asyncCopyStatement(expr, "group.<Void>member()", true));
                 		}
                 	}
             	} finally {
@@ -1435,17 +1433,17 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                         }
                     }
                     if (canLoad) {
-                        subviewLoads.add(viewExpr + ".load(group.member());");
+                        subviewLoads.add(viewExpr + ".load(group.<Void>member());");
                     }
                     if (!readOnly) {
                         if (canSave)
-                            saves.add(viewExpr + ".save(group.member());");
+                            saves.add(viewExpr + ".save(group.<Void>member());");
                     }
                     if(canLoad) {
                     	clearFields.add(viewExpr + ".clearFields();");
                     }
                     //if (canSetModel)
-                    //    setModels.add(viewExpr + ".setModel(" + modelExpr + ", group.member());");
+                    //    setModels.add(viewExpr + ".setModel(" + modelExpr + ", group.<Void>member());");
 
                 }
             }
@@ -1687,7 +1685,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				sw.indent();
 				sw.println("public void " + "onFocus(Widget sender)" + " {");
 				sw.indent();
-				sw.println(actionExpr.toString("AsyncCallbackFactory.defaultNewInstance()", true));
+				sw.println(actionExpr.toString("AsyncCallbackFactory.<Void>defaultNewInstance()", true));
 				sw.outdent();
 				sw.println("}");
 				sw.println("public void " + "onLostFocus(Widget sender)" + " { }");
@@ -1712,7 +1710,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				sw.indent();
 				sw.println("public void " + "onLostFocus(Widget sender)" + " {");
 				sw.indent();
-				sw.println(actionExpr.toString("AsyncCallbackFactory.defaultNewInstance()", true));
+				sw.println(actionExpr.toString("AsyncCallbackFactory.<Void>defaultNewInstance()", true));
 				sw.outdent();
 				sw.println("}");
 				sw.println("public void " + "onFocus(Widget sender)" + " { }");
@@ -1757,7 +1755,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 			protected void generateAttributeLoadSave(JClassType type, ExpressionInfo attributeAccessors, ExpressionInfo pathAccessors,
 				boolean readOnly, boolean constant, boolean earlyLoad)
 				throws UnableToCompleteException {
-				String loadExpr = attributeAccessors.asyncCopyStatement(pathAccessors, "group.member()", true);
+				String loadExpr = attributeAccessors.asyncCopyStatement(pathAccessors, "group.<Void>member()", true);
 				// Put the value into the widget on load()
 				//if(attributeAccessors.getter != null && attributeAccessors.getType().equals(getType(String.class.getName())) && pathAccessors.getter != null) {
 					// It turns out that calling setText() and setValue to the same value is a high-cost operation
@@ -1789,7 +1787,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				    }
 				    
 				    // If it's a two-way affair, copy the value back on save()
-				    String saveExpr = pathAccessors.asyncCopyStatement(attributeAccessors, "group.member()", true);
+				    String saveExpr = pathAccessors.asyncCopyStatement(attributeAccessors, "group.<Void>member()", true);
 				    saves.add(saveExpr);
 				}
 			}
@@ -1806,7 +1804,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 	sw.println("if("+condition+")");
                 	sw.indent();
                 }
-                sw.println(action.toString("AsyncCallbackFactory.defaultNewInstance()", true));
+                sw.println(action.toString("AsyncCallbackFactory.<Void>defaultNewInstance()", true));
                 if(condition != null)
                 	sw.outdent();
                 sw.outdent();
@@ -1934,8 +1932,8 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                             sw.println(name + ".setViewFactory("+fieldName+");");
 						} else if(widget) {
 							sw.println(name + ".setWidget("+fieldName+".getViewWidget());");
-							subviewLoads.add(fieldName + ".load(group.member());");
-                            saves.add(fieldName + ".save(group.member());");
+							subviewLoads.add(fieldName + ".load(group.<Void>member());");
+                            saves.add(fieldName + ".save(group.<Void>member());");
                             clearFields.add(fieldName + ".clearFields();");
                         } else if (findMethod(type, "setView", 1, false) != null
                         	 || (modelView && findMethod(type, "setView", 1, false) != null)) {
@@ -2675,17 +2673,17 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                     	if(subexpr.hasGetter()) {
                         	if(subexpr.hasSynchronousGetter()) {
                         		// Synchronous sub-expression, how merciful! 
-                            	asyncProxies.add("    public void "+getterName+"(AsyncCallback callback) {\n"+
-                            		             "        "+callAsyncGetter(getter, "new AsyncCallbackProxy(callback, \""+path+"\") {\n"+
+                            	asyncProxies.add("    public void "+getterName+"(AsyncCallback<Object> callback) {\n"+
+                            		             "        "+callAsyncGetter(getter, "new AsyncCallbackDirectProxy<Object>(callback, \""+path+"\") {\n"+
                             		             "            public void onSuccess(Object result) {\n"+
                             		             "                "+type.getQualifiedSourceName()+" base = ("+type.getQualifiedSourceName()+") result;\n"+
-                            		             "                super.onSuccess("+subexpr.getterExpr()+");\n"+
+                            		             "                returnSuccess("+subexpr.getterExpr()+");\n"+
                             		             "            }\n"+
                             		             "        }")+";\n"+
                             		             "    }\n");
                         	} else if(subexpr.hasAsyncGetter()) {
-                            	asyncProxies.add("    public void "+getterName+"(AsyncCallback callback) {\n"+
-               		             "        "+callAsyncGetter(getter, "new AsyncCallbackProxy(callback, \""+path+"\") {\n"+
+                            	asyncProxies.add("    public void "+getterName+"(AsyncCallback<Object> callback) {\n"+
+               		             "        "+callAsyncGetter(getter, "new AsyncCallbackDirectProxy<Object>(callback, \""+path+"\") {\n"+
                		             "            public void onSuccess(Object result) {"+
                		             "                "+type.getQualifiedSourceName()+" base = ("+type.getQualifiedSourceName()+") result;\n"+
                		             "                "+callAsyncGetter(subexpr.asyncGetter, "callback")+";\n"+
@@ -2698,19 +2696,19 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                     	if(subexpr.hasSetter()) {
                         	if(subexpr.setter != null) {
                         		// Synchronous sub-expression, how merciful! 
-                            	asyncProxies.add("    public void "+setterName+"(final "+subexpr.type.getQualifiedSourceName()+" value, AsyncCallback callback) {\n"+
-                  		             "        "+callAsyncGetter(getter, "new AsyncCallbackProxy(callback, \""+path+"\") {\n"+
-                            		             "            public void onSuccess(Object result) {\n"+
+                            	asyncProxies.add("    public void "+setterName+"(final "+subexpr.type.getQualifiedSourceName()+" value, AsyncCallback<Void> callback) {\n"+
+                  		             "        "+callAsyncGetter(getter, "new AsyncCallbackDirectProxy<Void>(callback, \""+path+"\") {\n"+
+                            		             "            public void onSuccess(Void result) {\n"+
                             		             "                "+type.getQualifiedSourceName()+" base = ("+type.getQualifiedSourceName()+") result;\n"+
                             		             "                "+subexpr.setter+"(value);\n"+
-                            		             "                super.onSuccess(null);\n"+
+                            		             "                returnSuccess(null);\n"+
                             		             "            }\n"+
                    		             "        }")+";\n"+
                             		             "    }");
                         	} else if(subexpr.asyncSetter != null) {
-                            	asyncProxies.add("    public void "+setterName+"(final "+subexpr.type.getQualifiedSourceName()+" value, AsyncCallback callback) {\n"+
-                 		             "        "+callAsyncGetter(getter, "new AsyncCallbackProxy(callback, \""+path+"\") {\n"+
-               		             "            public void onSuccess(Object result) {\n"+
+                            	asyncProxies.add("    public void "+setterName+"(final "+subexpr.type.getQualifiedSourceName()+" value, AsyncCallback<Void> callback) {\n"+
+                 		             "        "+callAsyncGetter(getter, "new AsyncCallbackDirectProxy<Void>(callback, \""+path+"\") {\n"+
+               		             "            public void onSuccess(Void result) {\n"+
                		             "                "+type.getQualifiedSourceName()+" base = ("+type.getQualifiedSourceName()+") result;\n"+
                		             "                "+subexpr.asyncSetter+"(value, callback);\n"+
                		             "            }\n"+
@@ -3106,11 +3104,11 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				if(left.asyncGetter != null) {
 					if(right.asyncGetter != null) {
 						calculations.add("    public void "+getterName+"(AsyncCallback<"+resultClassTypeName+"> callback) {\n"+
-				             "        "+callAsyncGetter(left.asyncGetter, "new AsyncCallbackProxy<"+classLeftTypeName+">(callback) {\n"+
+				             "        "+callAsyncGetter(left.asyncGetter, "new AsyncCallbackProxy<"+classLeftTypeName+","+resultClassTypeName+">(callback) {\n"+
 				             "            public void onSuccess(final "+classLeftTypeName+" left) {\n"+
-				             "                "+callAsyncGetter(right.asyncGetter, "new AsyncCallbackProxy<"+classRightTypeName+">(callback) {\n"+
+				             "                "+callAsyncGetter(right.asyncGetter, "new AsyncCallbackProxy<"+classRightTypeName+","+resultClassTypeName+">(callback) {\n"+
 					         "                public void onSuccess(final "+classRightTypeName+" right) {\n"+
-					         "                    callback.onSuccess("+convertLeft+oper+convertRight+");\n"+
+					         "                    returnSuccess("+convertLeft+oper+convertRight+");\n"+
 					         "                }\n"+
 					         "            }")+";\n"+
 				             "            }\n"+
@@ -3118,10 +3116,10 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				             "    }\n");
 					} else {
 						calculations.add("    public void "+getterName+"(AsyncCallback<"+resultClassTypeName+"> callback) {\n"+
-				             "        "+callAsyncGetter(left.asyncGetter, "new AsyncCallbackProxy<"+classLeftTypeName+">(callback) {\n"+
+				             "        "+callAsyncGetter(left.asyncGetter, "new AsyncCallbackProxy<"+classLeftTypeName+","+resultClassTypeName+">(callback) {\n"+
 				             "            public void onSuccess(final "+classLeftTypeName+" left) {\n"+
 					         "                final "+rightTypeName+" right = "+right.getterExpr()+";\n"+
-					         "                callback.onSuccess("+convertLeft+oper+convertRight+");\n"+
+					         "                returnSuccess("+convertLeft+oper+convertRight+");\n"+
 				             "            }\n"+
 				             "        }")+";\n"+
 				             "    }\n");
@@ -3130,9 +3128,9 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 					// right.asyncGetter must != null
 					calculations.add("    public void "+getterName+"(AsyncCallback<"+resultClassTypeName+"> callback) {\n"+
 				         "            final "+leftTypeName+" left = "+left.getterExpr()+";\n"+
-				         "            "+callAsyncGetter(right.asyncGetter, "new AsyncCallbackProxy<"+classRightTypeName+">(callback) {\n"+
+				         "            "+callAsyncGetter(right.asyncGetter, "new AsyncCallbackProxy<"+classRightTypeName+","+resultClassTypeName+">(callback) {\n"+
 				         "            public void onSuccess(final "+classRightTypeName+" right) {\n"+
-				         "                callback.onSuccess("+convertLeft+oper+convertRight+");\n"+
+				         "                returnSuccess("+convertLeft+oper+convertRight+");\n"+
 				         "            }\n"+
 				         "        }")+";\n"+
 				         "    }\n");
@@ -3183,7 +3181,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
         }
 
         public String replaceGroupMember(String expr, String newCallback) {
-            return expr.replaceFirst("group.member\\((?:\"[^\"]*\")?[^)]*\\)", newCallback);
+            return expr.replaceFirst("group.(?:<[^>]*>)?member\\((?:\"[^\"]*\")?[^)]*\\)", newCallback);
         }
 
         public Object backslashEscape(String substring) {
@@ -3624,11 +3622,11 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             				logger.log(TreeLogger.ERROR, "Can't convert "+src.type+" to "+type+" for copy from "+src.asyncGetter+" to "+setter, null);
             				throw new UnableToCompleteException();
             			}
-                    	return callAsyncGetter(src.asyncGetter, "(new AsyncCallbackProxy("+callback+") {" +
-            			"public void onSuccess(Object result) {" +
+                    	return callAsyncGetter(src.asyncGetter, "(new AsyncCallbackProxy<"+src.getType().getParameterizedQualifiedSourceName()+", Void>("+callback+") {" +
+            			"public void onSuccess("+src.getType().getParameterizedQualifiedSourceName()+" result) {" +
             				"try {" +
                 				callSetter(setter, applySetOperators(converted)) +
-        						"super.onSuccess(null);" +
+        						"returnSuccess(null);" +
     						"} catch(Throwable caught) {" +
         						"super.onFailure(caught);" +
     						"}" +
@@ -3649,10 +3647,10 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             				logger.log(TreeLogger.ERROR, "Can't convert "+src.type+" to "+type+" for copy from "+src.asyncGetter+" to "+asyncSetter, null);
             				throw new UnableToCompleteException();
             			}
-                    	return callAsyncGetter(src.asyncGetter, "new AsyncCallbackProxy("+callback+") {" +
-                    			"public void onSuccess(Object result) {" +
-                    				callSetter(asyncSetter, applySetOperators(converted)+", callback") +
-                    			"}}")+";";
+                    	return callAsyncGetter(src.asyncGetter, "new AsyncCallbackProxy<"+src.getType().getParameterizedQualifiedSourceName()+", Void>("+callback+") {" +
+                    			"public void onSuccess("+src.getType().getParameterizedQualifiedSourceName()+" result) {" +
+                    				callSetter(asyncSetter, applySetOperators(converted)+", takeCallback()") +
+                    			" returnSuccess(null); }}")+";";
             		} else throw new NullPointerException("No getter!");
             	} else throw new NullPointerException("No setter!");
             }

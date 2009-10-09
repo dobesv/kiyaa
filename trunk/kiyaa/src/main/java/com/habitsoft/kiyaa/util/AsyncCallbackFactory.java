@@ -9,8 +9,8 @@ public abstract class AsyncCallbackFactory {
 	 * Default implement will alert() if the operation fails.  Subclasses should override this
 	 * to do something more cross-browser friendly (IE blocks alerts these days).
 	 */
-	public abstract AsyncCallback newInstance();	
-	public AsyncCallback newInstance(final Object marker) { return newInstance(); }
+	public abstract <T> AsyncCallback<T> newInstance();	
+	public <T> AsyncCallback<T> newInstance(final Object marker) { return newInstance(); }
 	
 	static AsyncCallbackFactory defaultFactory = new AsyncCallbackFactory() {
 	    /**
@@ -18,14 +18,14 @@ public abstract class AsyncCallbackFactory {
 	     * to do something more cross-browser friendly (IE blocks alerts these days).
 	     */
 	    @Override
-        public AsyncCallback newInstance() {
+        public <T> AsyncCallback<T> newInstance() {
 	        return newInstance(null);
 	    }
 	    
 	    @Override
-        public AsyncCallback newInstance(final Object marker) {
-	        return new AsyncCallback() {
-	            public void onSuccess(Object arg0) {
+        public <T> AsyncCallback<T> newInstance(final Object marker) {
+	        return new AsyncCallback<T>() {
+	            public void onSuccess(T arg0) {
 	            }
 	            public void onFailure(Throwable caught) {
 	                if(marker != null && (caught instanceof Error || caught instanceof RuntimeException)) try {
@@ -48,10 +48,10 @@ public abstract class AsyncCallbackFactory {
 		AsyncCallbackFactory.defaultFactory = defaultFactory;
 	}
 	
-	public static AsyncCallback defaultNewInstance() {
-		return defaultFactory.newInstance();
+	public static <T> AsyncCallback<T> defaultNewInstance() {
+		return defaultFactory.<T>newInstance();
 	}
-    public static AsyncCallback defaultNewInstance(Object marker) {
-        return defaultFactory.newInstance(marker);
+    public static <T> AsyncCallback<T> defaultNewInstance(Object marker) {
+        return defaultFactory.<T>newInstance(marker);
     }
 }

@@ -301,7 +301,7 @@ public class CustomPopup<T> implements PopupListener {
                 //GWT.log("Action clicked ..."+label, null);
     			if(hideOnClick)
     				hidePopup();
-    			action.perform(AsyncCallbackFactory.defaultNewInstance());
+    			action.perform(AsyncCallbackFactory.<Void>defaultNewInstance());
     		}
     	});
     	if(test != null) {
@@ -399,7 +399,7 @@ public class CustomPopup<T> implements PopupListener {
     		if(table instanceof TableView)
     			((TableView)table).addColumn(viewFactory);
     		else
-    			createTableView(AsyncCallbackFactory.defaultNewInstance());
+    			createTableView(AsyncCallbackFactory.<Void>defaultNewInstance());
     	}
     }
 
@@ -503,7 +503,7 @@ public class CustomPopup<T> implements PopupListener {
             public void onSuccess(Void result) {
                 if(loadTable) {
                     //GWT.log("Loading table in applyFilter()", null);
-                    loadTable(AsyncCallbackFactory.defaultNewInstance());
+                    loadTable(AsyncCallbackFactory.<Void>defaultNewInstance());
                 }
             }
             public void onFailure(Throwable caught) {
