@@ -4,7 +4,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.habitsoft.kiyaa.util.AsyncCallbackProxy;
+import com.habitsoft.kiyaa.util.AsyncCallbackDirectProxy;
 
 /**
  * This is used to implement lazy conditional subview inside templates,
@@ -106,7 +106,7 @@ public class WhenView extends SimplePanel implements View, TakesElementName {
 				createView();
 			}
 			if(wait) {
-    			view.load(new AsyncCallbackProxy(callback) {
+    			view.load(new AsyncCallbackDirectProxy(callback) {
     				@Override
     				public void onSuccess(Object result) {
     				    if(shouldShow)

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.habitsoft.kiyaa.util.AsyncCallbackProxy;
+import com.habitsoft.kiyaa.util.AsyncCallbackDirectProxy;
 
 /**
  * An AsyncCallbackProxy that flushes cached entries on success.  The 
@@ -16,7 +16,7 @@ import com.habitsoft.kiyaa.util.AsyncCallbackProxy;
  * operation fails, the data is assumed to not be invalidated.
  * 
  */
-public class CachedQueryFlushCallbackProxy<T> extends AsyncCallbackProxy<T> {
+public class CachedQueryFlushCallbackProxy<T> extends AsyncCallbackDirectProxy<T> {
 	class CacheKey {
 		final CacheMap<?,?> cache;
 		final Object key;

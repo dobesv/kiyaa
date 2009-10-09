@@ -3,7 +3,7 @@ package com.habitsoft.kiyaa.util;
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
-public class ProfilingCallback<T> extends AsyncCallbackProxy<T> {
+public class ProfilingCallback<T> extends AsyncCallbackDirectProxy<T> {
     final long start = System.currentTimeMillis();
     final String method;
     

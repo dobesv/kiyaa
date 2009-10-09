@@ -37,8 +37,8 @@ public abstract class Action {
 	 * operation.  If that operation is successful, the action is
 	 * performed and its result is passed onto the given callback.
 	 */
-	public AsyncCallback performOnSuccess(final AsyncCallback<Void> callback) {
-		return new AsyncCallbackProxy(callback) {
+	public <T> AsyncCallback<T> performOnSuccess(final AsyncCallback<Void> callback) {
+		return new AsyncCallbackProxy<T,Void>(callback) {
 			@Override
 			public void onSuccess(Object result) {
 				perform(callback);
@@ -51,7 +51,7 @@ public abstract class Action {
 	 * 
 	 * Uses DeferredCommand.addCommand().
 	 */
-	public void performDeferred(final AsyncCallback callback) {
+	public void performDeferred(final AsyncCallback<Void> callback) {
 		DeferredCommand.addCommand(new Command() {
 			public void execute() {
 				perform(callback);

@@ -14,7 +14,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
  * @author dobes
  *
  */
-public class AsyncCallbackWithTimeout<T> extends AsyncCallbackProxy<T> {
+public class AsyncCallbackWithTimeout<T> extends AsyncCallbackDirectProxy<T> {
 	boolean complete;
 	Timer timer;
 	Error timeout;

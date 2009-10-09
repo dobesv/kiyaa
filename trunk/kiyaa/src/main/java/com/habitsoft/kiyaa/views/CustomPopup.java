@@ -21,8 +21,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.habitsoft.kiyaa.metamodel.Action;
 import com.habitsoft.kiyaa.metamodel.ActionSeries;
 import com.habitsoft.kiyaa.metamodel.Value;
+import com.habitsoft.kiyaa.util.AsyncCallbackDirectProxy;
 import com.habitsoft.kiyaa.util.AsyncCallbackFactory;
-import com.habitsoft.kiyaa.util.AsyncCallbackFilter;
 import com.habitsoft.kiyaa.util.AsyncCallbackProxy;
 import com.habitsoft.kiyaa.util.ModelFilter;
 import com.habitsoft.kiyaa.util.ToStringNameValueAdapter;
@@ -94,13 +94,12 @@ public class CustomPopup<T> implements PopupListener {
         	    if(!popupShowing) {
                     popupShowing = true;
             		if(table == null) {
-            			createTableView(new AsyncCallbackProxy<Void>(callback) {
+            			createTableView(new AsyncCallbackDirectProxy<Void>(callback) {
             				@Override
             				public void onSuccess(Void arg0) {
             					if(table == null) throw new NullPointerException();
             					showPopupImpl(left, top);
-            					if(callback != null)
-            					    callback.onSuccess(null);
+            					returnSuccess(null);
             				}
             			});
             		} else {
@@ -166,7 +165,7 @@ public class CustomPopup<T> implements PopupListener {
     		table = t;
     	}
     	// Defer adding the table to the DOM until after it's loaded
-    	callback = new AsyncCallbackProxy<Void>(callback) {
+    	callback = new AsyncCallbackDirectProxy<Void>(callback) {
     		@Override
     		public void onSuccess(Void result) {
     			if(table != null) // Amazingly, the table could be set to null before we get here
@@ -310,7 +309,7 @@ public class CustomPopup<T> implements PopupListener {
     		actionTests.add(new Action() {
     			@Override
     			public void perform(AsyncCallback<Void> callback) {
-    				test.getValue(new AsyncCallbackFilter<Boolean,Void>(callback) {
+    				test.getValue(new AsyncCallbackProxy<Boolean,Void>(callback) {
     					@Override
     					public void onSuccess(Boolean result) {
     					    if(widget.isVisible() != result) {
@@ -441,12 +440,12 @@ public class CustomPopup<T> implements PopupListener {
     		callback = actionTests.performOnSuccess(callback);
     	
     	if(modelsValue != null) {
-    	    modelsValue.getValue(new AsyncCallbackFilter<T[],Void>(callback) {
+    	    modelsValue.getValue(new AsyncCallbackProxy<T[],Void>(callback) {
     	        @Override
                 public void onSuccess(T[] result) {
     	            setModels(result);
     	            //if(table != null) GWT.log("loading table in custom popup.load() (async models)", null);
-    	            loadTable(callback);
+    	            loadTable(takeCallback());
     	        }
     	    });
     	} else {

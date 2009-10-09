@@ -10,5 +10,5 @@ public interface ModelView<T> extends View {
 
 	public T getModel();
 	
-	public void setModel(T model, AsyncCallback callback);
+	public void setModel(T model, AsyncCallback<Void> callback);
 }
