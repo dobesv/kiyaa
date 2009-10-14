@@ -100,14 +100,15 @@ public class AsyncCallbackGroup {
 	}
 	
 	/** Supply a callback to be used when all of the member callbacks have completed. The callback param will be passed back to the callback in onsuccess.*/
-	public void ready(AsyncCallback callback, Object callbackParam) {
+	public <T> void ready(AsyncCallback<T> callback, T callbackParam) {
 		this.callback = callback;
 		this.callbackParam = callbackParam;
 		ready();
 	}
 	/** Supply a callback to be used when all of the member callbacks have completed. */
-	public void ready(AsyncCallback callback) {
+	public void ready(AsyncCallback<Void> callback) {
 		this.callback = callback;
+		this.callbackParam = null;
 		ready();
 	}
 	public void ready() {
