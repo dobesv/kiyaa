@@ -21,7 +21,7 @@ public abstract class LabelViewFactory<T> implements ViewFactory<ModelView<T>> {
             return model;
         }
 
-        public void setModel(T model, AsyncCallback callback) {
+        public void setModel(T model, AsyncCallback<Void> callback) {
             this.model = model;
             callback.onSuccess(null);
         }
