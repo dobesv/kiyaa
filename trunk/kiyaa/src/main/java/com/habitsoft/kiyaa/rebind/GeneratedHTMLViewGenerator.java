@@ -790,6 +790,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             	    generateSetStyle(getType(Widget.class.getName()), "panel", "style", styleDefn.getValue());
             	    rootElement.removeAttribute(styleDefn);
             	}
+
                 sw.outdent();
                 sw.println("}");
                 
@@ -1474,7 +1475,11 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 
 			private void generateAttribute(JClassType type, String name, final String key, final String value)
 				throws UnableToCompleteException {
-				final ExpressionInfo attributeAccessors = findAccessors(new ExpressionInfo(name, type, false), key, true);
+				ExpressionInfo baseExpr = new ExpressionInfo(name, type, false);
+				ExpressionInfo attributeAccessors = findAccessors(baseExpr, key, true);
+				// Automatically propagate some properties to the getViewWidget()
+				if(attributeAccessors == null && key.matches("visible|width|height|title") && type.isAssignableTo(getType(View.class.getName()))) 
+					attributeAccessors = findAccessors(baseExpr, "viewWidget."+key, true);
 				boolean readOnly = false;
 				boolean constant = false;
 				boolean earlyLoad = false;
@@ -1640,6 +1645,24 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				return widgetExpr;
 			}
 
+			private String generateSetVisible(JClassType type, String name, final String value, ExpressionInfo pathAccessors)	throws UnableToCompleteException {
+				String widgetExpr;
+				if (implementsInterface(type, getType(View.class.getName()))) {
+				    widgetExpr = name + ".getViewWidget()";
+				} else if (type.isAssignableTo(getType(Widget.class.getName()))) {
+				    widgetExpr = name;
+				} else {
+				    logger.log(TreeLogger.ERROR, "Don't know how to set the visibility of a " + type, null);
+				    throw new UnableToCompleteException();
+				}
+				String[] styleNames = value.split("\\s+");
+				for (int i = 0; i < styleNames.length; i++) {
+				    String string = styleNames[i];
+				    sw.println(widgetExpr + ".setVisible(" + pathAccessors.conversionExpr(JPrimitiveType.BOOLEAN) + ");");
+				}
+				return widgetExpr;
+			}
+			
 			private void generateBinding(JClassType type, String name, String value)
 				throws UnableToCompleteException {
 				if(value.startsWith("${") || value.startsWith("#{") || value.startsWith("%{") || value.startsWith("@{")) value = value.substring(2);
@@ -3623,12 +3646,12 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             				throw new UnableToCompleteException();
             			}
                     	return callAsyncGetter(src.asyncGetter, "(new AsyncCallbackProxy<"+src.getType().getParameterizedQualifiedSourceName()+", Void>("+callback+") {" +
-            			"public void onSuccess("+src.getType().getParameterizedQualifiedSourceName()+" result) {" +
-            				"try {" +
-                				callSetter(setter, applySetOperators(converted)) +
-        						"returnSuccess(null);" +
-    						"} catch(Throwable caught) {" +
-        						"super.onFailure(caught);" +
+            			"public void onSuccess("+src.getType().getParameterizedQualifiedSourceName()+" result) { " +
+            				"try { " +
+                				callSetter(stripThis(setter), applySetOperators(converted)) +
+        						"returnSuccess(null); " +
+    						"} catch(Throwable caught) { " +
+        						"super.onFailure(caught); " +
     						"}" +
     					"}" +
         			"})")+";";
@@ -3654,6 +3677,12 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             		} else throw new NullPointerException("No getter!");
             	} else throw new NullPointerException("No setter!");
             }
+
+			private String stripThis(String setter) {
+				if(setter.startsWith("this."))
+					return setter.substring(5);
+				return setter;
+			}
 
 			public String getGetter() {
 				return getter;
