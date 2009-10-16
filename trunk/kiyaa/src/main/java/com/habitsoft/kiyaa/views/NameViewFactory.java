@@ -30,7 +30,7 @@ final class NameViewFactory<T> implements ViewFactory<ModelView> {
 			label.setText("");
 		}
 
-		public void setModel(T model, AsyncCallback callback) {
+		public void setModel(T model, AsyncCallback<Void> callback) {
 			this.model = model;
 			load(callback);
 		}
