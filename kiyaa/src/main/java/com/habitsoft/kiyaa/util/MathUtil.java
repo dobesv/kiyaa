@@ -79,4 +79,34 @@ public class MathUtil {
             throw new IllegalArgumentException("Unsupported number of decimal places: "+decimalPlaces);
         }
     }
+    
+    /**
+     * Return a number whose absolute value is less or
+     * equal than value, and which is as close or closer
+     * to zero as limit in the same direction.
+     * 
+     * i.e.
+     * 
+     * When limit is positive, return the same as Math.min(value, limit).
+     * When limit is negative return the same as Math.max(value, limit).
+     * When limit is zero, return zero.
+     * 
+     * If the 'value' is negative, the result will be negative
+     * or zero.  If the 'value' is positive, the result will be
+     * positive or zero.
+     * 
+     * This is used to restrict value so that it does not exceed
+     * limit, but supporting a negative number better than Math.min()
+     * would.
+     * 
+     * For example, a refund or a vendor credit might be recorded
+     * as a negative amount, and we just want to ensure that a
+     * payment amount does not exceed that limit even though it is
+     * negative.  If we just used Math.min() we'd always adjust our
+     * value to the maximum allocation if the limit was negative.
+     */
+    public static long minAmount(long value, long limit) {
+    	if(limit != 0 && (limit > 0) == (value < limit)) return value;
+    	else return limit;
+    }
 }
