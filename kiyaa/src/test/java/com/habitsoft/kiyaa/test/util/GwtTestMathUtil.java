@@ -1,9 +1,10 @@
 package com.habitsoft.kiyaa.test.util;
 
-import com.google.gwt.junit.client.GWTTestCase;
+import junit.framework.TestCase;
+
 import com.habitsoft.kiyaa.util.MathUtil;
 
-public class GwtTestMathUtil extends GWTTestCase {
+public class GwtTestMathUtil extends TestCase {
 
     public void testRounding() {
         assertEquals(5L, MathUtil.round(5.0));
@@ -30,8 +31,18 @@ public class GwtTestMathUtil extends GWTTestCase {
         assertEquals(-6.0, MathUtil.fixedPointToDouble(-6, 0));
     }
 
-    @Override
-    public String getModuleName() {
-        return "com.habitsoft.kiyaa.test.KiyaaTests";
+    public void testMinAmount() {
+    	assertEquals(2, MathUtil.minAmount(2, 2));
+    	assertEquals(1, MathUtil.minAmount(1, 2));
+    	assertEquals(2, MathUtil.minAmount(3, 2));
+    	assertEquals(2, MathUtil.minAmount(2, 3));
+    	assertEquals(-1, MathUtil.minAmount(-1, 2));
+    	assertEquals(-1, MathUtil.minAmount(-1, -2));
+    	assertEquals(-2, MathUtil.minAmount(-2, 2));
+    	assertEquals(-3, MathUtil.minAmount(-3, 2));
+    	assertEquals(2, MathUtil.minAmount(2, -3));
+    	assertEquals(-2, MathUtil.minAmount(-3, -2));
+    	assertEquals(0, MathUtil.minAmount(5, 0));
+    	assertEquals(0, MathUtil.minAmount(-5, 0));
     }
 }
