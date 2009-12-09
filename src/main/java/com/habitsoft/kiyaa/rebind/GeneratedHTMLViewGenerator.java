@@ -3,9 +3,11 @@ package com.habitsoft.kiyaa.rebind;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.Annotation;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -44,6 +46,7 @@ import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JRealClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.core.ext.typeinfo.JTypeParameter;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
@@ -646,14 +649,14 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                     sw.println("public Object getModel() {");
                     sw.indentln("return " + myModelVarName + ";");
                     sw.println("}");
-                    new JMethod(myClass, "getModel").setReturnType(getType("java.lang.Object")); 
+                    new JMethod(myClass, "getModel",  Collections.<Class<? extends Annotation>, Annotation>emptyMap(), new JTypeParameter[0]).setReturnType(getType("java.lang.Object")); 
                     // Provide access to model as "model"
                 }
                 sw.println("public void validate(AsyncCallback callback) {");
                 sw.indentln("callback.onFailure(new Error(\"Not implemented\"));");
                 sw.println("}");
                 // Make clearFields available as an action
-                new JMethod(myClass, "clearFields").setReturnType(JPrimitiveType.VOID); 
+                new JMethod(myClass, "clearFields", Collections.<Class<? extends Annotation>, Annotation>emptyMap(), new JTypeParameter[0]).setReturnType(JPrimitiveType.VOID); 
 
                 // Two results of this operation:
                 // the template string
@@ -750,14 +753,14 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             protected void generateField(String fieldName, JType fieldType) {
             	JParameterizedType parameterized = fieldType.isParameterized();
             	if(parameterized != null) fieldType = parameterized.getErasedType();
-                final JField field = new JField(this.myClass, fieldName);
+                final JField field = new JField(this.myClass, fieldName, Collections.<Class<? extends Annotation>, Annotation>emptyMap());
                 field.setType(fieldType);
-                JMethod getter = new JMethod(this.myClass, "get" + capitalize(fieldName));
+                JMethod getter = new JMethod(this.myClass, "get" + capitalize(fieldName), Collections.<Class<? extends Annotation>, Annotation>emptyMap(), new JTypeParameter[0]);
                 getter.setReturnType(fieldType);
                 memberDecls.add(getter + "{ return " + fieldName + "; }");
-                final JMethod setter = new JMethod(this.myClass, "set" + capitalize(fieldName));
+                final JMethod setter = new JMethod(this.myClass, "set" + capitalize(fieldName), Collections.<Class<? extends Annotation>, Annotation>emptyMap(), new JTypeParameter[0]);
                 setter.setReturnType(JPrimitiveType.VOID);
-                new JParameter(setter, fieldType, fieldName);
+                new JParameter(setter, fieldType, fieldName, Collections.<Class<? extends Annotation>, Annotation>emptyMap());
                 memberDecls.add(setter + "{ this." + fieldName + " = " + fieldName + "; }");
                 memberDecls.add(fieldType.getQualifiedSourceName() + " " + fieldName + ";");
                 fieldNames.add(fieldName);
@@ -1106,8 +1109,10 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                         sw.println("protected static class " + subviewClassName
                                         + " implements "+(isModelView?"ModelView":"View")+" {");
                         sw.indent();
-                        JClassType genClass = new JRealClassType(myTypes, myTypes.getOrCreatePackage(baseType
-                                        .getPackage().getName()), myClass, false, subviewClassName, false);
+                        JRealClassType genClass = new JRealClassType(myTypes, myTypes.getOrCreatePackage(baseType
+                                        .getPackage().getName()), myClass.getQualifiedSourceName(), false, subviewClassName, false);
+                        genClass.setEnclosingType(myClass);
+                        
                         if(isModelView)
                             genClass.addImplementedInterface(getType(ModelView.class.getName()));
                         genClass.setSuperclass(getType("java.lang.Object"));
@@ -1181,8 +1186,8 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                         if (id == null)
                             id = "view" + insertedViews.size();
                         else {
-                            new JField(myClass, id).setType(tagClass);
-                            new JMethod(myClass, "get" + capitalize(id))
+                            new JField(myClass, id, Collections.<Class<? extends Annotation>, Annotation>emptyMap()).setType(tagClass);
+                            new JMethod(myClass, "get" + capitalize(id), Collections.<Class<? extends Annotation>, Annotation>emptyMap(), new JTypeParameter[0])
                                             .setReturnType(tagClass);
                             // new JParameter(new JMethod(myClass,
                             // "set"+capitalize(myModelVarName), 0, 0, 0, 0),
@@ -1332,11 +1337,11 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 		}
                         
                         JClassType fieldType = getType("java.lang.String");
-                        final JField field = new JField(this.myClass, id);
+                        final JField field = new JField(this.myClass, id,  Collections.<Class<? extends Annotation>, Annotation>emptyMap());
     					field.setType(fieldType);
-                        final JMethod setter = new JMethod(this.myClass, "set" + capitalize(id));
+                        final JMethod setter = new JMethod(this.myClass, "set" + capitalize(id), Collections.<Class<? extends Annotation>, Annotation>emptyMap(), new JTypeParameter[0]);
                         setter.setReturnType(JPrimitiveType.VOID);
-                        new JParameter(setter, fieldType, id);
+                        new JParameter(setter, fieldType, id, Collections.<Class<? extends Annotation>, Annotation>emptyMap());
                         memberDecls.add(setter + "{ panel.setText(\"" + id + "\", " + id + "); }");
                         flushMethodsCache(myClass);
                         
@@ -1850,6 +1855,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 	if(childElems.size() > 0) {
                     	// TODO Currently this is order-dependent for overloads :-(
                 		JMethod[] methods = getAllMethods(type);
+                		System.out.println("####Number of Methods:" + methods.length);
                 		ArrayList<Element> missing_setter=new ArrayList<Element>();
                     	for(int i=0; i < childElems.size(); i++) {
                     		Element childElem = childElems.get(i);
@@ -1858,7 +1864,8 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                     		boolean elemProcessed = false;
                     		for (int j = 0; j < methods.length; j++) {
     							JMethod method = methods[j];
-    							//System.out.println("Looking for "+setMethod+" or "+addMethod+" for "+elem+" found "+method);
+    							System.out.println("Looking for " + setMethod+" or "+addMethod+" for "+elem+" found "+method);
+    							System.out.println("Method Name: " + method.getName());
     							if(!method.getName().equalsIgnoreCase(setMethod) &&
     								!method.getName().equalsIgnoreCase(addMethod)) {
     								continue;
@@ -1890,7 +1897,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
     									} else if((isString || asyncSetter || setter) && childElem.getValue().trim().length() > 0 && !generatedSubview) {
     										// Okay, we'll take it, I guess
     									} else {
-    										logger.log(TreeLogger.TRACE, "Couldn't match an attribute for parameter "+parameterName, null);
+    										logger.log(TreeLogger.WARN, "Couldn't match an attribute for parameter "+parameterName, null);
     										found_setter = false;
     										break;
     									}
