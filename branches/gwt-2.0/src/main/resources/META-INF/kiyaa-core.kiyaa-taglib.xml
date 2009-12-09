@@ -1,0 +1,28 @@
+<kiyaa-taglib>
+	<!--
+		This tag library contains tags that don't have any visual
+		component. 
+	 -->
+	<namespace>http://habitsoft.com/kiyaa/core</namespace>
+	<package>com.habitsoft.kiyaa</package>
+	<tag>
+		<tag-name>view</tag-name>
+		<tag-class>views.GeneratedHTMLView</tag-class>
+	</tag>
+	<tag>
+		<tag-name>when</tag-name>
+		<tag-class>views.WhenView</tag-class>
+	</tag>
+    <tag>
+        <tag-name>with</tag-name>
+        <tag-class>views.WithView</tag-class>
+    </tag>
+    <tag>
+        <tag-name>copy</tag-name>
+        <tag-class>views.LoadView</tag-class>
+    </tag>
+    <tag>
+        <tag-name>nowait</tag-name>
+        <tag-class>views.NoWaitView</tag-class>
+    </tag>
+</kiyaa-taglib>

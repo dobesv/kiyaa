@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 1.7.0//EN" "http://google-web-toolkit.googlecode.com/svn/tags/1.7.0/distro-source/core/src/gwt-module.dtd">
+<module>
+	<inherits name='com.google.gwt.user.User'/>
+	
+    <inherits name='com.habitsoft.kiyaa.Util'/>
+    <inherits name='com.habitsoft.kiyaa.Metamodel'/>
+    <inherits name='com.habitsoft.kiyaa.Widgets'/>
+    
+    <source path='views'/>
+    
+    <generate-with
+        class="com.habitsoft.kiyaa.rebind.GeneratedHTMLViewGenerator">
+     <when-type-assignable
+        class="com.habitsoft.kiyaa.views.GeneratedHTMLView"/>
+    </generate-with>
+    
+</module>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 1.7.0//EN" "http://google-web-toolkit.googlecode.com/svn/tags/1.7.0/distro-source/core/src/gwt-module.dtd">
+<module>
+	<inherits name='com.google.gwt.user.User'/>
+	<inherits name="com.allen_sauer.gwt.log.gwt-log-DEBUG" />
+	
+    <source path='util'/>
+    
+    <define-linker name="xsubs" class="com.habitsoft.kiyaa.linker.IFrameLinkerWithCrossDomainSupport"/>
+
+    <generate-with
+        class="com.habitsoft.kiyaa.rebind.ClonerGenerator">
+     <when-type-assignable
+        class="com.habitsoft.kiyaa.util.Cloner"/>
+    </generate-with>
+
+    <generate-with
+        class="com.habitsoft.kiyaa.rebind.DictionaryConstantsGenerator">
+     <when-type-assignable
+        class="com.habitsoft.kiyaa.util.DictionaryConstants"/>
+    </generate-with>
+
+    <generate-with
+        class="com.habitsoft.kiyaa.rebind.ServiceRetryingAdapterGenerator">
+     <when-type-assignable
+        class="com.habitsoft.kiyaa.util.ServiceRetryingAdapter"/>
+    </generate-with>
+
+    <generate-with
+        class="com.habitsoft.kiyaa.rebind.ServiceProfilingAdapterGenerator">
+     <when-type-assignable
+        class="com.habitsoft.kiyaa.util.ServiceProfilingAdapter"/>
+    </generate-with>
+    
+</module>

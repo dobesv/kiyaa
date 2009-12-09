@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<!--
+		GWT-Maven example POM without google.webtoolkit.home SET (GWT as deps)
+	-->
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.habitsoft</groupId>
+	<artifactId>kiyaa</artifactId>
+	<packaging>jar</packaging>
+	<version>1.0-SNAPSHOT</version>
+	<name>kiyaa GWT library</name>
+	
+	<properties>
+		<target.dir>.target</target.dir>
+		<gwt.version>1.7.0</gwt.version>
+ 	    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+	
+	<dependencies>
+		<!-- GWT dependencies (from maven "central" repo) -->
+		<dependency>
+			<groupId>com.google.gwt</groupId>
+			<artifactId>gwt-servlet</artifactId>
+			<version>${gwt.version}</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.google.gwt</groupId>
+			<artifactId>gwt-user</artifactId>
+			<version>${gwt.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		
+		<!--  this allows us to "see" gwt-dev.jar. Though the maven docs recommend against it. -->
+		<dependency>
+			<groupId>com.google.gwt</groupId>
+			<artifactId>gwt-dev</artifactId>
+			<version>${gwt.version}</version>
+			<classifier>windows-libs</classifier>
+			<type>zip</type>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.google.gwt</groupId>
+			<artifactId>gwt-dev</artifactId>
+			<version>${gwt.version}</version>
+			<classifier>windows</classifier>
+			<scope>provided</scope>
+		</dependency>
+		  	
+		<dependency>
+			<groupId>commons-lang</groupId>
+			<artifactId>commons-lang</artifactId>
+			<version>2.4</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.code</groupId>
+			<artifactId>gwt-log</artifactId>
+			<version>2.6.2</version>
+		</dependency>
+		<dependency>
+			<groupId>javassist</groupId>
+			<artifactId>javassist</artifactId>
+			<version>3.8.0.GA</version>
+		</dependency>
+		<dependency>
+			<groupId>com.habitsoft</groupId>
+			<artifactId>html-dtd-cache</artifactId>
+			<version>1.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>xom</groupId>
+			<artifactId>xom</artifactId>
+			<version>1.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-annotations</artifactId>
+			<version>3.4.0.GA</version>
+			<type>jar</type>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+		    <groupId>org.ow2.spec.ee</groupId>
+		    <artifactId>ow2-javaee-5-spec</artifactId>
+		    <version>1.0.2</version>
+			<scope>provided</scope>
+        	<exclusions>
+        		<exclusion>
+		        	<groupId>javax.faces</groupId>
+		        	<artifactId>jsf-api</artifactId>
+        		</exclusion>
+        		<exclusion>
+		        	<groupId>javax.faces</groupId>
+		        	<artifactId>jsf-impl</artifactId>
+        		</exclusion>
+        	</exclusions>			
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>3.8.2</version>
+			<type>jar</type>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>commons-fileupload</groupId>
+			<artifactId>commons-fileupload</artifactId>
+			<version>1.2.1</version>
+			<type>jar</type>
+			<scope>compile</scope>
+		</dependency>		
+	</dependencies>
+	
+	
+	<build>
+		<directory>${target.dir}</directory>
+	    <resources>
+ 	      <resource>
+	        <directory>src/main/java</directory>
+	        <excludes><exclude>**/.svn</exclude></excludes>
+	      </resource>
+ 	      <resource>
+	        <directory>src/main/resources</directory>
+	        <excludes><exclude>**/.svn</exclude></excludes>
+	      </resource>
+	    </resources> 
+	    <testResources>
+ 	      <testResource>
+	        <directory>src/test/java</directory>
+	        <excludes><exclude>**/.svn</exclude></excludes>
+	      </testResource>
+	    </testResources>
+	     
+        <outputDirectory>${basedir}/${target.dir}/classes</outputDirectory>
+	    <testOutputDirectory>${basedir}/${target.dir}/test-classes</testOutputDirectory>
+	    
+		<plugins>
+ 			<plugin>
+			   <groupId>org.apache.maven.plugins</groupId>
+			   <artifactId>maven-source-plugin</artifactId>
+			   <executions>
+			       <execution>
+			           <id>attach-sources</id>
+			           <goals>
+			               <goal>jar</goal>
+			           </goals>
+			        </execution>
+			    </executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.6</source>
+					<target>1.6</target>
+				</configuration>
+			</plugin>
+		    <plugin>
+		        <groupId>org.codehaus.mojo</groupId>
+		        <artifactId>gwt-maven-plugin</artifactId>
+		        <version>1.1</version>
+		        <configuration>
+		        	<localWorkers>1</localWorkers>
+		        </configuration>
+		        <executions>
+		          <execution>
+		            <goals>
+		              <goal>test</goal>
+		            </goals>
+		          </execution>
+		        </executions>
+		    </plugin>
+		</plugins>
+	</build>
+	
+  <repositories>
+       <repository>
+          <id>no-repo-jars</id>
+          <name>repo for jars that do not come from a repository</name>
+          <url>file://${project.basedir}/maven-repo</url>
+      </repository>
+       <repository>
+          <id>jboss-repository</id>
+          <name>repository for the jboss/hibernate jars.</name>
+          <url>http://repository.jboss.com/maven2</url>
+      </repository>
+     <repository>
+       <id>maven2-repository.dev.java.net</id>
+       <name>Java.net Repository for Maven 2</name>
+       <url>http://download.java.net/maven/2/</url>
+     </repository>      
+     <repository>
+       <id>maven2-mirrors.ibiblio.org</id>
+       <name>ibiblio.org</name>
+       <url>http://mirrors.ibiblio.org/pub/mirrors/maven2/</url>
+     </repository> 
+     <repository>
+     	<id>maven.ow2.org</id>
+     	<name>maven.ow2.org</name>
+     	<url>http://maven.ow2.org/maven2/</url>
+     </repository>          
+  </repositories>	
+  	
+</project>
