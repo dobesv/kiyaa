@@ -17,11 +17,11 @@ import com.habitsoft.kiyaa.util.HoverStyleHandler;
 /**
  * Creator MUST call setViewFactory() before adding the view to the UI.
  */
-public class ListView extends BaseCollectionView {
+public class ListView<T> extends BaseCollectionView<T> {
 
 	FlowPanel flow = new FlowPanel();
 	ViewFactory viewFactory;
-	ArrayList<ModelView> views = new ArrayList();
+	ArrayList<ModelView<T>> views = new ArrayList<ModelView<T>>();
 	String rowClass=null;
 	String rowStyle=null;
 	View emptyContent;
@@ -31,10 +31,11 @@ public class ListView extends BaseCollectionView {
 		flow.setStylePrimaryName("ui-list");
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	protected void showItem(final int i, Object object, AsyncCallback callback) {
-		ModelView view = (ModelView)viewFactory.createView();
-		view.setModel(object, callback);
+	protected void showItem(final int i, T object, AsyncCallbackGroup group) {
+		ModelView<T> view = (ModelView<T>)viewFactory.createView();
+		view.setModel(object, group.<Void>member());
 		views.add(view);
 		Widget widget = view.getViewWidget();
 		if(selectable || clickable) {
@@ -78,13 +79,13 @@ public class ListView extends BaseCollectionView {
 	}
 
 	@Override
-	protected void setItem(int i, Object model, AsyncCallback callback) {
+	protected void setItem(int i, T model, AsyncCallbackGroup group) {
 		if(i >= views.size()) {
-			addItem(i, model, callback);
+			addItem(i, model, group);
 			return;
 		}
-		ModelView view = (ModelView)views.get(i);
-		view.setModel(model, callback);
+		ModelView<T> view = views.get(i);
+		view.setModel(model, group.<Void>member());
 	}
 	@Override
 	protected void hideItem(final int i) {
