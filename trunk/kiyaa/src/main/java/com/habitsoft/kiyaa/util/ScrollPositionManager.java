@@ -50,12 +50,12 @@ public class ScrollPositionManager implements HistoryListener {
         }
     }
     
-    public AsyncCallback doAsyncTransition(AsyncCallback callback, final String token) {
+    public <T> AsyncCallback<T> doAsyncTransition(AsyncCallback<T> callback, final String token) {
         save();
         if(currentToken == null || !currentToken.equals(token)) {
-            return new AsyncCallbackDirectProxy(callback) {
+            return new AsyncCallbackDirectProxy<T>(callback) {
                 @Override
-                public void onSuccess(Object result) {
+                public void onSuccess(T result) {
                     // TODO Maybe we could animate this?
                     load(token);
                     super.onSuccess(result);
