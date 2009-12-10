@@ -17,9 +17,9 @@ import com.google.gwt.user.client.ui.SourcesClickEvents;
 import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
 import com.habitsoft.kiyaa.metamodel.ModelCollection;
+import com.habitsoft.kiyaa.util.AsyncCallbackDirectProxy;
 import com.habitsoft.kiyaa.util.AsyncCallbackGroup;
 import com.habitsoft.kiyaa.util.AsyncCallbackGroupMember;
-import com.habitsoft.kiyaa.util.AsyncCallbackDirectProxy;
 import com.habitsoft.kiyaa.util.HoverStyleHandler;
 import com.habitsoft.kiyaa.util.ModelFilter;
 import com.habitsoft.kiyaa.widgets.ScrollAutoLoader.Loader;
@@ -68,9 +68,9 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 	 * 
 	 * @param i Index of the item to show, amongst visible items
 	 * @param object Model object which should be shown
-	 * @param callback 
+	 * @param group 
 	 */
-	protected abstract void showItem(int i, T model, AsyncCallback callback);
+	protected abstract void showItem(int i, T model, AsyncCallbackGroup group);
 	
 	/**
 	 * Remove an item from the view.  Items following the removed one should
@@ -92,13 +92,13 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 		return items.size();
 	}
 	
-	public void addModel(T object, AsyncCallback callback) {
-		addItem(items.size()+startOffset, object, callback);
+	public void addModel(T object, AsyncCallbackGroup group) {
+		addItem(items.size()+startOffset, object, group);
 	}
 	
-	protected void addItem(int i, T object, AsyncCallback callback) {
+	protected void addItem(int i, T object, AsyncCallbackGroup group) {
 		items.add(i-startOffset, object);
-		showItem(i-startOffset, object, callback);
+		showItem(i-startOffset, object, group);
 		//GWT.log("Showing new item "+object, new Exception());
 	}
 	
@@ -111,18 +111,17 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 	    }
 	}
 	
-	protected void replaceItem(int i, T object, AsyncCallback callback) {
+	protected void replaceItem(int i, T object, AsyncCallbackGroup group) {
 		
 		final int row = i-startOffset;
 		Object existing = items.get(row);
 		if(existing == object) {
-			callback.onSuccess(null);
 			return; // Already there
 		}
 		items.set(row, object);
-		setItem(row, object, callback);
+		setItem(row, object, group);
 	}
-	protected abstract void setItem(int i, T object, AsyncCallback callback);
+	protected abstract void setItem(int i, T object, AsyncCallbackGroup group);
 	
 	public ModelCollection getCollection() {
 		return collection;
@@ -217,6 +216,7 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 	
 	protected abstract Element getScrollElement();
 	
+	@SuppressWarnings("unchecked")
 	public void load(final int offset, final int limit, AsyncCallback callback) {
 		if(collection == null) {
 			callback.onSuccess(null);
@@ -333,9 +333,9 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
                         }
                     }
                     if(row == items.size()) {
-                        addItem(row, model, group.member());
+                        addItem(row, model, group);
                     } else {
-                        replaceItem(row, model, group.member());
+                        replaceItem(row, model, group);
                     }
                     if(selectedModel != null && selectedModel.equals(model)) {
                         selectedIndex = row;
@@ -387,9 +387,9 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 					throw new NullPointerException("Model "+i+" of "+models.length+" in "+models+" was null");
 				int idx = offset+i-startOffset;
 				if(idx == items.size()) {
-					addItem(offset+i, models[i], group.member());
+					addItem(offset+i, models[i], group);
 				} else if(models[i] != items.get(i)){
-					replaceItem(offset+i, models[i], group.member());
+					replaceItem(offset+i, models[i], group);
 				}
 				loadItem(i, group);
 			}
@@ -545,7 +545,7 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 			T item = allItems.get(i);
 			if(modelFilter.includes(item)) {
 				itemIndexesAfterFiltering[i] = j;
-				addItem(j+startOffset, item, group.member());
+				addItem(j+startOffset, item, group);
 				j++;
 			} else {
 				itemIndexesAfterFiltering[i] = -1;
@@ -637,10 +637,12 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 		return filter;
 	}
 
-	public void setFilter(ModelFilter<T> filter, AsyncCallback callback) {
+	public void setFilter(ModelFilter<T> filter, AsyncCallback<Void> callback) {
 		if(filter != this.filter) {
 			this.filter = filter;
 			applyFilter(filter, callback);
+		} else {
+			callback.onSuccess(null);
 		}
 	}
 

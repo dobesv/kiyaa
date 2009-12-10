@@ -54,12 +54,12 @@ public class CustomPopup<T> implements PopupListener {
     	};
     protected boolean popupShowing = false;
     private boolean applyDefaultFilter = true;
-    public static final ModelFilter NOOP_FILTER = new ModelFilter() {
-        public boolean includes(Object model) {
+    public final ModelFilter<T> NOOP_FILTER = new ModelFilter<T>() {
+        public boolean includes(T model) {
             return true;
         }
     };
-    private ModelFilter defaultFilter = NOOP_FILTER;
+    private ModelFilter<T> defaultFilter = NOOP_FILTER;
     private Timer hidePopupOperation = new Timer() {
     		@Override
     		public void run() {
@@ -489,7 +489,7 @@ public class CustomPopup<T> implements PopupListener {
         return false;
     }
     
-    protected ModelFilter getFilter() {
+    protected ModelFilter<T> getFilter() {
         return null;
     }
 

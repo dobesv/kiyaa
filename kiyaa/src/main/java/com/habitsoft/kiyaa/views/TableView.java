@@ -2,6 +2,7 @@ package com.habitsoft.kiyaa.views;
 
 import java.util.ArrayList;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
@@ -20,7 +21,7 @@ import com.habitsoft.kiyaa.metamodel.Value;
 import com.habitsoft.kiyaa.util.AsyncCallbackDirectProxy;
 import com.habitsoft.kiyaa.util.AsyncCallbackFactory;
 import com.habitsoft.kiyaa.util.AsyncCallbackGroup;
-import com.habitsoft.kiyaa.util.AsyncCallbackProxy;
+import com.habitsoft.kiyaa.util.AsyncCallbackGroupMember;
 import com.habitsoft.kiyaa.util.HoverStyleHandler;
 import com.habitsoft.kiyaa.widgets.HTMLTableRowPanel;
 
@@ -60,7 +61,7 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 		String styleName;
 		Value test;
 		boolean visible;
-		private ArrayList<ModelView> views; // One per row
+		private ArrayList<ModelView<T>> views; // One per row
 		
 		public Series(ViewFactory viewFactory, String styleName, Value test, boolean visible, int position) {
 			super();
@@ -70,7 +71,7 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 			this.styleName = styleName;
 			this.test = test;
 			this.visible = visible;
-			this.views = new ArrayList<ModelView>();
+			this.views = new ArrayList<ModelView<T>>();
 		}
 		public ViewFactory getViewFactory() {
 			return viewFactory;
@@ -132,46 +133,40 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 				visible = true;
 			}
 		}
-		public void load(AsyncCallback<Void> callback) {
+		public void load(AsyncCallbackGroup group) {
 			if(test == null) {
-				loadViews(callback);
+				loadViews(group);
 			} else {
-				test.getValue(new AsyncCallbackProxy<Boolean,Void>(callback) {
+				test.getValue(new AsyncCallbackGroupMember<Boolean>(group) {
 					@Override
 					public void onSuccess(Boolean result) {
 						if(result) {
-							loadViews(takeCallback());
+							loadViews(group);
 							show();
 						} else {
 							hide();
-							returnSuccess(null);
 						}
+						super.onSuccess(null);
 					}
 				});
 			}
 		}
-		private void loadViews(AsyncCallback callback) {
-			AsyncCallbackGroup group = new AsyncCallbackGroup();
+		private void loadViews(AsyncCallbackGroup group) {
 			for(ModelView view: views) {
 				view.load(group.<Void>member());
 			}
-			group.ready(callback);
 		}
-		public void save(AsyncCallback callback) {
+		public void save(AsyncCallbackGroup group) {
 			if(visible) {
-    			AsyncCallbackGroup group = new AsyncCallbackGroup();
     			for(ModelView view: views) {
     				view.save(group.<Void>member());
     			}
-    			group.ready(callback);
-			} else {
-				callback.onSuccess(null);
 			}
 		}
-		void setViews(ArrayList<ModelView> views) {
+		void setViews(ArrayList<ModelView<T>> views) {
 			this.views = views;
 		}
-		ArrayList<ModelView> getViews() {
+		ArrayList<ModelView<T>> getViews() {
 			return views;
 		}
 		public ModelView addView() {
@@ -392,8 +387,7 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 	}
 	
 	@Override
-	protected void showItem(int row, T model, AsyncCallback callback) {
-        AsyncCallbackGroup group = new AsyncCallbackGroup();
+	protected void showItem(int row, T model, AsyncCallbackGroup group) {
 	    if(horizontal) {
             for (Series column : series) {
                 column.addItem(row, model, group.member("Table col "+row+" row "+column.position));
@@ -417,7 +411,6 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
     		if(isAttached())
     		    rowPanel.onAttach();
 	    }
-		group.ready(callback);
 	}
     private HTMLTableRowPanel addRowPanel(int row, T model, String styleName) {
         HTMLTableRowPanel rowPanel = new HTMLTableRowPanel(table, row, styleName, selectable || clickable, hoverGroup);
@@ -483,28 +476,26 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 			checkEmpty(null);
 	}
 	@Override
-	protected void setItem(int row, T model, AsyncCallback callback) {
+	protected void setItem(int row, T model, AsyncCallbackGroup group) {
 		//callback = new AsyncCallbackWithTimeout(callback); // debug
 		if(row == rowPanels.size()) {
-			showItem(row, model, callback);
+			showItem(row, model, group);
 			return;
 		}
 		if(rowStyleHandler != null) {
 		    maybeAssignStyle(row, rowPanels.get(row), model);
 		}
-		AsyncCallbackGroup group = new AsyncCallbackGroup();
 		for(Series column: series) {
-			ArrayList<ModelView> views = column.getViews();
-			ModelView view;
+			ArrayList<ModelView<T>> views = column.getViews();
+			ModelView<T> view;
 			try {
 				view = views.get(row);
 			} catch (ArrayIndexOutOfBoundsException	e) {
-				callback.onFailure(new ArrayIndexOutOfBoundsException("Tried to give model "+model+" for row "+row+" on table "+this+" but column "+column.getPosition()+" doesn't have that many rows; it has "+column.getViews().size()));
+				Log.error("Tried to give model "+model+" for row "+row+" on table "+this+" but column "+column.getPosition()+" doesn't have that many rows; it has "+column.getViews().size());
 				return;
 			}
-			view.setModel(model, group.member());
+			view.setModel(model, group.<Void>member());
 		}
-		group.ready(callback);
 	}
 	
 	public void onCellClicked(SourcesTableEvents sender, int row, int cell) {
@@ -555,10 +546,10 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 		}
 	}
 
-	public void save(AsyncCallback callback) {
+	public void save(AsyncCallback<Void> callback) {
 		AsyncCallbackGroup group = new AsyncCallbackGroup();
 		for(Series column:series) {
-			column.save(group.member());
+			column.save(group);
 		}
 		if(navigation != null && navigation.getViewWidget().isVisible())
 		    navigation.save(group.<Void>member());
