@@ -1180,12 +1180,12 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                             parseTree(elem);
                             continue;
                         }
-                        if(KIYAA_CORE_TAGS_NAMESPACE.equalsIgnoreCase(namespace)) {
-                        	if("insert".equals(tag)) {
-                        		String templatePath = elem.getAttributeValue("templatePath");
-                        		parseTree(loadAndParseTemplate(templatePath));
-                        		continue;
-                        	}
+                        if(KIYAA_CORE_TAGS_NAMESPACE.equalsIgnoreCase(namespace) && "insert".equals(tag)) {
+                    		String templatePath = elem.getAttributeValue("templatePath");
+                    		Element newElem = (Element) loadAndParseTemplate(templatePath).copy();
+							rootElement.replaceChild(elem, newElem);
+							parseTree(newElem);
+                    		continue;
                         }
                         JClassType tagClass = getTagClass(elem);
                         Element viewElem = new Element(XHTML_NAMESPACE.equals(elem.getNamespaceURI())?elem.getLocalName():"div", XHTML_NAMESPACE);
