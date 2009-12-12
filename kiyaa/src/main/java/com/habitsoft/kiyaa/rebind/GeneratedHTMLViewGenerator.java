@@ -401,7 +401,17 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                             false, implName, false);
             rootClassType.setSuperclass(baseType);
 
-            XMLReader reader;
+            rootElement = loadAndParseTemplate(templatePath);
+            if (rootElement.getAttribute("with-model") != null) {
+                final String modelViewClassName = ModelView.class.getName();
+                this.composerFactory.addImplementedInterface(modelViewClassName);
+                rootClassType.addImplementedInterface(getType(modelViewClassName));
+            }
+        }
+
+		protected Element loadAndParseTemplate(String templatePath) throws Error,
+				UnableToCompleteException {
+			XMLReader reader;
 			try {
 				reader = XMLReaderFactory.createXMLReader();
 			} catch (SAXException caught1) {
@@ -448,13 +458,8 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 logger.log(TreeLogger.ERROR, "Failed to load template '" + templatePath + ": "+caught.toString(), null);
                 throw new UnableToCompleteException();
             }
-            rootElement = getComponentRootElement(d);
-            if (rootElement.getAttribute("with-model") != null) {
-                final String modelViewClassName = ModelView.class.getName();
-                this.composerFactory.addImplementedInterface(modelViewClassName);
-                rootClassType.addImplementedInterface(getType(modelViewClassName));
-            }
-        }
+            return getComponentRootElement(d);
+		}
 
         protected void loadTagLibraries() throws UnableToCompleteException {
             URL[] taglibs;
@@ -1174,6 +1179,13 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                         	}
                             parseTree(elem);
                             continue;
+                        }
+                        if(KIYAA_CORE_TAGS_NAMESPACE.equalsIgnoreCase(namespace)) {
+                        	if("insert".equals(tag)) {
+                        		String templatePath = elem.getAttributeValue("templatePath");
+                        		parseTree(loadAndParseTemplate(templatePath));
+                        		continue;
+                        	}
                         }
                         JClassType tagClass = getTagClass(elem);
                         Element viewElem = new Element(XHTML_NAMESPACE.equals(elem.getNamespaceURI())?elem.getLocalName():"div", XHTML_NAMESPACE);
