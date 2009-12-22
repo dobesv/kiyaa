@@ -530,7 +530,7 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
     @Override
     protected ModelFilter getFilter() {
         final String text = getText();
-        final String filter = ".*"+text.toLowerCase().trim().replaceAll("\\W+", ".*")+".*";
+        final String filter = ".*"+text.toLowerCase().trim().replaceAll("\\s+", ".*")+".*";
         return new ModelFilter<T>() {
             public boolean includes(T model) {
                 String label = nameValueAdapter!=null?nameValueAdapter.getName(model):model.toString();
@@ -539,7 +539,7 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
                     label = alternateNameValueAdapter.getName(model);
                     result = label != null && label.toLowerCase().matches(filter);
                 }
-                //GWT.log("Does "+filter+" match "+label+"? "+result, null);
+                GWT.log("Does "+filter+" match "+label+"? "+result, null);
                 return result;
             }
         };
