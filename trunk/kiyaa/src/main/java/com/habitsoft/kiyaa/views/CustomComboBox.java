@@ -4,6 +4,7 @@ package com.habitsoft.kiyaa.views;
 import java.util.HashMap;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -64,9 +65,10 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
     final class MyKeyboardListener extends KeyboardListenerAdapter {
 		@Override
 		public void onKeyDown(Widget sender, char keyCode, int modifiers) {
-			if(keyCode == KeyboardListener.KEY_ESCAPE) {
+			if(keyCode == KeyCodes.KEY_ESCAPE) {
 				hidePopup();
-			} else if(keyCode == KeyboardListener.KEY_DOWN) {
+				applySearchTextOperation.cancel();
+			} else if(keyCode == KeyCodes.KEY_DOWN) {
 				showPopup(new AsyncCallback<Void>() {
 					public void onFailure(Throwable caught) {
 						GWT.log("showPopup() failed in KEY_DOWN handler", caught);
@@ -80,7 +82,7 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 						}
 					}
 				});
-			} else if(keyCode == KeyboardListener.KEY_UP) {
+			} else if(keyCode == KeyCodes.KEY_UP) {
 				showPopup(new AsyncCallback<Void>() {
 					public void onFailure(Throwable caught) {
 						GWT.log("showPopup() failed in KEY_UP handler", caught);
@@ -94,16 +96,16 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 						}
 					}
 				});
-			} else if(keyCode == KeyboardListener.KEY_TAB || keyCode == KeyboardListener.KEY_ENTER) {
+			} else if(keyCode == KeyCodes.KEY_TAB || keyCode == KeyCodes.KEY_ENTER) {
 				onTabEnterOrLostFocus(true);
-	            if(focusNextOnEnter && focusGroup != null && keyCode == KeyboardListener.KEY_ENTER) {
+	            if(focusNextOnEnter && focusGroup != null && keyCode == KeyCodes.KEY_ENTER) {
 	                if(modifiers != 0)
 	                    focusGroup.focusNextButton();
 	                else
 	                    focusGroup.focusNext();
 	            }
-			} else if(keyCode == KEY_RIGHT || keyCode == KEY_LEFT) {
-			} else if(Character.isLetterOrDigit(keyCode) || keyCode == KEY_BACKSPACE || keyCode == KEY_DELETE) {
+			} else if(keyCode == KeyCodes.KEY_RIGHT || keyCode == KeyCodes.KEY_LEFT) {
+			} else {
 		        applySearchTextOperation.schedule(250);
 			}
 		}
@@ -530,16 +532,24 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
     @Override
     protected ModelFilter getFilter() {
         final String text = getText();
-        final String filter = ".*"+text.toLowerCase().trim().replaceAll("\\s+", ".*")+".*";
+        // Escape any special regex characters in their search pattern
+        final String[] words = text.toLowerCase().split("\\s+");
         return new ModelFilter<T>() {
+        	boolean containsAllWords(String text) {
+        		for(String word : words) {
+        			if(text.contains(word))
+        				return true;
+        		}
+        		return false;
+        	}
             public boolean includes(T model) {
                 String label = nameValueAdapter!=null?nameValueAdapter.getName(model):model.toString();
-                boolean result = label.toLowerCase().matches(filter);
+                boolean result = containsAllWords(label.toLowerCase());
                 if(!result && alternateNameValueAdapter != null) {
                     label = alternateNameValueAdapter.getName(model);
-                    result = label != null && label.toLowerCase().matches(filter);
+                    result = label != null && containsAllWords(label.toLowerCase());
                 }
-                GWT.log("Does "+filter+" match "+label+"? "+result, null);
+                GWT.log("Does "+text+" match "+label+"? "+result, null);
                 return result;
             }
         };
