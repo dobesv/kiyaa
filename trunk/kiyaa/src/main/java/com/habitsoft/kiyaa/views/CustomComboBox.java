@@ -549,7 +549,7 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
                     label = alternateNameValueAdapter.getName(model);
                     result = label != null && containsAllWords(label.toLowerCase());
                 }
-                GWT.log("Does "+text+" match "+label+"? "+result, null);
+                //GWT.log("Does "+text+" match "+label+"? "+result, null);
                 return result;
             }
         };
