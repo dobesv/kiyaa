@@ -368,6 +368,7 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 	}
 	@Override
 	public void clearRows() {
+		hoverGroup.clear();
 	    if(horizontal) {
 	        for(HTMLTableRowPanel rowPanel : rowPanels) {
 	            int count = DOM.getChildCount(rowPanel.getElement());
@@ -383,7 +384,6 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 			column.getViews().clear();
 		}
 		checkEmpty(null);
-		hoverGroup.clear();
 	}
 	
 	@Override
