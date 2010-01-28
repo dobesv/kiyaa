@@ -33,6 +33,7 @@ import com.habitsoft.kiyaa.widgets.TextBox;
  * 
  */
 public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesChangeEvents, SourcesPopupEvents, SourcesFocusEvents, HasFocus, Focusable {
+	boolean stickySearchText;
 	
 	private final class MyFocusListener implements FocusListener {
 		public void onFocus(Widget sender) {
@@ -334,15 +335,22 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 	    // Popup might become invisible before the timer expires (it's actually quite likely that it will)
         final boolean shouldUseModelFromTable = popupShowing && !searching && table != null && table.getSelectedModel() != null;
         
+        
 	    // Have to schedule a timer so that if we just lost focus due to the user clicking on something we won't
         // hide the popup before the click is processed.
         if(shouldUseModelFromTable) {
             useModelFromTable();
-        } else if(tabOrEnter) {
-            sendChangeEvent();
+        } else {
+            // If they were typing in a name, match it before we clear it
+    		applySearchTextOperation.cancel();
+        	applySearchText(false);
+        	if(tabOrEnter)
+        		sendChangeEvent();
         }
-        if(selectedModel != null)
-            textbox.setText(nameValueAdapter.getName(selectedModel));
+        if(selectedModel != null || stickySearchText == false) {
+            setText(nameValueAdapter.getName(selectedModel));
+        	searching = false;
+        }
         
         hidePopup();
     }
@@ -650,4 +658,19 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 		applySearchText(false);
     	super.save(callback);
     }
+
+    /**
+     * Set to true if you want to preserve search text
+     * when the TextBox loses focus; otherwise, the text
+     * will be set to the selected model's text as returned
+     * by the nameValueAdapter, even if the selectedModel
+     * is null.
+     */
+	public boolean isStickySearchText() {
+		return stickySearchText;
+	}
+
+	public void setStickySearchText(boolean stickySearchText) {
+		this.stickySearchText = stickySearchText;
+	}
 }
