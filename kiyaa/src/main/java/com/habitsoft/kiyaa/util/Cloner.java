@@ -29,13 +29,16 @@ public interface Cloner<T extends Serializable> {
 	 * 
 	 * <ul>
 	 * <li>Objects are compared using equals()</li>
-	 * <li>Native arrays are compared using Arrays.equals()</li>
+	 * <li>Native arrays are compared deeply</li>
 	 * <li>Primitive types are compared using ==</li>
 	 * </ul>
 	 * 
 	 * When two arrays differ, the elements are compared one at a time
 	 * and any changed, added, or removed element indexes are reported in
-	 * <arrayPropery>[<index>] format.
+	 * <arrayPropery>[<index>] format; additionally, changes to fields
+	 * of the elements of the array will be reported as 
+	 * <arrayPropery>[<index>].<field> recursively.
+	 * 
 	 */
 	public Set<String> diff(T a, T b);
 }
