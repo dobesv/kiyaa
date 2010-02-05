@@ -78,7 +78,7 @@ public class ClonerGenerator extends BaseGenerator {
 				sw.println("public java.util.Set<String> diff("+className+" a, "+className+" b) {");
 				sw.indent();
 				sw.println("java.util.TreeSet<String> diffs = new java.util.TreeSet<String>();");
-				generateGetDifferences("", beanType);
+				generateGetDifferences("", beanType, "a", "b");
 				sw.println("return diffs;");
 				sw.outdent();
 				sw.println("}");
@@ -107,7 +107,7 @@ public class ClonerGenerator extends BaseGenerator {
 			}
 		}
 
-		private void generateGetDifferences(String prefix, JClassType beanType) {
+		private void generateGetDifferences(String prefix, JClassType beanType, String firstObject, String secondObject) {
 			if(beanType.getQualifiedSourceName().startsWith("java.lang"))
 				return;
 			generateCloneFields(beanType.getSuperclass());
@@ -119,8 +119,8 @@ public class ClonerGenerator extends BaseGenerator {
 				if(getter == null) getter = targetType.findMethod("is"+capFieldName, new JType[0]);
 				JType type = field.getType();
 				if(getter != null) {
-					String firstValue = "a."+getter.getName()+"()";
-					String secondValue = "b."+getter.getName()+"()";
+					String firstValue = firstObject+"."+getter.getName()+"()";
+					String secondValue = secondObject+"."+getter.getName()+"()";
 					generateCompareValue(prefix, field, type, firstValue,
 							secondValue);
 				}
