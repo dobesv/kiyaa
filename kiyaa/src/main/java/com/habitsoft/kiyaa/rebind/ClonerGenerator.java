@@ -63,11 +63,26 @@ public class ClonerGenerator extends BaseGenerator {
 				sw.println("public "+className+" clone("+className+" src) {");
 				sw.indent();
 				sw.println("if(src == null) return null;");
-				sw.println(className+" result = new "+className+"();");
-				generateCloneFields(beanType);
-				sw.println("return result;");
+				sw.println(className+" dest = new "+className+"();");
+				sw.println("clone(src, dest);");
+				sw.println("return dest;");
 				sw.outdent();
 				sw.println("}");
+				
+				sw.println("public void clone("+className+" src, "+className+" dest) {");
+				sw.indent();
+				generateCloneFields(beanType);
+				sw.outdent();
+				sw.println("}");
+				
+				sw.println("public java.util.Set<String> diff("+className+" a, "+className+" b) {");
+				sw.indent();
+				sw.println("java.util.TreeSet<String> diffs = new java.util.TreeSet<String>();");
+				generateGetDifferences("", beanType);
+				sw.println("return diffs;");
+				sw.outdent();
+				sw.println("}");
+				
 			}
 		}
 
@@ -87,11 +102,70 @@ public class ClonerGenerator extends BaseGenerator {
 					String copyValue = "src."+getter.getName()+"()";
 					
 					copyValue = copyField(type, copyValue, capFieldName);
-					sw.println("result.set"+capFieldName+"("+copyValue+");");
+					sw.println("dest.set"+capFieldName+"("+copyValue+");");
 				}
 			}
 		}
 
+		private void generateGetDifferences(String prefix, JClassType beanType) {
+			if(beanType.getQualifiedSourceName().startsWith("java.lang"))
+				return;
+			generateCloneFields(beanType.getSuperclass());
+			JField[] fields = beanType.getFields();
+			for(JField field : fields) {
+				JClassType targetType = beanType;
+				String capFieldName = capitalize(field.getName());
+				JMethod getter = targetType.findMethod("get"+capFieldName, new JType[0]);
+				if(getter == null) getter = targetType.findMethod("is"+capFieldName, new JType[0]);
+				JType type = field.getType();
+				if(getter != null) {
+					String firstValue = "a."+getter.getName()+"()";
+					String secondValue = "b."+getter.getName()+"()";
+					generateCompareValue(prefix, field, type, firstValue,
+							secondValue);
+				}
+			}
+		}
+
+		private void generateCompareValue(String prefix, JField field,
+				JType type, String firstValue, String secondValue) {
+			JArrayType arrayType = type.isArray();
+			if(arrayType != null) {
+				JType eltType = type.isArray().getComponentType();
+				generateCompareArray(prefix, field, firstValue, secondValue,
+						eltType);
+			} else {
+				String test = type.isPrimitive() != null ? firstValue+" != "+secondValue 
+						: firstValue+" != "+secondValue+" && ("+firstValue+" == null || "+secondValue+" == null || ! "+firstValue+".equals("+secondValue+"))";
+				sw.println("if("+test+") diffs.add(\""+prefix+field.getName()+"\");");
+			}
+		}
+
+		private void generateCompareArray(String prefix, JField field,
+				String firstValue, String secondValue, JType eltType) {
+			sw.println("if(!java.util.Arrays.equals("+firstValue+", "+secondValue+")) {");
+			sw.indent();
+			sw.println("diffs.add(\""+prefix+field.getName()+"\");");
+			sw.println("int count = Math.min("+firstValue+" == null ? 0 : "+firstValue+".length, "+secondValue+" == null ? 0 : "+secondValue+".length);");
+			sw.println("for(int i=0; i < count; i++) {");
+			sw.indent();
+			if(eltType.isPrimitive() != null)
+				sw.println("if("+firstValue+"[i] != "+secondValue+"[i])");
+			else
+				sw.println("if("+firstValue+"[i] != null && "+secondValue+"[i] != null ? !"+firstValue+"[i].equals("+secondValue+"[i]):"+firstValue+"[i] == "+secondValue+"[i])");
+			sw.indentln("diffs.add(\""+prefix+field.getName()+"[\"+i+\"]\");");
+			sw.outdent();
+			sw.println("}");
+			sw.println("int maxCount = Math.max("+firstValue+" == null ? 0 : "+firstValue+".length, "+secondValue+" == null ? 0 : "+secondValue+".length);");
+			sw.println("for(int i=count; i < maxCount; i++) {");
+			sw.indent();
+			sw.indentln("diffs.add(\""+prefix+field.getName()+"[\"+i+\"]\");");
+			sw.outdent();
+			sw.println("}");
+			sw.outdent();
+			sw.println("}");
+		}
+		
 		private String copyField(JType type, String copyValue, String capFieldName) {
 			// Don't copy primitive types, or immutable types
 			if(type.isPrimitive() != null 
@@ -104,7 +178,7 @@ public class ClonerGenerator extends BaseGenerator {
 			if(array != null) {
 				String arrayTypeName = array.getParameterizedQualifiedSourceName();
 				String compTypeName = array.getComponentType().getParameterizedQualifiedSourceName();
-				String arrayName = "result"+capFieldName;
+				String arrayName = "dest"+capFieldName;
 				sw.println(arrayTypeName+" src"+capFieldName+" = "+copyValue+";");
 				sw.println(arrayTypeName+" "+arrayName+";");
 				sw.println("if(src"+capFieldName+" != null) {");
@@ -120,7 +194,7 @@ public class ClonerGenerator extends BaseGenerator {
 				sw.println("} else {");
 				sw.indentln(arrayName+" = null;");
 				sw.println("}");
-				copyValue = "result"+capFieldName;
+				copyValue = "dest"+capFieldName;
 			}
 			
 			// Deep copy objects
