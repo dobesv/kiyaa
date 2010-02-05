@@ -121,45 +121,42 @@ public class ClonerGenerator extends BaseGenerator {
 				if(getter != null) {
 					String firstValue = firstObject+"."+getter.getName()+"()";
 					String secondValue = secondObject+"."+getter.getName()+"()";
-					generateCompareValue(prefix, field, type, firstValue,
+					generateCompareValue(field.getName(), type, firstValue,
 							secondValue);
 				}
 			}
 		}
 
-		private void generateCompareValue(String prefix, JField field,
+		private void generateCompareValue(String fieldName,
 				JType type, String firstValue, String secondValue) {
 			JArrayType arrayType = type.isArray();
 			if(arrayType != null) {
 				JType eltType = type.isArray().getComponentType();
-				generateCompareArray(prefix, field, firstValue, secondValue,
+				generateCompareArray(fieldName, firstValue, secondValue,
 						eltType);
 			} else {
 				String test = type.isPrimitive() != null ? firstValue+" != "+secondValue 
 						: firstValue+" != "+secondValue+" && ("+firstValue+" == null || "+secondValue+" == null || ! "+firstValue+".equals("+secondValue+"))";
-				sw.println("if("+test+") diffs.add(\""+prefix+field.getName()+"\");");
+				sw.println("if("+test+") diffs.add(\""+fieldName+"\");");
 			}
 		}
 
-		private void generateCompareArray(String prefix, JField field,
+		private void generateCompareArray(String fieldName,
 				String firstValue, String secondValue, JType eltType) {
 			sw.println("if(!java.util.Arrays.equals("+firstValue+", "+secondValue+")) {");
 			sw.indent();
-			sw.println("diffs.add(\""+prefix+field.getName()+"\");");
+			sw.println("diffs.add(\""+fieldName+"\");");
 			sw.println("int count = Math.min("+firstValue+" == null ? 0 : "+firstValue+".length, "+secondValue+" == null ? 0 : "+secondValue+".length);");
 			sw.println("for(int i=0; i < count; i++) {");
 			sw.indent();
-			if(eltType.isPrimitive() != null)
-				sw.println("if("+firstValue+"[i] != "+secondValue+"[i])");
-			else
-				sw.println("if("+firstValue+"[i] != null && "+secondValue+"[i] != null ? !"+firstValue+"[i].equals("+secondValue+"[i]):"+firstValue+"[i] == "+secondValue+"[i])");
-			sw.indentln("diffs.add(\""+prefix+field.getName()+"[\"+i+\"]\");");
+			String eltName = fieldName+"[\"+i+\"]";
+			generateCompareValue(eltName, eltType, firstValue+"[i]", secondValue+"[i]");
 			sw.outdent();
 			sw.println("}");
 			sw.println("int maxCount = Math.max("+firstValue+" == null ? 0 : "+firstValue+".length, "+secondValue+" == null ? 0 : "+secondValue+".length);");
 			sw.println("for(int i=count; i < maxCount; i++) {");
 			sw.indent();
-			sw.indentln("diffs.add(\""+prefix+field.getName()+"[\"+i+\"]\");");
+			sw.indentln("diffs.add(\""+eltName+"\");");
 			sw.outdent();
 			sw.println("}");
 			sw.outdent();
