@@ -399,7 +399,9 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 		textbox.setReadOnly(readOnly);
 	}
 	public void setSearchText(String text) {
-		// Ignored - just here to make this look like a real property
+		if(selectedModel == null) {
+			setText(text);
+		}
 	}
 	public void setShowOnFocus(boolean showOnFocus) {
 		this.showOnFocus = showOnFocus;
