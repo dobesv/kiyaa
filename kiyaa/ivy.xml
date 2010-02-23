@@ -19,7 +19,7 @@
 			<!-- <artifact name="gwt-dev" type="zip" m:classifier="windows-libs" conf="compile"/> -->
 			<artifact name="gwt-dev" type="jar" m:classifier="windows"/>
 		</dependency>
-		<dependency org="com.google.code.gwt-log" name="gwt-log" rev="3.0.0"/>
+		<dependency org="com.google.code.gwt-log" name="gwt-log" rev="2.6.2"/>
 		
 		<dependency org="com.google.gwt" name="gwt-servlet" rev="1.7.0"/>
 		<dependency org="xom" name="xom" rev="1.1" conf="compile;test;sources"/>

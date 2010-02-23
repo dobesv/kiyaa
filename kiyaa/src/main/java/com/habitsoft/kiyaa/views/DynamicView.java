@@ -107,7 +107,8 @@ public class DynamicView implements View {
     private void displayError(Throwable caught) {
         Feedback fb = new Feedback();
         fb.showError(caught);
-        GWT.getUncaughtExceptionHandler().onUncaughtException(caught);
+        if(GWT.getUncaughtExceptionHandler() != null)
+        	GWT.getUncaughtExceptionHandler().onUncaughtException(caught);
         wrapper.setWidget(fb);
     }
 }
