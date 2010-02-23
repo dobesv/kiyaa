@@ -168,8 +168,10 @@ public class AsyncCallbackGroup {
 		if(callback != null) {
 			if(error != null) {
 				callback.onFailure((Throwable)error);
-			} else {
+			} else try {
 				callback.onSuccess(callbackParam);
+			} catch(Throwable t) {
+				callback.onFailure(t);
 			}
 			callback = null;
 		}
