@@ -9,8 +9,8 @@ import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.habitsoft.kiyaa.metamodel.Action;
-import com.habitsoft.kiyaa.util.AsyncCallbackFactory;
 import com.habitsoft.kiyaa.util.AsyncCallbackDirectProxy;
+import com.habitsoft.kiyaa.util.AsyncCallbackFactory;
 
 public class Feedback extends FlowPanel {
     public enum FeedbackType {
@@ -158,11 +158,15 @@ public class Feedback extends FlowPanel {
     }
 
     public <T> AsyncCallback<T> busyCallback(final String busyText, final String successText, AsyncCallback<T> callback) {
+    	return busyCallback(busyText, successText, callback);
+    }
+    
+    public <T> AsyncCallback<T> busyCallback(final String busyText, final String successText, final Collection<Action> followupActions, AsyncCallback<T> callback) {
         busy(busyText);
         callback = new AsyncCallbackDirectProxy<T>(callback) {
             @Override
             public void onSuccess(T result) {
-                positiveFeedback(successText, null, 0);
+                positiveFeedback(successText, followupActions, 0);
                 super.onSuccess(result);
             }
             
