@@ -158,7 +158,7 @@ public class Feedback extends FlowPanel {
     }
 
     public <T> AsyncCallback<T> busyCallback(final String busyText, final String successText, AsyncCallback<T> callback) {
-    	return busyCallback(busyText, successText, callback);
+    	return busyCallback(busyText, successText, null, callback);
     }
     
     public <T> AsyncCallback<T> busyCallback(final String busyText, final String successText, final Collection<Action> followupActions, AsyncCallback<T> callback) {
