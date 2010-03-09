@@ -3,6 +3,9 @@ package com.habitsoft.kiyaa.views;
 import java.util.ArrayList;
 
 import com.allen_sauer.gwt.log.client.Log;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
@@ -16,6 +19,7 @@ import com.google.gwt.user.client.ui.SourcesTableEvents;
 import com.google.gwt.user.client.ui.TableListener;
 import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.HTMLTable.Cell;
 import com.habitsoft.kiyaa.metamodel.Action;
 import com.habitsoft.kiyaa.metamodel.Value;
 import com.habitsoft.kiyaa.util.AsyncCallbackDirectProxy;
@@ -25,7 +29,7 @@ import com.habitsoft.kiyaa.util.AsyncCallbackGroupMember;
 import com.habitsoft.kiyaa.util.HoverStyleHandler;
 import com.habitsoft.kiyaa.widgets.HTMLTableRowPanel;
 
-public class TableView<T> extends BaseCollectionView<T> implements SourcesTableEvents, TableListener, Focusable {
+public class TableView<T> extends BaseCollectionView<T> implements SourcesTableEvents, Focusable {
 
 	final FlexTable table = new FlexTable();
 	ArrayList<Series> series = new ArrayList();
@@ -248,7 +252,31 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 		DOM.appendChild(thead, headings);
 		setStylePrimaryName("ui-table");
 		table.setStylePrimaryName("ui-table");
-		table.addTableListener(this);
+		table.addClickHandler(new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				Cell eventCell = table.getCellForEvent(event);
+				int row = eventCell.getRowIndex();
+				Element currentEventTarget = event.getNativeEvent().getCurrentEventTarget().cast();
+				for(Element elt = event.getNativeEvent().getEventTarget().cast(); 
+						elt != currentEventTarget && elt != getElement() && elt != null; 
+						elt = DOM.getParent(elt)) {
+					if(elt.getTagName().equalsIgnoreCase("td") && elt == table.getCellFormatter().getElement(row, eventCell.getCellIndex()))
+						break;
+					if(elt.getTagName().equalsIgnoreCase("tr") && elt == table.getRowFormatter().getElement(row))
+						break;
+					if((DOM.getEventsSunk(elt) & (Event.ONCLICK|Event.ONCONTEXTMENU|Event.ONMOUSEDOWN|Event.ONMOUSEUP)) != 0) {
+						// Ignore this event since it should be handled by the other element
+						GWT.log("Ignoring click because it should be handled by "+elt.getTagName()+" ("+DOM.getInnerHTML(elt)+")", null);
+						return;
+					}
+				}
+				
+				if((selectable || clickable) && row >= 0) {
+					onRowClicked(row);
+				}
+			}
+		});
 		setCellSpacing(0);
 		setCellPadding(0);
 	}
@@ -495,12 +523,6 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 				return;
 			}
 			view.setModel(model, group.<Void>member());
-		}
-	}
-	
-	public void onCellClicked(SourcesTableEvents sender, int row, int cell) {
-		if((selectable || clickable) && row >= 0) {
-			onRowClicked(row);
 		}
 	}
 	
