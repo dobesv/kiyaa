@@ -603,8 +603,8 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                     JType fieldType = myModelClass;
                     generateField(fieldName, fieldType);
                 } else if (implementsInterface(myClass, getType(ModelView.class.getName()))
-                                && (findMethod(myClass.getSuperclass(), "getModel", 0, false) == null || findMethod(myClass
-                                                .getSuperclass(), "setModel", 2, false) == null)) {
+                                && (findMethod(myClass.getSuperclass(), "getModel", 0, false, false) == null || findMethod(myClass
+                                                .getSuperclass(), "setModel", 2, false, false) == null)) {
                     logger.log(TreeLogger.WARN, "Generated views that implement ModelView should define"
                                     + " an attribute with-model='Type modelName'"
                                     + " on their root element ("+rootElement.getQualifiedName()+"), or implement"
@@ -939,7 +939,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             private void generateLoad() throws UnableToCompleteException {
             	String name = "load";
                 final boolean nothingToLoad = loads.isEmpty() && subviewLoads.isEmpty() && asyncLoads.isEmpty() && earlyLoads.isEmpty() && earlyAsyncLoads.isEmpty();
-            	JMethod loadMethod = findMethod(myClass, "load", 0, true);
+            	JMethod loadMethod = findMethod(myClass, "load", 0, true, false);
             	final boolean baseClassLoads = loadMethod != null && loadMethod.getParameters().length == 1;
                 if(baseClassLoads) {
             	    if(nothingToLoad)
@@ -1066,7 +1066,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 sw.println("public void clearFields() {");
                 sw.indent();
                 sw.println("if(!didInit) return;");
-            	JMethod superMethod = findMethod(myClass.getSuperclass(), "clearFields", 0, false);
+            	JMethod superMethod = findMethod(myClass.getSuperclass(), "clearFields", 0, false, false);
             	if(superMethod != null && !superMethod.isAbstract()) {
         			sw.println("super.clearFields();");
             	}
@@ -1488,10 +1488,10 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 			private void generateAttribute(JClassType type, String name, final String key, final String value)
 				throws UnableToCompleteException {
 				ExpressionInfo baseExpr = new ExpressionInfo(name, type, false);
-				ExpressionInfo attributeAccessors = findAccessors(baseExpr, key, true);
+				ExpressionInfo attributeAccessors = findAccessors(baseExpr, key, true, false);
 				// Automatically propagate some properties to the getViewWidget()
 				if(attributeAccessors == null && key.matches("visible|width|height|title") && type.isAssignableTo(getType(View.class.getName()))) 
-					attributeAccessors = findAccessors(baseExpr, "viewWidget."+key, true);
+					attributeAccessors = findAccessors(baseExpr, "viewWidget."+key, true, false);
 				boolean readOnly = false;
 				boolean constant = false;
 				boolean earlyLoad = false;
@@ -1555,7 +1555,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				} else if (pathAccessors != null && pathAccessors.hasGetter()) {
 				    generateAttributeLoadSave(type, attributeAccessors, pathAccessors, readOnly, constant, earlyLoad);
 				} else if (path != null && (valueExpr = getFieldValue(path)) != null) {
-					ExpressionInfo valueAccessors = findAccessors(new ExpressionInfo(valueExpr, getType(Value.class.getName()), true), "value", true);
+					ExpressionInfo valueAccessors = findAccessors(new ExpressionInfo(valueExpr, getType(Value.class.getName()), true), "value", true, false);
 					generateAttributeLoadSave(type, attributeAccessors, valueAccessors, readOnly, constant, earlyLoad);
 				} else if(isExpr) {
 					logger.log(TreeLogger.WARN, "Couldn't figure out how to set attribute "+key+" on "+type+"; couldn't find a getter for "+value, null);                    	
@@ -1861,7 +1861,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             		boolean found_setter=false;
                 	if(childElems.size() > 0) {
                     	// TODO Currently this is order-dependent for overloads :-(
-                		JMethod[] methods = getAllMethods(type);
+                		JMethod[] methods = getAllMethods(type, false);
                 		ArrayList<Element> missing_setter=new ArrayList<Element>();
                     	for(int i=0; i < childElems.size(); i++) {
                     		Element childElem = childElems.get(i);
@@ -1948,8 +1948,8 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                     // setView() - set a view directly
                     // setViewFactory() - set a view factory (used by lists)
                 	if(!found_setter) {
-                        boolean factory = findMethod(type, "setViewFactory", 1, false)!=null;
-                        boolean widget = !factory && findMethod(type, "setWidget", 1, false)!=null;
+                        boolean factory = findMethod(type, "setViewFactory", 1, false, false)!=null;
+                        boolean widget = !factory && findMethod(type, "setWidget", 1, false, false)!=null;
                         
                         String fieldName = "sv"+memberDecls.size();
                         String id = elem.getAttributeValue("id");
@@ -1970,8 +1970,8 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 							subviewLoads.add(fieldName + ".load(group.<Void>member());");
                             saves.add(fieldName + ".save(group.<Void>member());");
                             clearFields.add(fieldName + ".clearFields();");
-                        } else if (findMethod(type, "setView", 1, false) != null
-                        	 || (modelView && findMethod(type, "setView", 1, false) != null)) {
+                        } else if (findMethod(type, "setView", 1, false, false) != null
+                        	 || (modelView && findMethod(type, "setView", 1, false, false) != null)) {
                             sw.println(name + ".setView("+fieldName+");");                        	
                         } else if(childElems.size() > 0){
                             logger.log(TreeLogger.WARN,
@@ -2351,7 +2351,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 	JClassType searchType = objectType;
                     final String asyncCallbackClassName = AsyncCallback.class.getName();
                     for(;;) {
-                        JMethod[] methods = getAllMethods(searchType);
+                        JMethod[] methods = getAllMethods(searchType, false);
                         //if(methodName.equals("getContact")) System.out.println("Looking for "+methodName+" in "+searchType+" with "+methods.length+" methods to search");
                         for (int i = 0; i < methods.length; i++) {
                             JMethod method = methods[i];
@@ -2505,7 +2505,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 return findField(superclass, name);
             }
 
-            protected ExpressionInfo findAccessors(ExpressionInfo base, final String path, final boolean matchAsync) throws UnableToCompleteException {
+            protected ExpressionInfo findAccessors(ExpressionInfo base, final String path, final boolean matchAsync, boolean staticAccess) throws UnableToCompleteException {
                 JClassType inType = base.type.isClassOrInterface();
                 if(inType == null) {
                     logger.log(TreeLogger.ERROR, "Can't find any member inside of non-class type "+base.type+" with path "+path);
@@ -2534,7 +2534,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
         			throw new UnableToCompleteException();
             	} else */ 
                 boolean endsWithParen = name.endsWith(")");
-                if(endsWithParen || findMethod(inType, name, 0, matchAsync) != null) {
+                if(endsWithParen || findMethod(inType, name, 0, matchAsync, false) != null) {
                     String getterMethodName;
                     String[] args;
                     if(endsWithParen) {
@@ -2563,7 +2563,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                     boolean searchingThis = objectType.equals(myClass);
                     //System.out.println("inType = "+inType+" myClass = "+myClass+" path = "+path+" expr = "+expr+" searchingThis = "+searchingThis);
                     for(;;) {
-                        JMethod[] methods = getAllMethods(objectType);
+                        JMethod[] methods = getAllMethods(objectType, staticAccess);
                         for (int i = 0; i < methods.length; i++) {
                             JMethod method = methods[i];
                             if (method.getName().equals(getterMethodName) ||
@@ -2601,7 +2601,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                         } else break;
                     }
                     if (getterMethod == null) {
-                        logger.log(TreeLogger.ERROR, "findAccessors(): Unable to find a method with the right number of arguments ("
+                        logger.log(TreeLogger.ERROR, "findAccessors(): Unable to find a "+(staticAccess?"static":"instance")+" method with the right number of arguments ("
                                         + args.length + " [ + AsyncCallback]) with name '" + getterMethodName + "' in " + inType
                                         + " for expression " + path, null);
                         throw new UnableToCompleteException();
@@ -2627,7 +2627,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                     String setterMethodName = getterMethodName.replaceFirst("^(is|get)", "set");
                     //if(getterMethodName.equals("getAdjustmentAccount"))
                     //	System.out.println("Looking for "+setterMethodName+" to match "+getter+" with "+args.length+" arguments, matchAsync = "+matchAsync+" objectType = "+objectType);
-					JMethod setterMethod = findMethod(objectType, setterMethodName, args.length+1, matchAsync);
+					JMethod setterMethod = findMethod(objectType, setterMethodName, args.length+1, matchAsync, false);
 					if(setterMethod != null) {
 						setter = expr + "." + setterMethodName + (asyncMethod && args.length==0?"":"("+joinWithCommas(0, args)+",");
 						asyncSetter = setterMethod.getParameters().length == args.length+2;
@@ -2641,10 +2641,10 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                     name = identifier(name);
                     String getterName = "get" + capitalize(name);
                     String setterName = "set" + capitalize(name);
-                    JMethod getterMethod = findMethod(inType, getterName, 0, matchAsync);
+                    JMethod getterMethod = findMethod(inType, getterName, 0, matchAsync, false);
                     if (getterMethod == null) {
                         getterName = "is" + capitalize(name);
-                        getterMethod = findMethod(inType, getterName, 0, matchAsync);
+                        getterMethod = findMethod(inType, getterName, 0, matchAsync, false);
                     }
                     if (getterMethod != null) {
                         asyncGetter = matchAsync && getterMethod.getParameters().length == 1 
@@ -2661,7 +2661,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                     	type = null;
                     }
                     JMethod setterMethod;
-                    if(splitPath.length == 1 && (setterMethod = findMethod(inType, setterName, 1, matchAsync))!=null) {
+                    if(splitPath.length == 1 && (setterMethod = findMethod(inType, setterName, 1, matchAsync, false))!=null) {
                     	//System.out.println("Found setter "+setterMethod);
                         setter = baseExpr + setterName;
                         asyncSetter = matchAsync && setterMethod.getParameters().length == 2;
@@ -2694,12 +2694,12 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                     }
                     if(asyncGetter == false) {
                     	// Easy... just get them to create a new getter based on this one
-                    	return findAccessors(new ExpressionInfo(getter, classType, isConstants(classType)), splitPath[1], matchAsync);
+                    	return findAccessors(new ExpressionInfo(getter, classType, isConstants(classType)), splitPath[1], matchAsync, staticAccess);
                     } else {
                     	// Oops, we're getting a property of an async property, time for some magic
                     	// The trick: generate a new method that does the first async operation and
                     	// then returns the result of the getter of the proceeding attributes.
-                    	ExpressionInfo subexpr = findAccessors(new ExpressionInfo("base", classType, false), splitPath[1], matchAsync);
+                    	ExpressionInfo subexpr = findAccessors(new ExpressionInfo("base", classType, false), splitPath[1], matchAsync, staticAccess);
                     	if(subexpr == null) {
                     		logger.log(TreeLogger.ERROR, "Failed to find property '"+splitPath[1]+"' of type '"+classType+"' of expression '"+getter+"'", null);
                             throw new UnableToCompleteException();
@@ -3025,14 +3025,18 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 	//System.out.println("Static reference: "+className+" property "+property);
                 	JClassType staticType = getType(className);  
                 	JField field = staticType.getField(property);
+            	    JEnumType enum1 = staticType.isEnum();
                 	if(field != null && field.isStatic()) {
-                	    return new ExpressionInfo(path, field.getType(), field.isFinal() || staticType.isEnum()!=null);
+						return new ExpressionInfo(path, field.getType(), field.isFinal() || enum1!=null);
                 	}
-                	return findAccessors(new ExpressionInfo(className, staticType, true), property, matchAsync);
+                	if(enum1 != null && property.equals("values()")) {
+                		return new ExpressionInfo(path, types.getArrayType(enum1), true);
+                	}
+                	return findAccessors(new ExpressionInfo(className, staticType, true), property, matchAsync, true);
                 }
                 
                 for (;;) {
-                    ExpressionInfo accessors = findAccessors(new ExpressionInfo(thisExpr, classToSearch, true), path, matchAsync);
+                    ExpressionInfo accessors = findAccessors(new ExpressionInfo(thisExpr, classToSearch, true), path, matchAsync, false);
                     if (accessors != null) {
                     	//System.out.println("Found in "+classToSearch+" "+thisExpr+" for "+path);
                         return accessors;
@@ -3283,16 +3287,17 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
          * 
          * @param inType
          *                Class to search for methods; superclasses are not automatically searched
-         * @param name
+		 * @param name
          *                Name of the method to search for
-         * @param parameterCount
+		 * @param parameterCount
          *                Number of parameters we want
-         * @param matchAsync If true, an async method with parameterCount + 1 will be matched
+		 * @param matchAsync If true, an async method with parameterCount + 1 will be matched
+		 * @param staticCall TODO
          * @return A JMethod if a match is found, or null
          * @throws UnableToCompleteException 
          */
-        public JMethod findMethod(JClassType inType, String name, int parameterCount, boolean matchAsync) throws UnableToCompleteException {
-            JMethod[] overloads = getAllMethods(inType);
+        public JMethod findMethod(JClassType inType, String name, int parameterCount, boolean matchAsync, boolean staticCall) throws UnableToCompleteException {
+            JMethod[] overloads = getAllMethods(inType, staticCall);
             //System.out.println("Looking for "+name+" with "+parameterCount+" parameters matchAsync = "+matchAsync+" in "+inType);
             for (int i = 0; i < overloads.length; i++) {
                 JMethod candidate = overloads[i];
@@ -3325,8 +3330,9 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
         Map<String,JMethod[]> methodsListCache = new HashMap<String,JMethod[]>();
         /**
          * Return all methods of a class, including superclasses.
+         * @param staticMethods TODO
          */
-        public JMethod[] getAllMethods(JClassType inType) {
+        public JMethod[] getAllMethods(JClassType inType, boolean staticMethods) {
         	JMethod[] cachedOverridableMethods = methodsListCache.get(inType.toString());        	
             if (cachedOverridableMethods == null) {
                 Map<String,JMethod> methodsBySignature = new TreeMap<String,JMethod>();
@@ -3341,7 +3347,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 	        				final String key = method.toString();
 	        				//if(interfaceType.isInterface() != null)
 	        				//	System.out.println(key);
-	        				if(method.isStatic())
+	        				if(method.isStatic() != staticMethods)
 	        					continue;
 	        				if(!methodsBySignature.containsKey(key)) {
 	        					methodsBySignature.put(key, method);
