@@ -263,7 +263,7 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 		if(selectedModel != null)
 			return null;
 		String text = getText();
-		if(text.length() > 0)
+		if((text!= null) && (text.length() > 0))
 			return text;
 		return null;
 	}
