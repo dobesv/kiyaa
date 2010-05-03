@@ -179,4 +179,10 @@ public class Feedback extends FlowPanel {
         return callback;
     }
 
+    @Override
+    protected void onDetach() {
+        clearFeedback();
+        super.onDetach();
+    }
+            
 }
