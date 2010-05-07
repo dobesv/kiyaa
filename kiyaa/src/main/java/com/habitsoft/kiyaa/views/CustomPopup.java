@@ -26,6 +26,7 @@ import com.habitsoft.kiyaa.util.AsyncCallbackFactory;
 import com.habitsoft.kiyaa.util.AsyncCallbackProxy;
 import com.habitsoft.kiyaa.util.ModelFilter;
 import com.habitsoft.kiyaa.util.ToStringNameValueAdapter;
+import com.habitsoft.kiyaa.util.Name;
 
 public class CustomPopup<T> implements PopupListener {
 
@@ -274,11 +275,13 @@ public class CustomPopup<T> implements PopupListener {
     	changeListeners.remove(listener);
     }
 
-    public void addAction(final String label, final Action action) {
+    @Name("action")
+    public void addAction(@Name("label") final String label, @Name("action") final Action action) {
     	addAction(label, action, null);
     }
 
-    public void addAction(String label, Action action, Value test) {
+    @Name("action")
+    public void addAction(@Name("label") String label, @Name("action") Action action, @Name("test") Value test) {
     	addAction(label, action, test, true);
     }
 
@@ -289,7 +292,7 @@ public class CustomPopup<T> implements PopupListener {
      * @param action
      * @param test If non-null, the action will only show when the value is true
      */
-    public Anchor addAction(final String label, final Action action, final Value test, final boolean hideOnClick) {
+    public Anchor addAction(@Name("label") final String label, @Name("action") final Action action, @Name("test") final Value test, @Name("hideOnClick") final boolean hideOnClick) {
     	final Anchor widget = new Anchor();
     	widget.setText(label);
     	widget.setStyleName("action");
@@ -341,7 +344,8 @@ public class CustomPopup<T> implements PopupListener {
         container.setWidget(flow);
     }
 
-    public void addRemoveFilterAction(final String removeLabel, final String restoreLabel) {
+    @Name("removeFilterAction")
+    public void addRemoveFilterAction(@Name("removeLabel") String removeLabel, @Name("restoreLabel") String restoreLabel) {
     	if(removeFilterActionLabel != null) {
     		removeFilterActionLabel.setText(removeLabel);
     	} else {
@@ -392,6 +396,7 @@ public class CustomPopup<T> implements PopupListener {
     	}
     }
 
+    @Name("column")
     public void addColumn(ViewFactory viewFactory) {
         if(viewFactory == null) throw new NullPointerException("viewFactory");
     	columns.add(viewFactory);

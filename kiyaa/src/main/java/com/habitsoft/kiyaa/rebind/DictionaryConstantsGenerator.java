@@ -122,7 +122,7 @@ public class DictionaryConstantsGenerator extends BaseGenerator {
     		    }
     		    SerializableTypeOracle serializableTypeOracle = serializerBuilder.build(tempLogger);
                 String serializerClassName = baseType.getQualifiedSourceName()+"_TypeSerializer";
-    		    TypeSerializerCreator typeSerializerCreator = new TypeSerializerCreator(tempLogger, serializableTypeOracle, context, serializerClassName);
+    		    TypeSerializerCreator typeSerializerCreator = new TypeSerializerCreator(tempLogger, serializableTypeOracle, serializableTypeOracle, context, serializerClassName);
                 typeSerializerCreator.realize(tempLogger);
                 sw.println("com.google.gwt.user.client.rpc.impl.Serializer serializer = new " + serializerClassName + "();");
                 sw.println("public com.habitsoft.kiyaa.util.DictionaryConstantsSerializationStreamReader createStreamReader(com.google.gwt.core.client.JavaScriptObject encoded)");

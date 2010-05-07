@@ -3,11 +3,11 @@ package com.habitsoft.kiyaa.util;
 import java.util.Date;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.i18n.client.CurrencyList;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.i18n.client.constants.NumberConstants;
-import com.google.gwt.i18n.client.impl.CurrencyList;
 
 /**
  * Implementation of LocalizedParser for GWT on the client side.  This
@@ -15,7 +15,7 @@ import com.google.gwt.i18n.client.impl.CurrencyList;
  * @author dobes
  */
 public class ClientLocalizedParser implements LocalizedParser {
-    private static NumberConstants nc = GWT.create(NumberConstants.class);
+    private static NumberConstants nc = LocaleInfo.getCurrentLocale().getNumberConstants();
     private static String stripTrailingZeroesRegex = nc.decimalSeparator().replaceAll("\\.", "\\\\.")+"?0*([^0-9]*)$";
     private DateTimeFormat dateFormat = DateTimeFormat.getMediumDateFormat();
     private DateTimeFormat shortDateFormat = DateTimeFormat.getShortDateFormat();

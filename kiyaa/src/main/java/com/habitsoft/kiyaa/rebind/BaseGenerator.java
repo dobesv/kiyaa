@@ -10,11 +10,13 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JField;
 import com.google.gwt.core.ext.typeinfo.JMethod;
+import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
+import com.habitsoft.kiyaa.util.Name;
 
 public abstract class BaseGenerator extends Generator {
 
@@ -38,6 +40,15 @@ public abstract class BaseGenerator extends Generator {
 			clsName = getSimpleClassName(type.getEnclosingType(), nestedClassSeperator)+nestedClassSeperator+clsName;
 		}
 		return clsName;
+	}
+
+	/**
+	 * Get a parameter name, taking into account the @Name annotation, if present.
+	 */
+	public static String getParameterName(JParameter parameter) {
+		Name parameterNameAnnotation = parameter.getAnnotation(Name.class);
+		String parameterName = parameterNameAnnotation!=null?parameterNameAnnotation.value():parameter.getName();
+		return parameterName;
 	}
 
 	public static String joinWithSpaces(int startIndex, String[] strings) {
