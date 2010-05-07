@@ -15,11 +15,9 @@
             Toolkit &amp; library for GWT with many features
     </description>
 	
-    <target name="version">
-		<tstamp>
-			<format property="now" pattern="yyyyMMddHHmmss"/>
-		</tstamp>
-        <property name="ivy.new.revision" value="${ivy.revision}.${now}"/>
+    <target name="version" depends="jar">
+    	<checksum property="checksum" file="build/${ivy.module}-${ivy.revision}.jar"></checksum>
+        <property name="ivy.new.revision" value="${ivy.revision}.${checksum}"/>
     </target>
 	
 	<target name="publish" depends="jar,version">
