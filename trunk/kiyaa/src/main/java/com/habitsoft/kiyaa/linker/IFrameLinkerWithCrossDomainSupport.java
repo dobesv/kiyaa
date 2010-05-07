@@ -34,13 +34,21 @@ import com.google.gwt.core.linker.IFrameLinker;
  */
 public class IFrameLinkerWithCrossDomainSupport extends IFrameLinker {
 	String FIX_DOMAIN_JS="document.domain=document.domain.replace(/(?:[^.]+\\.)?([^.]+\\.[^.]+)/i, '\\$1')";
+	
 	@Override
-	protected String getModulePrefix(TreeLogger logger, LinkerContext context) {
-		String basePrefix = super.getModulePrefix(logger, context);
-		
+	protected String getModulePrefix(TreeLogger logger, LinkerContext context,
+			String strongName) {
+		String basePrefix = super.getModulePrefix(logger, context, strongName);
 		return basePrefix.replaceFirst("<script>(\\s*)", "<script>$1"+FIX_DOMAIN_JS+"$1");
 	}
-
+	
+	@Override
+	protected String getModulePrefix(TreeLogger logger, LinkerContext context,
+			String strongName, int numFragments) {
+		String basePrefix = super.getModulePrefix(logger, context, strongName, numFragments);
+		return basePrefix.replaceFirst("<script>(\\s*)", "<script>$1"+FIX_DOMAIN_JS+"$1");
+	}
+	
 	@Override
 	protected String generateSelectionScript(TreeLogger logger,
 			LinkerContext context, ArtifactSet artifacts)

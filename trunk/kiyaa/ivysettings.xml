@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ivysettings>
+  <caches useOrigin="true"/>
+  <settings defaultResolver="default"/>
+  <include url="${ivy.default.settings.dir}/ivysettings.xml"/>
+  <resolvers>
+    <chain name="default">
+    	<!-- 
+	    <filesystem name="our-projects">
+	      <ivy pattern="${ivy.settings.dir}/../[module]/build/[artifact]-[revision].[ext]" />
+	      <artifact pattern="${ivy.settings.dir}/../[module]/build/[artifact]-[revision].[ext]" />
+	    </filesystem>
+	     -->
+	    <filesystem name="lib-folder">
+	      <ivy pattern="${ivy.settings.dir}/local-ivy-repo/[module]-[artifact]-[revision].[ext]" />
+	      <artifact pattern="${ivy.settings.dir}/local-ivy-repo/[artifact]-[revision].[ext]" />
+	    </filesystem>
+    	<resolver ref="local"/>
+	    <ibiblio name="maven-central" m2compatible="true" checksums=""/>
+	    <ibiblio name="jboss" m2compatible="true" checksums="" root="http://repository.jboss.org/maven2/"/>
+	    <ibiblio name="java.net" m2compatible="true" checksums="" root="http://download.java.net/maven/2/"/>
+		<packager name="roundup" buildRoot="${user.home}/.ivy2/packager/build" resourceCache="${user.home}/.ivy2/packager/cache">
+        	<ivy pattern="http://ivyroundup.googlecode.com/svn/trunk/repo/modules/[organisation]/[module]/[revision]/ivy.xml"/>
+        	<artifact pattern="http://ivyroundup.googlecode.com/svn/trunk/repo/modules/[organisation]/[module]/[revision]/packager.xml"/>
+    	</packager>
+    </chain>
+  </resolvers>
+</ivysettings>
+

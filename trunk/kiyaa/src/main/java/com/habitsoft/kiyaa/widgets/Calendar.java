@@ -9,6 +9,7 @@ import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.dom.client.TableSectionElement;
+import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.i18n.client.constants.DateTimeConstants;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
@@ -43,7 +44,7 @@ public class Calendar extends ComplexPanel implements SourcesChangeEvents, Sourc
 	TableRowElement dayNames;
 	
 	final CalendarConstants constants = GWT.create(CalendarConstants.class);
-	final DateTimeConstants dtc = GWT.create(DateTimeConstants.class);
+	final DateTimeConstants dtc = LocaleInfo.getCurrentLocale().getDateTimeConstants();
 	
 	ClickListenerCollection closeListeners;
 	ChangeListenerCollection changeListeners;
