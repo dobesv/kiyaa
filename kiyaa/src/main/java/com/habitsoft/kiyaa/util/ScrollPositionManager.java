@@ -79,7 +79,7 @@ public class ScrollPositionManager implements HistoryListener {
      * @return The left scroll position. 
      */ 
     public static native int getScrollLeft() /*-{ 
-            var scrollLeft = 0; 
+            var scrollLeft; 
             if ($wnd.innerHeight) 
             { 
                     scrollLeft = $wnd.pageXOffset; 
@@ -92,7 +92,7 @@ public class ScrollPositionManager implements HistoryListener {
             { 
                     scrollLeft = $doc.body.scrollLeft; 
             } 
-            return scrollLeft; 
+            return scrollLeft || 0; 
     }-*/; 
 
     /** 
@@ -101,7 +101,7 @@ public class ScrollPositionManager implements HistoryListener {
      * @return The top scroll position. 
      */ 
     public static native int getScrollTop() /*-{ 
-            var scrollTop = 0; 
+            var scrollTop; 
             if ($wnd.innerHeight) 
             { 
                     scrollTop = $wnd.pageYOffset; 
@@ -114,7 +114,7 @@ public class ScrollPositionManager implements HistoryListener {
             { 
                     scrollTop = $doc.body.scrollTop; 
             } 
-            return scrollTop; 
+            return scrollTop || 0; 
     }-*/;
     
     public static native void scrollTo(int scrollLeft, int scrollTop) /*-{
