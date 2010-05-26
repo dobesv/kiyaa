@@ -3,6 +3,7 @@
 <module>
 	<inherits name='com.google.gwt.user.User'/>
 	<inherits name="com.allen_sauer.gwt.log.gwt-log-DEBUG" />
+	<inherits name="com.datejs.DateJs" />
 	
     <source path='util'/>
     
