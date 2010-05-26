@@ -2,7 +2,6 @@ package com.habitsoft.kiyaa.widgets;
 
 import java.util.Date;
 
-import com.datejs.client.LocalizedParserWithDateJs;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.client.DOM;
@@ -26,6 +25,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.habitsoft.kiyaa.util.ClientLocalizedParser;
 import com.habitsoft.kiyaa.util.DateParseException;
 import com.habitsoft.kiyaa.util.FocusGroup;
+import com.habitsoft.kiyaa.util.LocalizedParserWithDateJs;
 
 public class DatePicker extends FlowPanel implements SourcesChangeEvents, SourcesClickEvents, SourcesKeyboardEvents, SourcesFocusEvents, HasText, HasFocus {
 
