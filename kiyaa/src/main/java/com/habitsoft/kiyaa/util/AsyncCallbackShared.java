@@ -42,6 +42,8 @@ public class AsyncCallbackShared<T> implements AsyncCallback<T> {
 	 * when this callback is invoked with success / failure
 	 */
 	public void addCallback(AsyncCallback<T> callback) {
+		if(callback == null)
+			return;
 		if(done) {
 			fireCallback(callback);
 		} else {
