@@ -60,7 +60,7 @@ public class AsyncCallbackShared<T> implements AsyncCallback<T> {
 	}
 	
 	protected void fireCallbacks() {
-		for (AsyncCallback<T> callback : callbacks) {
+		for (AsyncCallback<T> callback : callbacks.toArray(new AsyncCallback[callbacks.size()])) {
 			fireCallback(callback);
 		}
 	}
