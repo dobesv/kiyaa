@@ -20,6 +20,7 @@ import com.habitsoft.kiyaa.metamodel.ModelCollection;
 import com.habitsoft.kiyaa.util.AsyncCallbackDirectProxy;
 import com.habitsoft.kiyaa.util.AsyncCallbackGroup;
 import com.habitsoft.kiyaa.util.AsyncCallbackGroupMember;
+import com.habitsoft.kiyaa.util.AsyncCallbackShared;
 import com.habitsoft.kiyaa.util.HoverStyleHandler;
 import com.habitsoft.kiyaa.util.ModelFilter;
 import com.habitsoft.kiyaa.widgets.ScrollAutoLoader.Loader;
@@ -47,6 +48,7 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 	protected HoverStyleHandler.Group hoverGroup = new HoverStyleHandler.Group();
     private IncrementalCommand loadModelsCommand;
     private boolean modelsChanged;
+	protected final AsyncCallbackShared<Void> loadingCallback = new AsyncCallbackShared<Void>((Void)null);
 	
 	public BaseCollectionView() {
 		super();
@@ -250,6 +252,21 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 	}
 
 	public void load(final AsyncCallback<Void> callback) {
+		// If a load is in-progress, wait for it to finish before starting a new load,
+		// otherwise when the RPC calls come back they'll be working on the wrong state.
+		if(!loadingCallback.isDone()) {
+			loadingCallback.addCallback(new AsyncCallbackDirectProxy<Void>(callback) {
+				@Override
+				public void onSuccess(Void result) {
+					load(takeCallback());
+				}
+				
+				@Override
+				public void onFailure(Throwable caught) {
+					load(takeCallback());
+				}
+			});
+		}
 	    if(collection != null) {
 	        Object collectionId = collection.getId();
             boolean collectionChanged = collectionId != null && !collectionId.equals(loadedCollectionId);
@@ -263,13 +280,14 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
             }
 	    }
         
+	    loadingCallback.reset();
 	    if(modelsChanged) {
 	        modelsChanged = false;
-            loadModels(callback);
+            loadModels(loadingCallback);
 	    } else if(collection == null) {
-	        refreshModels(callback);
+	        refreshModels(loadingCallback);
 	    } else {
-	        load(startOffset, increment, callback);
+	        load(startOffset, increment, loadingCallback);
 	    }
 	}
 	
@@ -375,7 +393,7 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
         }
     }
 	
-	private void showLoadedModels(T[] models, final int offset, final int limit, AsyncCallback callback) {
+	private void showLoadedModels(T[] models, int offset, int limit, AsyncCallback callback) {
 		try {
 			if(selectedRow >= offset && selectedRow < (offset+limit)) {
 				selectRow(-1);
