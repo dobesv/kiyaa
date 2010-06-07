@@ -11,7 +11,7 @@ import com.habitsoft.kiyaa.widgets.Label;
  * based on the model given.  Very handy for custom subclasses of
  * TableView or ListView that define their own columns.
  */
-public abstract class LabelViewFactory<T> implements ViewFactory<ModelView<T>> {
+public class LabelViewFactory<T> implements ViewFactory<ModelView<T>> {
     
     protected final class LabelView implements ModelView<T> {
         Label label = new Label();
@@ -52,7 +52,9 @@ public abstract class LabelViewFactory<T> implements ViewFactory<ModelView<T>> {
      * The method should handle null values gracefully, returning
      * "" or some appropriate string.
      */
-    public abstract String getText(T model);
+    public String getText(T model) {
+    	return String.valueOf(model);
+    }
 
     public ModelView<T> createView() {
         return new LabelView();
