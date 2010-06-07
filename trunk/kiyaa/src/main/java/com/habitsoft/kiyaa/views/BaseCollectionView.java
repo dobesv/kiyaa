@@ -2,6 +2,8 @@ package com.habitsoft.kiyaa.views;
 
 import java.util.ArrayList;
 
+import com.allen_sauer.gwt.log.client.Log;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
@@ -244,7 +246,7 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 			@Override
 			public void onSuccess(T[] models) {				
 				//GWT.log("Loading list ... got "+models.length+" results attached = "+isAttached(), null);
-				showLoadedModels(models, offset, limit, group.member(getClass().getName()+".showLoadedModels("+models+")"));
+				showLoadedModels(models, offset, limit, group);
 				super.onSuccess(null);
 			}
 		});
@@ -255,6 +257,7 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 		// If a load is in-progress, wait for it to finish before starting a new load,
 		// otherwise when the RPC calls come back they'll be working on the wrong state.
 		if(!loadingCallback.isDone()) {
+			Log.info("BaseCollectionView.load(): already loading, delaying load until current load is complete.");
 			loadingCallback.addCallback(new AsyncCallbackDirectProxy<Void>(callback) {
 				@Override
 				public void onSuccess(Void result) {
@@ -266,6 +269,7 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 					load(takeCallback());
 				}
 			});
+			return;
 		}
 	    if(collection != null) {
 	        Object collectionId = collection.getId();
@@ -289,6 +293,7 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 	    } else {
 	        load(startOffset, increment, loadingCallback);
 	    }
+	    loadingCallback.addCallback(callback);
 	}
 	
 	private void refreshModels(AsyncCallback<Void> callback) {
@@ -393,41 +398,45 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
         }
     }
 	
-	private void showLoadedModels(T[] models, int offset, int limit, AsyncCallback callback) {
-		try {
-			if(selectedRow >= offset && selectedRow < (offset+limit)) {
-				selectRow(-1);
-			}
-			AsyncCallbackGroup group = new AsyncCallbackGroup();
-	        startLoadingModels(group);
-			for (int i = 0; i < models.length; i++) {
-				if(models[i] == null)
-					throw new NullPointerException("Model "+i+" of "+models.length+" in "+models+" was null");
-				int idx = offset+i-startOffset;
-				if(idx == items.size()) {
-					addItem(offset+i, models[i], group);
-				} else if(models[i] != items.get(i)){
-					replaceItem(offset+i, models[i], group);
-				}
-				loadItem(i, group);
-			}
-			
-			// If we get less than we asked for, there's no more to get
-			final boolean done = increment <= 0 || models.length<limit;
-			int endOffset = offset + models.length;
-			if(models.length > 0) // If we got models back then we can push totalItems ahead to include them
-			    totalItems = Math.max(totalItems, endOffset);
-			if(done) {
-				for(int i=offset + items.size()-1; i >= endOffset; i--){
-					removeItem(i);
-				}
-			}
-			
-			finishLoadingModels(group);
-			group.ready(callback, new Boolean(!done));
-		} catch (Throwable caught) {
-			callback.onFailure(caught);
+    /**
+     * Show models that were fetched.
+     * 
+     * @param models
+     * @param offset
+     * @param limit
+     * @param group
+     * @return true if we're "done", that is, we got less back from the server than we asked for
+     */
+	private boolean showLoadedModels(T[] models, int offset, int limit, AsyncCallbackGroup group) {
+		if(selectedRow >= offset && selectedRow < (offset+limit)) {
+			selectRow(-1);
 		}
+        startLoadingModels(group);
+		for (int i = 0; i < models.length; i++) {
+			if(models[i] == null)
+				throw new NullPointerException("Model "+i+" of "+models.length+" in "+models+" was null");
+			int idx = offset+i-startOffset;
+			if(idx == items.size()) {
+				addItem(offset+i, models[i], group);
+			} else if(models[i] != items.get(i)){
+				replaceItem(offset+i, models[i], group);
+			}
+			loadItem(i, group);
+		}
+		
+		// If we get less than we asked for, there's no more to get
+		final boolean done = increment <= 0 || models.length<limit;
+		int endOffset = offset + models.length;
+		if(models.length > 0) // If we got models back then we can push totalItems ahead to include them
+		    totalItems = Math.max(totalItems, endOffset);
+		if(done) {
+			for(int i=offset + items.size()-1; i >= endOffset; i--){
+				removeItem(i);
+			}
+		}
+		
+		finishLoadingModels(group);
+		return done;
 	}
 
 	public static AsyncCallback hideDuringUpdate(AsyncCallback callback, final Widget widget) {
