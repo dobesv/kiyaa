@@ -176,6 +176,9 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 		});
 		// Disable autocomplete on our custom combobox, since autocomplete interferes with our use of the cursor keys!
 		DOM.setElementProperty(textbox.getElement(), "autocomplete", "off");
+		
+		// Don't auto-hide the popup if the user clicks/focuses on the related text box
+		popup.addAutoHidePartner(textbox.getElement());
 	}
 	
 	public void addKeyboardListener(KeyboardListener listener) {
