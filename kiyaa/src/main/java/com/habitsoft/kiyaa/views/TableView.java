@@ -629,6 +629,16 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 	public void setSeries(ArrayList<Series> columns) {
 		this.series = columns;
 	}
+	/**
+	 * Get the view at the given coordinate.
+	 * 
+	 * @param a For a "horizontal" table, the row; otherwise, the column
+	 * @param b For a "horizontal" table, the column; otherwise, the row
+	 * @return The View instance for that row/column as constructed by the ViewFactory for that row/column
+	 */
+	public ModelView<T> getView(int a, int b) {
+		return series.get(a).getViews().get(b);
+	}
 	public ArrayList<HTMLTableRowPanel> getRowPanels() {
 		return rowPanels;
 	}

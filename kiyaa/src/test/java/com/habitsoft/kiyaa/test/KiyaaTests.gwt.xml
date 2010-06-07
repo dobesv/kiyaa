@@ -7,5 +7,6 @@
     
     <source path="client"/>
     <source path="util"/>
+    <source path="views"/>
     
 </module>
