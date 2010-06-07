@@ -31,7 +31,7 @@ import com.habitsoft.kiyaa.util.Name;
 public class CustomPopup<T> implements PopupListener {
 
     
-    protected final PopupPanel popup = new FocusAwarePopupPanel();
+    protected final PopupPanel popup = new PopupPanel(true);
     protected final ScrollPanel container = new ScrollPanel();
     protected final FlowPanel flow = new FlowPanel();
     protected BaseCollectionView<T> table;
@@ -70,6 +70,7 @@ public class CustomPopup<T> implements PopupListener {
     	};
     protected Anchor removeFilterActionLabel;
 
+    
     /**
      * A subclass can override this to disable the popup in some
      * circumstances - for example, if there's nothing to show in the
