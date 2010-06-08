@@ -316,13 +316,12 @@ public class CustomPopup<T> implements PopupListener {
     				test.getValue(new AsyncCallbackProxy<Boolean,Void>(callback) {
     					@Override
     					public void onSuccess(Boolean result) {
-    					    if(widget.isVisible() != result) {
-    					        widget.setVisible(result);
-    					        if(result && !visibleActions.contains(action))
-    					            visibleActions.add(action);
-    					        else
-    					            visibleActions.remove(action);
-    					    }
+    					    if(widget.isVisible() != result)
+    					        widget.setVisible(result); 
+					        if(result && !visibleActions.contains(action))
+					            visibleActions.add(action);
+					        else if(!result && visibleActions.contains(action))
+					            visibleActions.remove(action);
     						returnSuccess(null);
     					}
     				});
