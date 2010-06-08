@@ -3,6 +3,14 @@ package com.habitsoft.kiyaa.widgets;
 import java.util.Date;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Timer;
@@ -64,9 +72,12 @@ public class DatePicker extends FlowPanel implements SourcesChangeEvents, Source
 		// Disable autocomplete on our custom combobox, since autocomplete interferes with our use of the cursor keys!
 		DOM.setElementProperty(textbox.getElement(), "autocomplete", "off");
 		calendarIcon.setStyleName("date-picker-icon");
+		popup.addAutoHidePartner(getElement());
 		popup.setWidget(calendar);
-		popup.addPopupListener(new PopupListener() {
-			public void onPopupClosed(PopupPanel sender, boolean autoClosed) {
+		popup.addCloseHandler(new CloseHandler<PopupPanel>() {
+			
+			@Override
+			public void onClose(CloseEvent<PopupPanel> event) {
 				showing = false;
 			}
 		});
@@ -85,8 +96,18 @@ public class DatePicker extends FlowPanel implements SourcesChangeEvents, Source
 					hideCalendar();
 			}
 		});
-		textbox.addFocusListener(new FocusListener() {
-			public void onLostFocus(Widget sender) {
+		textbox.addFocusHandler(new FocusHandler() {
+			
+			@Override
+			public void onFocus(FocusEvent event) {
+				if (showOnFocus)
+					showCalendar();
+			}
+		});
+		textbox.addBlurHandler(new BlurHandler() {
+			
+			@Override
+			public void onBlur(BlurEvent event) {
 				boolean wasShowing = showing;
 				//hideTimer.schedule(200);
 				
@@ -102,14 +123,11 @@ public class DatePicker extends FlowPanel implements SourcesChangeEvents, Source
 				if (wasShowing || textbox.getText().length() > 0)
 					reformatDate();
 			}
-
-			public void onFocus(Widget sender) {
-				if (showOnFocus)
-					showCalendar();
-			}
 		});
-		calendarIcon.addClickListener(new ClickListener() {
-			public void onClick(Widget sender) {
+		calendarIcon.addClickHandler(new ClickHandler() {
+			
+			@Override
+			public void onClick(ClickEvent event) {
 				showCalendar();
 			}
 		});
