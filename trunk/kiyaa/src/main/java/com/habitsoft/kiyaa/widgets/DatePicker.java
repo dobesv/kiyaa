@@ -71,7 +71,6 @@ public class DatePicker extends FlowPanel implements SourcesChangeEvents, Source
 		textbox.setStyleName("date-picker");
 		// Disable autocomplete on our custom combobox, since autocomplete interferes with our use of the cursor keys!
 		DOM.setElementProperty(textbox.getElement(), "autocomplete", "off");
-		calendarIcon.setStyleName("date-picker-icon");
 		popup.addAutoHidePartner(getElement());
 		popup.setWidget(calendar);
 		popup.addCloseHandler(new CloseHandler<PopupPanel>() {
@@ -81,13 +80,13 @@ public class DatePicker extends FlowPanel implements SourcesChangeEvents, Source
 				showing = false;
 			}
 		});
-		calendar.addCloseListener(new ClickListener() {
-			public void onClick(Widget sender) {
+		calendar.addCloseHandler(new CloseHandler<Calendar>() {
+			public void onClose(CloseEvent<Calendar> event) {
 				hideCalendar();
 			}
 		});
-		calendar.addClickListener(new ClickListener() {
-			public void onClick(Widget sender) {
+		calendar.addClickHandler(new ClickHandler() {
+			public void onClick(ClickEvent event) {
 				textbox.setFocus(true);
 				reformatDate();
 				if(changeListeners != null)
@@ -124,6 +123,7 @@ public class DatePicker extends FlowPanel implements SourcesChangeEvents, Source
 					reformatDate();
 			}
 		});
+		calendarIcon.setStyleName("date-picker-icon");
 		calendarIcon.addClickHandler(new ClickHandler() {
 			
 			@Override
@@ -388,4 +388,28 @@ public class DatePicker extends FlowPanel implements SourcesChangeEvents, Source
         textbox.ensureDebugId(baseID+"-text");
         calendarIcon.ensureDebugId(baseID+"-icon");
     }
+
+	public int getDayOfMonth() {
+		return calendar.getDayOfMonth();
+	}
+
+	public int getMonth() {
+		return calendar.getMonth();
+	}
+
+	public int getYear() {
+		return calendar.getYear();
+	}
+
+	public void setDayOfMonth(int dayOfMonth) {
+		calendar.setDayOfMonth(dayOfMonth);
+	}
+
+	public void setMonth(int month) {
+		calendar.setMonth(month);
+	}
+
+	public void setYear(int year) {
+		calendar.setYear(year);
+	}
 }

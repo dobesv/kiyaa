@@ -3,12 +3,26 @@ package com.habitsoft.kiyaa.widgets;
 import java.util.ArrayList;
 import java.util.Date;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.dom.client.TableSectionElement;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.DomEvent;
+import com.google.gwt.event.dom.client.HasChangeHandlers;
+import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.event.logical.shared.HasCloseHandlers;
+import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.i18n.client.constants.DateTimeConstants;
 import com.google.gwt.user.client.DOM;
@@ -16,15 +30,11 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.ChangeListener;
 import com.google.gwt.user.client.ui.ChangeListenerCollection;
-import com.google.gwt.user.client.ui.ClickListener;
-import com.google.gwt.user.client.ui.ClickListenerCollection;
 import com.google.gwt.user.client.ui.ComplexPanel;
-import com.google.gwt.user.client.ui.SourcesChangeEvents;
-import com.google.gwt.user.client.ui.SourcesClickEvents;
 import com.google.gwt.user.client.ui.Widget;
 import com.habitsoft.kiyaa.util.HoverStyleHandler;
 
-public class Calendar extends ComplexPanel implements SourcesChangeEvents, SourcesClickEvents {
+public class Calendar extends ComplexPanel implements HasCloseHandlers<Calendar>, HasClickHandlers, HasChangeHandlers {
 	
 	class CalendarButton extends Label {
 		public CalendarButton() {
@@ -32,7 +42,7 @@ public class Calendar extends ComplexPanel implements SourcesChangeEvents, Sourc
 		}
 	}
 	
-	Date date;
+	int year, month, dayOfMonth;
 	boolean closable = true;
 	
 	TableElement table;
@@ -46,9 +56,7 @@ public class Calendar extends ComplexPanel implements SourcesChangeEvents, Sourc
 	final CalendarConstants constants = GWT.create(CalendarConstants.class);
 	final DateTimeConstants dtc = LocaleInfo.getCurrentLocale().getDateTimeConstants();
 	
-	ClickListenerCollection closeListeners;
-	ChangeListenerCollection changeListeners;
-	ClickListenerCollection clickListeners;
+	HandlerManager handlerManager;
 	private Label closeButton;
 	
 	int minYear = 1970;
@@ -61,10 +69,24 @@ public class Calendar extends ComplexPanel implements SourcesChangeEvents, Sourc
 	HoverStyleHandler.Group rowHoverGroup = new HoverStyleHandler.Group();
 	
 	public Calendar() {
+		handlerManager = new HandlerManager(this);
 		setElement(DOM.createDiv());
 		setStylePrimaryName("calendar");
-		date = new Date();
-		create();
+		table = TableElement.as(DOM.createTable());
+		table.setCellPadding(0);
+		table.setCellSpacing(0);
+		thead = table.createTHead();
+		createTitleRow();
+		createNavRow();
+		createDayNameRow();
+		tbody = TableSectionElement.as(DOM.createTBody());
+		table.appendChild(tbody);
+		rows = new ArrayList();
+		for(int i=0; i < 6; i++) {
+			rows.add(new WeekRow());
+		}
+		setDate(new Date());
+		getElement().appendChild(table);
 	}
 
 	static native void disableSelection(Element elt) /*-{
@@ -92,7 +114,7 @@ public class Calendar extends ComplexPanel implements SourcesChangeEvents, Sourc
 			super.onBrowserEvent(event);
 		}
 	}
-	class DayLabel extends NavButton implements ClickListener {
+	class DayLabel extends NavButton implements ClickHandler {
 		int row;
 		int col;
 		boolean otherMonth;
@@ -103,12 +125,12 @@ public class Calendar extends ComplexPanel implements SourcesChangeEvents, Sourc
 			this.row = row;
 			this.col = col;
 			setStyleName("day");
-			addClickListener(this);
+			addClickHandler(this);
 		}
 		
-		public void onClick(Widget sender) {
+		public void onClick(ClickEvent event) {
 			if(!disabled)
-				cellClicked(this);
+				cellClicked(this, event);
 		}
 
 		public void setOtherMonth(boolean otherMonth) {
@@ -156,36 +178,14 @@ public class Calendar extends ComplexPanel implements SourcesChangeEvents, Sourc
 	}
 	ArrayList<WeekRow> rows;
 	private Label title;
-	private void create() {
-		table = TableElement.as(DOM.createTable());
-		table.setCellPadding(0);
-		table.setCellSpacing(0);
-		thead = table.createTHead();
-		createTitleRow();
-		createNavRow();
-		createDayNameRow();
-		tbody = TableSectionElement.as(DOM.createTBody());
-		table.appendChild(tbody);
-		rows = new ArrayList();
-		for(int i=0; i < 6; i++) {
-			rows.add(new WeekRow());
-		}
-		dateChanged();
-		getElement().appendChild(table);
-		
-	}
-	public void cellClicked(DayLabel cellLabel) {
+	public void cellClicked(DayLabel cellLabel, ClickEvent click) {
 		//GWT.log("Calendar cell clicked - "+cellLabel.col+","+cellLabel.row+" date "+cellLabel.getDate(), null);
 		if(setDate(cellLabel.getDate())) {
-    		if(changeListeners != null)
-    			changeListeners.fireChange(this);
+			DomEvent.fireNativeEvent(Document.get().createChangeEvent(), this);
 		} else if(closable) {
-			if(closeListeners != null)
-				// Double-click means set and close
-				closeListeners.fireClick(this);
+			CloseEvent.fire(this, this);
 		}
-		if(clickListeners != null)
-			clickListeners.fireClick(this);
+		handlerManager.fireEvent(click);
 	}
 
 	private void createDayNameRow() {
@@ -207,7 +207,7 @@ public class Calendar extends ComplexPanel implements SourcesChangeEvents, Sourc
 		NavButton help = new NavButton("?");
 		help.setStyleName("button");
 		help.addStyleName("nav");
-		help.addClickListener(new ClickListener() {
+		help.addClickHandler(new ClickHandler() {
 			public void onClick(Widget sender) {
 				showHelpPopup();
 			}
@@ -229,9 +229,9 @@ public class Calendar extends ComplexPanel implements SourcesChangeEvents, Sourc
 			closeButton = new NavButton("\u00d7");
 			closeButton.setTitle(constants.getClose());
 			closeButton.addStyleName("title");
-			closeButton.addClickListener(new ClickListener() {
-				public void onClick(Widget sender) {
-					closeListeners.fireClick(sender);
+			closeButton.addClickHandler(new ClickHandler() {
+				public void onClick(ClickEvent event) {
+					CloseEvent.fire(Calendar.this, Calendar.this);
 				}
 			});
 			add(closeButton, titleRow.insertCell(-1));
@@ -255,24 +255,24 @@ public class Calendar extends ComplexPanel implements SourcesChangeEvents, Sourc
 		setStyleName(navRow, "headrow");
 		
 		Label prevYear = new NavButton("\u00ab");
-		prevYear.addClickListener(new ClickListener() {
-			public void onClick(Widget sender) {
+		prevYear.addClickHandler(new ClickHandler() {
+			public void onClick(ClickEvent event) {
 				gotoPrevYear();
 			}
 		});
 		add(prevYear, navRow.insertCell(-1));
 		
 		Label prevMonth = new NavButton("\u2039");
-		prevMonth.addClickListener(new ClickListener() {
-			public void onClick(Widget sender) {
+		prevMonth.addClickHandler(new ClickHandler() {
+			public void onClick(ClickEvent event) {
 				gotoPrevMonth();
 			}
 		});
 		add(prevMonth, navRow.insertCell(-1));
 
 		Label today = new NavButton(constants.getToday());
-		today.addClickListener(new ClickListener() {
-			public void onClick(Widget sender) {
+		today.addClickHandler(new ClickHandler() {
+			public void onClick(ClickEvent event) {
 				gotoToday();
 			}
 		});
@@ -282,16 +282,16 @@ public class Calendar extends ComplexPanel implements SourcesChangeEvents, Sourc
 		add(today, todayCell);
 		
 		Label nextMonth = new NavButton("\u203a");
-		nextMonth.addClickListener(new ClickListener() {
-			public void onClick(Widget sender) {
+		nextMonth.addClickHandler(new ClickHandler() {
+			public void onClick(ClickEvent event) {
 				gotoNextMonth();
 			}
 		});
 		add(nextMonth, navRow.insertCell(-1));
 		
 		Label nextYear = new NavButton("\u00bb");
-		nextYear.addClickListener(new ClickListener() {
-			public void onClick(Widget sender) {
+		nextYear.addClickHandler(new ClickHandler() {
+			public void onClick(ClickEvent event) {
 				gotoNextYear();
 			}
 		});
@@ -311,42 +311,38 @@ public class Calendar extends ComplexPanel implements SourcesChangeEvents, Sourc
 	    adopt(child);
 	}
 	
-	@SuppressWarnings("deprecation")
+
 	public void gotoPrevYear() {
-		Date d = new Date(date.getTime());
-		d.setYear(d.getYear()-1);
-		setDate(d);
+		year -= 1;
+		dateChanged();
 	}
 	
-	@SuppressWarnings("deprecation")
+
 	public void gotoNextYear() {
-		Date d = new Date(date.getTime());
-		d.setYear(d.getYear()+1);
-		setDate(d);
+		year += 1;
+		dateChanged();
 	}
 	
-	@SuppressWarnings("deprecation")
+
 	public void gotoPrevMonth() {
-		Date d = new Date(date.getTime());
-		if(d.getMonth() == 0) {
-			d.setYear(d.getYear()-1);
-			d.setMonth(11);
+		if(month <= 1) {
+			year--;
+			month = 12;
 		} else {
-			d.setMonth(d.getMonth()-1);
+			month--;
 		}
-		setDate(d);
+		dateChanged();
 	}
 	
-	@SuppressWarnings("deprecation")
+
 	public void gotoNextMonth() {
-		Date d = new Date(date.getTime());
-		if(d.getMonth() == 11) {
-			d.setYear(d.getYear()+1);
-			d.setMonth(0);
+		if(month == 12) {
+			month = 1;
+			year++;
 		} else {
-			d.setMonth(d.getMonth()+1);
+			month++;
 		}
-		setDate(d);
+		dateChanged();
 	}
 	
 	public void gotoToday() {
@@ -354,14 +350,25 @@ public class Calendar extends ComplexPanel implements SourcesChangeEvents, Sourc
 	}
 
 	public Date getDate() {
-		return date;
+		return createDate();
 	}
 
+	private Date createDate() {
+		return new Date(year-1900, month-1, dayOfMonth);
+	}
+
+	@SuppressWarnings("deprecation")
 	public boolean setDate(Date selectedDate) {
 		if(selectedDate == null)
 			throw new NullPointerException("Null dates not allowed for Calendar display");
-		if(!selectedDate.equals(this.date)) {
-			this.date = selectedDate;
+		int newYear = selectedDate.getYear()+1900;
+		int newMonth = selectedDate.getMonth()+1;
+		int newDayOfMonth = selectedDate.getDate();
+		
+		if(newYear != this.year || newMonth != this.month || newDayOfMonth != this.dayOfMonth) {
+			this.year = newYear;
+			this.month = newMonth;
+			this.dayOfMonth = newDayOfMonth;
 			dateChanged();
 			return true;
 		}
@@ -375,68 +382,68 @@ public class Calendar extends ComplexPanel implements SourcesChangeEvents, Sourc
 		int thisMonth = today.getMonth();
 		int thisDay = today.getDate();
 		setVisible(table, false);
-		int year = date.getYear()+1900;
-		if(year < minYear) {
-			year = minYear;
-			date.setYear(year-1900);
-		} else if(year > maxYear) {
-			year = maxYear;
-			date.setYear(year-1900);
-		}
-		int month = date.getMonth();
-		int mday = date.getDate();
+		try {
+			if(year < minYear) {
+				year = minYear;
+			} else if(year > maxYear) {
+				year = maxYear;
+			}
+			// calendar voodoo for computing the first day that would actually be
+			// displayed in the calendar, even if it's from the previous month.
+			// WARNING: this is magic. ;-)		
+			Date tempDate = createDate();
+			tempDate.setDate(1);
 
-		// calendar voodoo for computing the first day that would actually be
-		// displayed in the calendar, even if it's from the previous month.
-		// WARNING: this is magic. ;-)		
-		Date tempDate = new Date(date.getTime());
-		tempDate.setDate(1);
-		int day1 = (tempDate.getDay() - firstDayOfWeek) % 7;
-		if(day1 < 0)
-			day1 += 7;
-		tempDate.setDate(-day1);
-		tempDate.setDate(tempDate.getDate()+1);
-		
-		for(WeekRow row : rows) { // up to 6 rows
-			setStyleName(row.row, "daysrow");
-			boolean hasDays = false;
-			for(DayLabel dayLabel : row.days) {
-				int iday = tempDate.getDate();
-				dayLabel.setStyleName("day");
-				dayLabel.setText(String.valueOf(iday));
-				dayLabel.setDate(new Date(tempDate.getTime()));
-				
-				boolean currentMonth = (tempDate.getMonth() == date.getMonth());
-				dayLabel.setOtherMonth(!currentMonth);
-				if(!dayLabel.disabled) {
-    				hasDays = true;
-    				
-    				if(currentMonth && iday == mday) {
-    					dayLabel.addStyleName("selected");
-    				}
-    				if(tempDate.getYear() == thisYear 
-    					&& tempDate.getMonth() == thisMonth
-    					&& tempDate.getDate() == thisDay) {
-    					dayLabel.addStyleName("today");
-    				}
-    				int wday = tempDate.getDay();
-    				boolean isWeekend = wday == 0 || wday == 6;
-    				if(isWeekend)
-    					dayLabel.addStyleName(currentMonth?"weekend":"oweekend");
-//				} else {
-//					GWT.log("Cell date "+tempDate+" disabled; not in the same month as "+date, null);
+			int day1 = (tempDate.getDay() - firstDayOfWeek) % 7;
+			if(day1 < 0)
+				day1 += 7;
+			tempDate.setDate(-day1 + 1);
+			//tempDate.setDate(tempDate.getDate()+1);
+
+			for(WeekRow row : rows) { // up to 6 rows
+				setStyleName(row.row, "daysrow");
+				boolean hasDays = false;
+				for(DayLabel dayLabel : row.days) {
+					int iday = tempDate.getDate();
+					dayLabel.setStyleName("day");
+					dayLabel.setText(String.valueOf(iday));
+					dayLabel.setDate(new Date(tempDate.getTime()));
+					
+					boolean currentMonth = (tempDate.getMonth() == (month-1));
+					dayLabel.setOtherMonth(!currentMonth);
+					if(!dayLabel.disabled) {
+	    				hasDays = true;
+	    				
+	    				if(currentMonth && iday == dayOfMonth) {
+	    					dayLabel.addStyleName("selected");
+	    				}
+	    				if(tempDate.getYear() == thisYear 
+	    					&& tempDate.getMonth() == thisMonth
+	    					&& tempDate.getDate() == thisDay) {
+	    					dayLabel.addStyleName("today");
+	    				}
+	    				int wday = tempDate.getDay();
+	    				boolean isWeekend = wday == 0 || wday == 6;
+	    				if(isWeekend)
+	    					dayLabel.addStyleName(currentMonth?"weekend":"oweekend");
+	//				} else {
+	//					GWT.log("Cell date "+tempDate+" disabled; not in the same month as "+date, null);
+					}
+					
+					// Advance to the next day
+					tempDate.setDate(iday+1);
 				}
-				
-				// Advance to the next day
-				tempDate.setDate(iday+1);
+				if(!(hasDays || showOtherMonths)) {
+					setStyleName(row.row, "emptyrow");
+				}
 			}
-			if(!(hasDays || showOtherMonths)) {
-				setStyleName(row.row, "emptyrow");
-			}
+			
+			title.setText(dtc.months()[month-1]+", "+year);
+		} catch(Exception e) {
+			Log.error("Error updating calendar for year="+thisYear+" month="+thisMonth+" day="+thisDay+": "+e, e);
+		} finally {
+			setVisible(table, true);
 		}
-		
-		title.setText(dtc.months()[month]+", "+year);
-		setVisible(table, true);
 	}
 
 	public boolean isClosable() {
@@ -447,62 +454,68 @@ public class Calendar extends ComplexPanel implements SourcesChangeEvents, Sourc
 		this.closable = closable;
 	}
 
-	public void addCloseListener(ClickListener listener) {
-		if(closeListeners == null) closeListeners = new ClickListenerCollection();
-		closeListeners.add(listener);
+	public HandlerRegistration addCloseHandler(CloseHandler<Calendar> handler) {
+		return handlerManager.addHandler(CloseEvent.getType(), handler);
 	}
 
-	public void removeCloseListener(ClickListener listener) {
-		if(closeListeners != null)
-			closeListeners.remove(listener);
+	public HandlerRegistration addChangeHandler(ChangeHandler handler) {
+		return handlerManager.addHandler(ChangeEvent.getType(), handler);
 	}
 
-	public void addChangeListener(ChangeListener listener) {
-		if(changeListeners == null) changeListeners = new ChangeListenerCollection();
-		changeListeners.add(listener);
-	}
-
-	public void removeChangeListener(ChangeListener listener) {
-		if(changeListeners != null)
-			changeListeners.remove(listener);
-	}
-
-	public void addClickListener(ClickListener listener) {
-		if(clickListeners == null) clickListeners = new ClickListenerCollection();
-		clickListeners.add(listener);
-	}
-
-	public void removeClickListener(ClickListener listener) {
-		if(clickListeners != null)
-			clickListeners.remove(listener);
+	public HandlerRegistration addClickHandler(ClickHandler handler) {
+		return handlerManager.addHandler(ClickEvent.getType(), handler);
 	}
 
 	@SuppressWarnings("deprecation")
 	public void gotoNextWeek() {
-		Date d = new Date(date.getTime());
+		Date d = createDate();
 		d.setDate(d.getDate()+7);
 		setDate(d);
 	}
 	
 	@SuppressWarnings("deprecation")
 	public void gotoPrevWeek() {
-		Date d = new Date(date.getTime());
+		Date d = createDate();
 		d.setDate(d.getDate()-7);
 		setDate(d);
 	}
 
 	@SuppressWarnings("deprecation")
 	public void gotoPrevDay() {
-		Date d = new Date(date.getTime());
+		Date d = createDate();
 		d.setDate(d.getDate()-1);
 		setDate(d);
 	}
 
 	@SuppressWarnings("deprecation")
 	public void gotoNextDay() {
-		Date d = new Date(date.getTime());
+		Date d = createDate();
 		d.setDate(d.getDate()+1);
 		setDate(d);
+	}
+
+	public int getYear() {
+		return year;
+	}
+
+	public void setYear(int year) {
+		this.year = year;
+	}
+
+	public int getMonth() {
+		return month;
+	}
+
+	public void setMonth(int month) {
+		this.month = month;
+	}
+
+	public int getDayOfMonth() {
+		return dayOfMonth;
+	}
+
+	public void setDayOfMonth(int dayOfMonth) {
+		this.dayOfMonth = dayOfMonth;
 	}
 	
 }
