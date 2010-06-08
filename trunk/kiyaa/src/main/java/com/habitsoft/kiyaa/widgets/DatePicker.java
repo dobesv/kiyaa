@@ -74,7 +74,6 @@ public class DatePicker extends FlowPanel implements SourcesChangeEvents, Source
 		popup.addAutoHidePartner(getElement());
 		popup.setWidget(calendar);
 		popup.addCloseHandler(new CloseHandler<PopupPanel>() {
-			
 			@Override
 			public void onClose(CloseEvent<PopupPanel> event) {
 				showing = false;

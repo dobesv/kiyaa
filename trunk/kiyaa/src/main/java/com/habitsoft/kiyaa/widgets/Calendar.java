@@ -56,7 +56,6 @@ public class Calendar extends ComplexPanel implements HasCloseHandlers<Calendar>
 	final CalendarConstants constants = GWT.create(CalendarConstants.class);
 	final DateTimeConstants dtc = LocaleInfo.getCurrentLocale().getDateTimeConstants();
 	
-	HandlerManager handlerManager;
 	private Label closeButton;
 	
 	int minYear = 1970;
@@ -69,7 +68,6 @@ public class Calendar extends ComplexPanel implements HasCloseHandlers<Calendar>
 	HoverStyleHandler.Group rowHoverGroup = new HoverStyleHandler.Group();
 	
 	public Calendar() {
-		handlerManager = new HandlerManager(this);
 		setElement(DOM.createDiv());
 		setStylePrimaryName("calendar");
 		table = TableElement.as(DOM.createTable());
@@ -96,7 +94,11 @@ public class Calendar extends ComplexPanel implements HasCloseHandlers<Calendar>
 	class NavButton extends Label {
 		public NavButton() {
 			setStyleName("button");
-			addMouseListener(new HoverStyleHandler(this, hoverGroup));
+			HoverStyleHandler hsh = new HoverStyleHandler(this, hoverGroup);
+			addMouseOutHandler(hsh);
+			addMouseOverHandler(hsh);
+			addMouseUpHandler(hsh);
+			addMouseDownHandler(hsh);
 			disableSelection(getElement());
 		}
 		
@@ -105,14 +107,14 @@ public class Calendar extends ComplexPanel implements HasCloseHandlers<Calendar>
 			setText(text);
 		}
 		
-		@Override
-		public void onBrowserEvent(Event event) {
-			if((event.getTypeInt() & (Event.ONMOUSEDOWN|Event.ONMOUSEUP|Event.ONCLICK|Event.ONDBLCLICK)) != 0) {
-				event.cancelBubble(true);
-				event.preventDefault();
-			}
-			super.onBrowserEvent(event);
-		}
+//		@Override
+//		public void onBrowserEvent(Event event) {
+//			if((event.getTypeInt() & (Event.ONMOUSEDOWN|Event.ONMOUSEUP|Event.ONCLICK|Event.ONDBLCLICK)) != 0) {
+//				event.cancelBubble(true);
+//				event.preventDefault();
+//			}
+//			super.onBrowserEvent(event);
+//		}
 	}
 	class DayLabel extends NavButton implements ClickHandler {
 		int row;
@@ -169,7 +171,10 @@ public class Calendar extends ComplexPanel implements HasCloseHandlers<Calendar>
 			for(int j=7; j > 0; j--) {
 				TableCellElement cell = row.insertCell(-1);
 				DayLabel cellLabel = new DayLabel(rowNum,j);
-				cellLabel.addMouseListener(hoverStyleHandler);
+				cellLabel.addMouseDownHandler(hoverStyleHandler);
+				cellLabel.addMouseUpHandler(hoverStyleHandler);
+				cellLabel.addMouseOverHandler(hoverStyleHandler);
+				cellLabel.addMouseOutHandler(hoverStyleHandler);
 				add(cellLabel, cell);
 				days.add(cellLabel);
 			}
@@ -180,12 +185,14 @@ public class Calendar extends ComplexPanel implements HasCloseHandlers<Calendar>
 	private Label title;
 	public void cellClicked(DayLabel cellLabel, ClickEvent click) {
 		//GWT.log("Calendar cell clicked - "+cellLabel.col+","+cellLabel.row+" date "+cellLabel.getDate(), null);
+		// If they clicked a new date, fire a change event.  Otherwise,
+		// it's a double-click so close the pop-up.
 		if(setDate(cellLabel.getDate())) {
 			DomEvent.fireNativeEvent(Document.get().createChangeEvent(), this);
 		} else if(closable) {
 			CloseEvent.fire(this, this);
 		}
-		handlerManager.fireEvent(click);
+		fireEvent(click);
 	}
 
 	private void createDayNameRow() {
@@ -357,6 +364,12 @@ public class Calendar extends ComplexPanel implements HasCloseHandlers<Calendar>
 		return new Date(year-1900, month-1, dayOfMonth);
 	}
 
+	/**
+	 * Set the date given.
+	 * 
+	 * Returns true if the date passed in differs from the date
+	 * already set.
+	 */
 	@SuppressWarnings("deprecation")
 	public boolean setDate(Date selectedDate) {
 		if(selectedDate == null)
@@ -381,7 +394,7 @@ public class Calendar extends ComplexPanel implements HasCloseHandlers<Calendar>
 		int thisYear = today.getYear()+1900;
 		int thisMonth = today.getMonth();
 		int thisDay = today.getDate();
-		setVisible(table, false);
+		//setVisible(table, false);
 		try {
 			if(year < minYear) {
 				year = minYear;
@@ -442,7 +455,7 @@ public class Calendar extends ComplexPanel implements HasCloseHandlers<Calendar>
 		} catch(Exception e) {
 			Log.error("Error updating calendar for year="+thisYear+" month="+thisMonth+" day="+thisDay+": "+e, e);
 		} finally {
-			setVisible(table, true);
+			//setVisible(table, true);
 		}
 	}
 
@@ -455,15 +468,15 @@ public class Calendar extends ComplexPanel implements HasCloseHandlers<Calendar>
 	}
 
 	public HandlerRegistration addCloseHandler(CloseHandler<Calendar> handler) {
-		return handlerManager.addHandler(CloseEvent.getType(), handler);
+		return addHandler(handler, CloseEvent.getType());
 	}
 
 	public HandlerRegistration addChangeHandler(ChangeHandler handler) {
-		return handlerManager.addHandler(ChangeEvent.getType(), handler);
+		return addHandler(handler, ChangeEvent.getType());
 	}
 
 	public HandlerRegistration addClickHandler(ClickHandler handler) {
-		return handlerManager.addHandler(ClickEvent.getType(), handler);
+		return addHandler(handler, ClickEvent.getType());
 	}
 
 	@SuppressWarnings("deprecation")
