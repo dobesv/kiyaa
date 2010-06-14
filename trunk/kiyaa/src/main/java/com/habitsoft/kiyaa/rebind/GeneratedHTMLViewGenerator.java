@@ -55,6 +55,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.SourcesChangeEvents;
 import com.google.gwt.user.client.ui.SourcesClickEvents;
 import com.google.gwt.user.client.ui.SourcesFocusEvents;
+import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
 import com.habitsoft.kiyaa.metamodel.Action;
 import com.habitsoft.kiyaa.metamodel.Value;
@@ -1500,6 +1501,14 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				// Automatically propagate some properties to the getViewWidget()
 				if(attributeAccessors == null && key.matches("visible|width|height|title") && type.isAssignableTo(getType(View.class.getName()))) 
 					attributeAccessors = findAccessors(baseExpr, "viewWidget."+key, true, false);
+				if(key.equals("class")) {
+					if(type.isAssignableTo(getType(View.class.getName())))
+						attributeAccessors = findAccessors(baseExpr, "viewWidget.styleName", false, false);
+					else if(type.isAssignableTo(getType(UIObject.class.getName())))
+						attributeAccessors = findAccessors(baseExpr, "styleName", false, false);
+					else
+						logger.log(TreeLogger.WARN, "Found attribute 'class' on something that isn't a View or Widget.");
+				}
 				boolean readOnly = false;
 				boolean constant = false;
 				boolean earlyLoad = false;
@@ -1513,7 +1522,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				}
 				String valueExpr;
 				ActionInfo action;
-				if ("class".equals(key)) {
+				if ("class".equals(key) && pathAccessors == null) {
                     generateSetClass(type, name, value);
                 } else if ("style".equals(key)) {
                     generateSetStyle(type, name, key, value);
