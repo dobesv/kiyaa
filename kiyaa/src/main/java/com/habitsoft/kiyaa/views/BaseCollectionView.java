@@ -257,7 +257,7 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 		// If a load is in-progress, wait for it to finish before starting a new load,
 		// otherwise when the RPC calls come back they'll be working on the wrong state.
 		if(!loadingCallback.isDone()) {
-			Log.info("BaseCollectionView.load(): already loading, delaying load until current load is complete.");
+			//Log.info("BaseCollectionView.load(): already loading, delaying load until current load is complete.");
 			loadingCallback.addCallback(new AsyncCallbackDirectProxy<Void>(callback) {
 				@Override
 				public void onSuccess(Void result) {
