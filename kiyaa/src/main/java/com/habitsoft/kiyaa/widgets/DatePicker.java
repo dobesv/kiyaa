@@ -238,7 +238,7 @@ public class DatePicker extends FlowPanel implements SourcesChangeEvents, Source
 		
 	}
 	
-	private void reformatDate() {
+	protected void reformatDate() {
 		textbox.setText(getDateString());
 	}
 
@@ -278,6 +278,12 @@ public class DatePicker extends FlowPanel implements SourcesChangeEvents, Source
 		}
 	}
 
+	public void setDate(int year, int month, int dayOfMonth) {
+		setYear(year);
+		setMonth(month);
+		setDayOfMonth(dayOfMonth);
+		reformatDate();
+	}
 	public void addClickListener(ClickListener listener) {
 		textbox.addClickListener(listener);
 		calendarIcon.addClickListener(listener);
