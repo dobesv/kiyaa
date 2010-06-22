@@ -20,6 +20,7 @@ import com.google.gwt.user.client.ui.TableListener;
 import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.client.ui.HTMLTable.Cell;
+import com.google.gwt.user.client.ui.HTMLTable.RowFormatter;
 import com.habitsoft.kiyaa.metamodel.Action;
 import com.habitsoft.kiyaa.metamodel.Value;
 import com.habitsoft.kiyaa.util.AsyncCallbackDirectProxy;
@@ -58,18 +59,14 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
      */
     public interface RowStyleHandler<T> {
         /**
-         * Modify the row style and return the updated style.
-         * 
-         * Note that the string returned by this method will overwrite the existing style of the row,
-         * including ones added earlier. To avoid this, concatenate the style to be added to the end of
-         * the oldStyles and return it. To remove a style, you can use RegEx.
-         * 
+         * Modify the row style update its style.
+
          * @param row the row index of the row in question
          * @param model the model object of the row in question
-         * @param oldStyle the current style of the row in question in a space seperated list
+         * @param rowFormatter the formatter of the current row
          * @return
          */
-        public String getNewStyles(int row, T model, String oldStyle);
+        public void modifyStyle(int row, T model, RowFormatter rowFormatter);
     }
     
     /**
@@ -469,9 +466,7 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
     }
     private void maybeAssignStyle(int row, HTMLTableRowPanel rowPanel, T model) {
         if(rowStyleHandler != null) {
-		    String newStyle = rowStyleHandler.getNewStyles(row, model, rowPanel.getStyleName());
-		    if(newStyle != null)
-		        rowPanel.setStyleName(newStyle);
+        	rowStyleHandler.modifyStyle(row, model, table.getRowFormatter());
 		}
     }
 	
