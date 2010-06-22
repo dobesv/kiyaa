@@ -51,8 +51,25 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
         }
     };
 	
+    /**
+     * RowStyleHandler is used to adjust the style of a row
+     *
+     * @param <T> the class name of the model for the row in question
+     */
     public interface RowStyleHandler<T> {
-        public String getStyle(int row, T model);
+        /**
+         * Modify the row style and return the updated style.
+         * 
+         * Note that the string returned by this method will overwrite the existing style of the row,
+         * including ones added earlier. To avoid this, concatenate the style to be added to the end of
+         * the oldStyles and return it. To remove a style, you can use RegEx.
+         * 
+         * @param row the row index of the row in question
+         * @param model the model object of the row in question
+         * @param oldStyle the current style of the row in question in a space seperated list
+         * @return
+         */
+        public String getNewStyles(int row, T model, String oldStyle);
     }
     
     /**
@@ -452,9 +469,9 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
     }
     private void maybeAssignStyle(int row, HTMLTableRowPanel rowPanel, T model) {
         if(rowStyleHandler != null) {
-		    String style = rowStyleHandler.getStyle(row, model);
-		    if(style != null)
-		        rowPanel.setStylePrimaryName(style);
+		    String newStyle = rowStyleHandler.getNewStyles(row, model, rowPanel.getStyleName());
+		    if(newStyle != null)
+		        rowPanel.setStyleName(newStyle);
 		}
     }
 	
