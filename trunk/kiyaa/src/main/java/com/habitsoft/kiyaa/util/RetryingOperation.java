@@ -7,7 +7,7 @@ public abstract class RetryingOperation<T> extends AsyncCallbackDirectProxy<T> {
     final RetryController controller;
     int retriesSoFar=0;
     
-    protected RetryingOperation(AsyncCallback delegate, RetryController controller) {
+    protected RetryingOperation(AsyncCallback<T> delegate, RetryController controller) {
         super(delegate);
         this.controller = controller;
     }
