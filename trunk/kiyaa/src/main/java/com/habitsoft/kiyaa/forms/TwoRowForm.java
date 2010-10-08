@@ -180,7 +180,7 @@ public class TwoRowForm extends ComplexPanel implements View {
 		return this;
 	}
 
-	public void load(AsyncCallback callback) {
+	public void load(AsyncCallback<Void> callback) {
 		AsyncCallbackGroup group = new AsyncCallbackGroup();
         for (Field field : fields) {
 			field.load(group.<Void>member());
@@ -188,7 +188,7 @@ public class TwoRowForm extends ComplexPanel implements View {
 		group.ready(callback);
 	}
 
-	public void save(AsyncCallback callback) {
+	public void save(AsyncCallback<Void> callback) {
 		AsyncCallbackGroup group = new AsyncCallbackGroup();
         for (Field field : fields) {
 			field.save(group.<Void>member());

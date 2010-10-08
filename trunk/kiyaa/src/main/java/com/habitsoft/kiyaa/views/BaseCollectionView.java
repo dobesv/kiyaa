@@ -34,7 +34,7 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 	protected ArrayList<T> items = new ArrayList<T>();
 	protected ArrayList<T> unfilteredItems = null;
 	protected int[] itemIndexesAfterFiltering;
-	protected ModelCollection collection;
+	protected ModelCollection<T> collection;
 	protected Object loadedCollectionId;
 	//protected ScrollAutoLoader scrollAutoLoader;
 	protected int increment = 0;
@@ -44,7 +44,7 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 	protected boolean selectable = false;
 	protected boolean clickable = false;
 	T[] models;
-	ModelFilter filter;
+	ModelFilter<T> filter;
 	ClickListenerCollection clickListeners;
 	ChangeListenerCollection changeListeners;
 	protected HoverStyleHandler.Group hoverGroup = new HoverStyleHandler.Group();
@@ -127,7 +127,7 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 	}
 	protected abstract void setItem(int i, T object, AsyncCallbackGroup group);
 	
-	public ModelCollection getCollection() {
+	public ModelCollection<T> getCollection() {
 		return collection;
 	}
 
@@ -135,7 +135,7 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 	 * Change the collection being displayed by this list.  The callback
 	 * is invoked when loading is complete.
 	 */
-	public void setCollection(ModelCollection collection, AsyncCallback callback) {
+	public void setCollection(ModelCollection<T> collection, AsyncCallback<Void> callback) {
 		if(collection != this.collection) {
 	        this.models = null;
 	        this.collection = collection;
@@ -439,11 +439,11 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 		return done;
 	}
 
-	public static AsyncCallback hideDuringUpdate(AsyncCallback callback, final Widget widget) {
+	public static <T> AsyncCallback<T> hideDuringUpdate(AsyncCallback<T> callback, final Widget widget) {
 		DOM.setStyleAttribute(widget.getElement(), "visibility", "hidden");
-		callback = new AsyncCallbackDirectProxy(callback) {
+		callback = new AsyncCallbackDirectProxy<T>(callback) {
 			@Override
-			public void onSuccess(Object result) {
+			public void onSuccess(T result) {
 				DOM.setStyleAttribute(widget.getElement(), "visibility", "visible");
 				super.onSuccess(result);
 			}
@@ -552,7 +552,7 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 		selectRow(newIndex-startOffset);
 	}
 
-	private void applyFilter(ModelFilter modelFilter, AsyncCallback callback) {
+	private void applyFilter(ModelFilter<T> modelFilter, AsyncCallback<Void> callback) {
 		ArrayList<T> allItems = unfilteredItems;
 		if(allItems == null) {
 			allItems = new ArrayList<T>();
@@ -660,7 +660,7 @@ public abstract class BaseCollectionView<T> extends FlowPanel implements View, L
 	        return (totalItems+increment-1)/increment;
 	}
 
-	public ModelFilter getFilter() {
+	public ModelFilter<T> getFilter() {
 		return filter;
 	}
 

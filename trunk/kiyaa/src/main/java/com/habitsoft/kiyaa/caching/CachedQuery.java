@@ -115,7 +115,7 @@ public class CachedQuery<V> {
 	 * When calling a method which saves or creates a new object,
 	 * use "saver" to store the async result into this cache entry.
 	 */
-	public AsyncCallback saver(AsyncCallback<V> callback) {
+	public AsyncCallback<V> saver(AsyncCallback<V> callback) {
 		fetchInProgress = new AsyncCallbackShared<V>(callback) {
 			@Override
 			public void onFailure(Throwable caught) {

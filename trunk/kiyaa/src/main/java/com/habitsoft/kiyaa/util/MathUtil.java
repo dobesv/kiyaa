@@ -1,5 +1,8 @@
 package com.habitsoft.kiyaa.util;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 public class MathUtil {
 
     /**
@@ -34,6 +37,17 @@ public class MathUtil {
      */
     public static long roundToFixedPoint(double val, int decimalPlaces) {
     	return round(pow10(val, decimalPlaces));
+    }
+    
+    /**
+     * Round a BigDecimal to its long value, remove all decimals using ROUND_HALF_UP
+     * Note the BigDecimal amounts used in our system is scaled to the same as the long values, so we wont need to know the decimal place we need here.
+     * 
+     * @param val
+     * @return
+     */
+    public static long roundBigDecimalToLong(BigDecimal val) {
+    	return val.setScale(0, RoundingMode.HALF_UP).longValue();
     }
 
     /**

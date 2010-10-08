@@ -15,7 +15,7 @@ public class LocalizedParserWithDateJs extends ClientLocalizedParser {
         } catch(DateParseException e) {
         }
         try {
-            // Fall back on DAteJs to parse everything else
+            // Fall back on DateJs to parse everything else
             return DateJs.parse(dateString).toDate();
         } catch (DateParseFailedException e) {
             throw new DateParseException(e);

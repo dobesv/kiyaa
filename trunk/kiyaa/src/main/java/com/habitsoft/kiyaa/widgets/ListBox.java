@@ -215,8 +215,8 @@ public class ListBox extends com.google.gwt.user.client.ui.ListBox {
 					final String value = getValue();
 					if(actions.containsKey(value)) {
 						Action action = (Action)actions.get(value);
-						action.perform(new AsyncCallback() {
-							public void onSuccess(Object result) {
+						action.perform(new AsyncCallback<Void>() {
+							public void onSuccess(Void result) {
 							}
 							public void onFailure(Throwable caught) {
 								GWT.log("Action "+value+" failed: "+caught, caught);

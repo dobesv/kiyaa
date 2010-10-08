@@ -42,8 +42,8 @@ public class CustomPopup<T> implements PopupListener {
     private ChangeListenerCollection changeListeners = new ChangeListenerCollection();
     protected boolean optional = true;
     private T[] models;
-    private Value modelsValue;
-    private ArrayList<ViewFactory> columns = new ArrayList<ViewFactory>();
+    private Value<T[]> modelsValue;
+    private ArrayList<ViewFactory<ModelView<T>>> columns = new ArrayList<ViewFactory<ModelView<T>>>();
     private View emptyContent;
     protected boolean selectable = true;
     protected boolean clickable = false;
@@ -142,24 +142,24 @@ public class CustomPopup<T> implements PopupListener {
         showPopup(callback, event.getClientX()+Window.getScrollLeft(), event.getClientY()+Window.getScrollTop());
     }
     
-    protected ViewFactory getDefaultViewFactory() {
-        return new NameViewFactory<T>(ToStringNameValueAdapter.getInstance());
+    protected ViewFactory<ModelView<T>> getDefaultViewFactory() {
+        return new NameViewFactory<T>(ToStringNameValueAdapter.<T>getInstance());
     }
     
     protected void createTableView(AsyncCallback<Void> callback) {
     	if(columns.isEmpty()) {
-    		ListView list = new ListView();
+    		ListView<T> list = new ListView<T>();
     		list.setViewFactory(getDefaultViewFactory());
     		list.setEmptyContent(emptyContent);
     		//table.addColumn(new NameViewFactory<T>(nameValueAdapter));
     		table = list;
     	} else if(columns.size() == 1) {
-    		ListView list = new ListView();
+    		ListView<T> list = new ListView<T>();
     		list.setViewFactory(columns.get(0));
     		list.setEmptyContent(emptyContent);
     		table = list;
     	} else {
-    		TableView t = new TableView();
+    		TableView<T> t = new TableView<T>();
     		for(ViewFactory column: columns) {
     			t.addColumn(column);
     		}
@@ -282,7 +282,7 @@ public class CustomPopup<T> implements PopupListener {
     }
 
     @Name("action")
-    public void addAction(@Name("label") String label, @Name("action") Action action, @Name("test") Value test) {
+    public void addAction(@Name("label") String label, @Name("action") Action action, @Name("test") Value<Boolean> test) {
     	addAction(label, action, test, true);
     }
 
@@ -293,7 +293,7 @@ public class CustomPopup<T> implements PopupListener {
      * @param action
      * @param test If non-null, the action will only show when the value is true
      */
-    public Anchor addAction(@Name("label") final String label, @Name("action") final Action action, @Name("test") final Value test, @Name("hideOnClick") final boolean hideOnClick) {
+    public Anchor addAction(@Name("label") final String label, @Name("action") final Action action, @Name("test") final Value<Boolean> test, @Name("hideOnClick") final boolean hideOnClick) {
     	final Anchor widget = new Anchor();
     	widget.setText(label);
     	widget.setStyleName("action");
@@ -359,11 +359,11 @@ public class CustomPopup<T> implements PopupListener {
     				applyFilter(true);
     				callback.onSuccess(null);
     			}
-    		}, new Value() {
-    			public void getValue(AsyncCallback callback) {
+    		}, new Value<Boolean>() {
+    			public void getValue(AsyncCallback<Boolean> callback) {
     				callback.onSuccess(applyDefaultFilter);
     			}
-    			public void setValue(Object newValue, AsyncCallback callback) {
+    			public void setValue(Boolean newValue, AsyncCallback<Void> callback) {
     				applyDefaultFilter = ((Boolean)newValue).booleanValue();
                     applyFilter(true);
     				callback.onSuccess(null);
@@ -383,11 +383,11 @@ public class CustomPopup<T> implements PopupListener {
     				applyFilter(true);
     				callback.onSuccess(null);
     			}
-    		}, new Value() {
-    			public void getValue(AsyncCallback callback) {
+    		}, new Value<Boolean>() {
+    			public void getValue(AsyncCallback<Boolean> callback) {
     				callback.onSuccess(!applyDefaultFilter);
     			}
-    			public void setValue(Object newValue, AsyncCallback callback) {
+    			public void setValue(Boolean newValue, AsyncCallback<Void> callback) {
     				applyDefaultFilter = !((Boolean)newValue).booleanValue();
     				applyFilter(true);
     				callback.onSuccess(null);
@@ -397,12 +397,12 @@ public class CustomPopup<T> implements PopupListener {
     }
 
     @Name("column")
-    public void addColumn(ViewFactory viewFactory) {
+    public void addColumn(ViewFactory<ModelView<T>> viewFactory) {
         if(viewFactory == null) throw new NullPointerException("viewFactory");
     	columns.add(viewFactory);
     	if(table != null) {
-    		if(table instanceof TableView)
-    			((TableView)table).addColumn(viewFactory);
+    		if(table instanceof TableView<?>)
+    			((TableView<T>)table).addColumn(viewFactory);
     		else
     			createTableView(AsyncCallbackFactory.<Void>defaultNewInstance());
     	}
@@ -432,11 +432,11 @@ public class CustomPopup<T> implements PopupListener {
     	filterOperation.schedule(250);
     }
 
-    public ModelFilter getDefaultFilter() {
+    public ModelFilter<T> getDefaultFilter() {
     	return defaultFilter;
     }
 
-    public void setDefaultFilter(ModelFilter defaultFilter) {
+    public void setDefaultFilter(ModelFilter<T> defaultFilter) {
     	this.defaultFilter = defaultFilter;
     }
 
@@ -530,7 +530,7 @@ public class CustomPopup<T> implements PopupListener {
         this.popupShowing = popupShowing;
     }
 
-    public void setModels(Value models) {
+    public void setModels(Value<T[]> models) {
         modelsValue = models;
     }
 

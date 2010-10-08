@@ -13,7 +13,7 @@ import com.habitsoft.kiyaa.util.AsyncCallbackWithTimeout;
 public class NoWaitView implements View {
 
 	View view;
-	AsyncCallbackShared loadInProgress;
+	AsyncCallbackShared<Void> loadInProgress;
 	
 	public void clearFields() {
 		view.clearFields();
@@ -23,11 +23,11 @@ public class NoWaitView implements View {
 		return view.getViewWidget();
 	}
 
-	public void load(AsyncCallback callback) {
+	public void load(AsyncCallback<Void> callback) {
 		callback.onSuccess(null);
-		loadInProgress = new AsyncCallbackShared(AsyncCallbackFactory.defaultNewInstance()) {
+		loadInProgress = new AsyncCallbackShared<Void>(AsyncCallbackFactory.<Void>defaultNewInstance()) {
 			@Override
-			public void onSuccess(Object result) {
+			public void onSuccess(Void result) {
 				loadInProgress = null;
 				super.onSuccess(result);
 			}
@@ -37,14 +37,14 @@ public class NoWaitView implements View {
 				super.onFailure(caught);
 			}
 		};
-		view.load(new AsyncCallbackWithTimeout(loadInProgress, view));
+		view.load(new AsyncCallbackWithTimeout<Void>(loadInProgress, view));
 	}
 
-	public void save(final AsyncCallback callback) {
+	public void save(final AsyncCallback<Void> callback) {
 		if(loadInProgress != null) {
-			loadInProgress.addCallback(new AsyncCallback() {
+			loadInProgress.addCallback(new AsyncCallback<Void>() {
 			
-				public void onSuccess(Object result) {
+				public void onSuccess(Void result) {
 					view.save(callback);
 				}
 			
