@@ -53,7 +53,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 		}
  </code>
   */
-public class AsyncCallbackGroup {
+public class AsyncCallbackGroup implements AsyncCallbackExtensions {
 	
 	int pending = 0;
 	Throwable error;
@@ -92,6 +92,9 @@ public class AsyncCallbackGroup {
 		pending--;
 		if(ready && pending == 0) {
 			done();
+		} else {
+			// Let our delegates know that we are still active, no need to time out
+			resetTimeout(null);
 		}
 	}
 
@@ -119,6 +122,9 @@ public class AsyncCallbackGroup {
 					done();
 				}
 			});
+		} else {
+			// Let our delegate timeouts know that we're still "alive"
+			resetTimeout(null);
 		}
 	}
     /** 
@@ -182,6 +188,12 @@ public class AsyncCallbackGroup {
 	 */
 	public boolean isPending() {
 		return pending > 0;
+	}
+
+	public void resetTimeout(Integer expectedTimeNeeded) {
+		// TODO Should we really let just one group member set the timeout or should we be doing something smarter here to keep the timeouts rolling? 
+		if(callback instanceof AsyncCallbackExtensions)
+			((AsyncCallbackExtensions)callback).resetTimeout(expectedTimeNeeded);
 	}
 	
 }
