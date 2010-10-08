@@ -11,7 +11,7 @@ import com.google.gwt.user.client.ui.Widget;
 public class ComplexHTMLPanel extends ComplexPanel {
     private static int sUid;
 
-    protected HashMap elementsById;
+    protected HashMap<String,Element> elementsById;
 
     /**
      * A helper method for creating unique IDs for elements within dynamically- generated HTML. This
@@ -68,13 +68,13 @@ public class ComplexHTMLPanel extends ComplexPanel {
      * @param html
      */
     public void setTemplate(String html) {
-        elementsById = new HashMap();
+        elementsById = new HashMap<String, Element>();
         DOM.setInnerHTML(getElement(), html);
         process(getElement());
     }
 
     public void setDomTemplate(Element element) {
-        elementsById = new HashMap();
+        elementsById = new HashMap<String, Element>();
         while(getElement().hasChildNodes()) {
         	getElement().removeChild(getElement().getLastChild());
         }
@@ -149,11 +149,11 @@ public class ComplexHTMLPanel extends ComplexPanel {
         return (Element) elementsById.get(id);
     }
 
-    public HashMap getElementsById() {
+    public HashMap<String, Element> getElementsById() {
         return elementsById;
     }
 
-    public void setElementsById(HashMap elementsById) {
+    public void setElementsById(HashMap<String, Element> elementsById) {
         this.elementsById = elementsById;
     }
 }
