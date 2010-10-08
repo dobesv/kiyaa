@@ -37,11 +37,11 @@ public class ButtonView implements View, ClickListener {
 		return button;
 	}
 
-	public void load(AsyncCallback completionCallback) {
+	public void load(AsyncCallback<Void> completionCallback) {
 		completionCallback.onSuccess(null);
 	}
 
-	public void save(AsyncCallback callback) {
+	public void save(AsyncCallback<Void> callback) {
 		callback.onSuccess(null);
 	}
 
@@ -56,8 +56,8 @@ public class ButtonView implements View, ClickListener {
 		}
 	}
 	public void onClick(Widget sender) {
-		action.perform(new AsyncCallback() {
-			public void onSuccess(Object result) {
+		action.perform(new AsyncCallback<Void>() {
+			public void onSuccess(Void result) {
 			}
 			public void onFailure(Throwable caught) {
 				GWT.log("Action failed", caught);

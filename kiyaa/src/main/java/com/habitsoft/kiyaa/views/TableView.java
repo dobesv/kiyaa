@@ -33,8 +33,8 @@ import com.habitsoft.kiyaa.widgets.HTMLTableRowPanel;
 public class TableView<T> extends BaseCollectionView<T> implements SourcesTableEvents, Focusable {
 
 	final FlexTable table = new FlexTable();
-	ArrayList<Series> series = new ArrayList();
-	ArrayList<HTMLTableRowPanel> rowPanels = new ArrayList();
+	ArrayList<Series> series = new ArrayList<Series>();
+	ArrayList<HTMLTableRowPanel> rowPanels = new ArrayList<HTMLTableRowPanel>();
 	Element headings;
 	View navigation;
     View bottomNavigation;
@@ -42,7 +42,7 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 	View footer;
 	private Element borderMiddle;
     private T contextMenuTarget;
-    CustomPopup contextMenu;
+    CustomPopup<Object> contextMenu;
     RowStyleHandler<T> rowStyleHandler;
     boolean horizontal;
     
@@ -75,13 +75,13 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
      */
 	class Series {
 		int position;
-		ViewFactory viewFactory;
+		ViewFactory<ModelView<T>> viewFactory;
 		String styleName;
-		Value test;
+		Value<Boolean> test;
 		boolean visible;
 		private ArrayList<ModelView<T>> views; // One per row
 		
-		public Series(ViewFactory viewFactory, String styleName, Value test, boolean visible, int position) {
+		public Series(ViewFactory<ModelView<T>> viewFactory, String styleName, Value<Boolean> test, boolean visible, int position) {
 			super();
 			this.position = position;
 			if(viewFactory == null) throw new NullPointerException("viewFactory");
@@ -91,10 +91,10 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 			this.visible = visible;
 			this.views = new ArrayList<ModelView<T>>();
 		}
-		public ViewFactory getViewFactory() {
+		public ViewFactory<ModelView<T>> getViewFactory() {
 			return viewFactory;
 		}
-		public void setViewFactory(ViewFactory viewFactory) {
+		public void setViewFactory(ViewFactory<ModelView<T>> viewFactory) {
 			this.viewFactory = viewFactory;
 		}
 		public String getStyleName() {
@@ -103,10 +103,10 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 		public void setStyleName(String styleClass) {
 			this.styleName = styleClass;
 		}
-		public Value getTest() {
+		public Value<Boolean> getTest() {
 			return test;
 		}
-		public void setTest(Value test) {
+		public void setTest(Value<Boolean> test) {
 			this.test = test;
 		}
 		public boolean isVisible() {
@@ -170,13 +170,13 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 			}
 		}
 		private void loadViews(AsyncCallbackGroup group) {
-			for(ModelView view: views) {
+			for(ModelView<T> view: views) {
 				view.load(group.<Void>member());
 			}
 		}
 		public void save(AsyncCallbackGroup group) {
 			if(visible) {
-    			for(ModelView view: views) {
+    			for(ModelView<T> view: views) {
     				view.save(group.<Void>member());
     			}
 			}
@@ -187,8 +187,8 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 		ArrayList<ModelView<T>> getViews() {
 			return views;
 		}
-		public ModelView addView() {
-			ModelView view = (ModelView)viewFactory.createView();
+		public ModelView<T> addView() {
+			ModelView<T> view = viewFactory.createView();
 			views.add(view);
 			return view;
 		}
@@ -210,13 +210,13 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 		}
 		public void load(int row, AsyncCallbackGroup group) {
 			if(visible) {
-				ModelView view = views.get(row);
+				ModelView<T> view = views.get(row);
 				view.load(group.<Void>member());
 			}
 		}
 		public void save(int row, AsyncCallbackGroup group) {
 			if(visible) {
-				ModelView view = views.get(row);
+				ModelView<T> view = views.get(row);
 				view.save(group.<Void>member());
 			}
 		}
@@ -224,8 +224,8 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 		    return getPosition() == series.size()-1;
 		}
 		
-		void addItem(int index, Object model, AsyncCallback callback) {
-			ModelView view = addView();			
+		void addItem(int index, T model, AsyncCallback<Void> callback) {
+			ModelView<T> view = addView();			
 			view.setModel(model, callback);
 			int row = horizontal?position:index;
 			int col = horizontal?index+1:position;
@@ -270,6 +270,8 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 			@Override
 			public void onClick(ClickEvent event) {
 				Cell eventCell = table.getCellForEvent(event);
+				if(eventCell == null)
+					return;
 				int row = eventCell.getRowIndex();
 				Element currentEventTarget = event.getNativeEvent().getCurrentEventTarget().cast();
 				for(Element elt = event.getNativeEvent().getEventTarget().cast(); 
@@ -316,41 +318,41 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 		table.setCellSpacing(spacing);
 	}
 
-	public void addColumn(ViewFactory viewFactory, String heading, String styleName) {
+	public void addColumn(ViewFactory<ModelView<T>> viewFactory, String heading, String styleName) {
 		addColumn(viewFactory, heading, styleName, null);
 	}
-	public void addColumn(ViewFactory viewFactory, String heading, Value test) {
+	public void addColumn(ViewFactory<ModelView<T>> viewFactory, String heading, Value<Boolean> test) {
 		addColumn(viewFactory, heading, null, test);
 	}
-	public void addColumn(ViewFactory viewFactory, String heading, String styleName, Value test) {
+	public void addColumn(ViewFactory<ModelView<T>> viewFactory, String heading, String styleName, Value<Boolean> test) {
 		series.add(new Series(viewFactory, styleName, test, true, series.size()));
 		if(heading != null)
 			addHeadingText(heading, styleName);
 	}
-	public void addColumn(ViewFactory viewFactory, String heading) {
+	public void addColumn(ViewFactory<ModelView<T>> viewFactory, String heading) {
 		addColumn(viewFactory);
 		addHeadingText(heading, null);
 	}
-	public void addColumn(ViewFactory viewFactory) {
+	public void addColumn(ViewFactory<ModelView<T>> viewFactory) {
 		addColumn(viewFactory, null, null, null);
 	}
 	public int getColumnCount() {
 		if(table.getRowCount() == 0) return 0;
 		return table.getCellCount(0);
 	}
-    public void addRow(ViewFactory viewFactory, String label) {
+    public void addRow(ViewFactory<ModelView<T>> viewFactory, String label) {
         addRow(viewFactory, null, label, null);
     }
-    public void addRow(ViewFactory viewFactory, String styleName, String label) {
+    public void addRow(ViewFactory<ModelView<T>> viewFactory, String styleName, String label) {
         addRow(viewFactory, styleName, label, null);
     }
-    public void addRow(ViewFactory viewFactory, Value test) {
+    public void addRow(ViewFactory<ModelView<T>> viewFactory, Value<Boolean> test) {
         addRow(viewFactory, null, test);
     }
-    public void addRow(ViewFactory viewFactory, String styleName, Value test) {
+    public void addRow(ViewFactory<ModelView<T>> viewFactory, String styleName, Value<Boolean> test) {
         addRow(viewFactory, styleName, null, test);
     }
-    public void addRow(ViewFactory viewFactory, String styleName, String label, Value test) {
+    public void addRow(ViewFactory<ModelView<T>> viewFactory, String styleName, String label, Value<Boolean> test) {
         horizontal=true;
         final int row = series.size();
         final HTMLTableRowPanel rowPanel = addRowPanel(row, null, styleName==null?"ui-table-row":"ui-table-row "+styleName);
@@ -362,7 +364,7 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
         }
         series.add(new Series(viewFactory, styleName, test, true, row));
     }
-    public void addRow(ViewFactory viewFactory) {
+    public void addRow(ViewFactory<ModelView<T>> viewFactory) {
         addRow(viewFactory, null, null, null);
     }
     
@@ -432,13 +434,13 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 	protected void showItem(int row, T model, AsyncCallbackGroup group) {
 	    if(horizontal) {
             for (Series column : series) {
-                column.addItem(row, model, group.member("Table col "+row+" row "+column.position));
+                column.addItem(row, model, group.<Void>member("Table col "+row+" row "+column.position));
             }
 	    } else {
     		HTMLTableRowPanel rowPanel = addRowPanel(row, model, "ui-table-row");
     
     		for (Series column : series) {
-    			column.addItem(row, model, group.member("Table col "+column.position+" row "+row));
+    			column.addItem(row, model, group.<Void>member("Table col "+column.position+" row "+row));
     		}
     				
     		if(model == selectedModel) {
@@ -476,7 +478,7 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
             event.cancelBubble(true);
             event.preventDefault();
             contextMenuTarget = items.get(row);
-            contextMenu.load(AsyncCallbackFactory.defaultNewInstance());
+            contextMenu.load(AsyncCallbackFactory.<Void>defaultNewInstance());
             contextMenu.showPopup(null);
 	    }
     }
@@ -617,7 +619,7 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 		if(getRowCount() == 0)
 			return;
 		for(Series c : series) {
-			ModelView firstView = c.getViews().get(0);
+			ModelView<T> firstView = c.getViews().get(0);
 			if(firstView instanceof Focusable) {
 				((Focusable)firstView).focus();
 				return;
@@ -747,15 +749,15 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
 	
     private void createContextMenu() {
         if(contextMenu == null) {
-            contextMenu = new CustomPopup();
+            contextMenu = new CustomPopup<Object>();
             contextMenu.setSelectable(false); // not selectable by default
         }
     }
-    public Anchor addContextMenuAction(String label, Action action, Value test, boolean hideOnClick) {
+    public Anchor addContextMenuAction(String label, Action action, Value<Boolean> test, boolean hideOnClick) {
         createContextMenu();
         return contextMenu.addAction(label, action, test, hideOnClick);
     }
-    public void addContextMenuAction(String label, Action action, Value test) {
+    public void addContextMenuAction(String label, Action action, Value<Boolean> test) {
         createContextMenu();
         contextMenu.addAction(label, action, test);
     }
@@ -763,11 +765,11 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
         createContextMenu();
         contextMenu.addAction(label, action);
     }
-    public void setContextMenuModels(Value models) {
+    public void setContextMenuModels(Value<Object[]> models) {
         createContextMenu();
         contextMenu.setModels(models);
     }
-    public void addContextMenuColumn(ViewFactory viewFactory) {
+    public void addContextMenuColumn(ViewFactory<ModelView<Object>> viewFactory) {
         createContextMenu();
         contextMenu.addColumn(viewFactory);
     }

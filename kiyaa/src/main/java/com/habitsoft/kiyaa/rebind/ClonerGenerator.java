@@ -1,9 +1,12 @@
 package com.habitsoft.kiyaa.rebind;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+
+import org.apache.naming.java.javaURLContextFactory;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -63,7 +66,9 @@ public class ClonerGenerator extends BaseGenerator {
 				sw.println("public "+className+" clone("+className+" src) {");
 				sw.indent();
 				sw.println("if(src == null) return null;");
+			
 				sw.println(className+" dest = new "+className+"();");
+				
 				sw.println("clone(src, dest);");
 				sw.println("return dest;");
 				sw.outdent();
@@ -167,7 +172,8 @@ public class ClonerGenerator extends BaseGenerator {
 			// Don't copy primitive types, or immutable types
 			if(type.isPrimitive() != null 
 				|| type.isEnum() != null 
-				|| type.getQualifiedSourceName().startsWith("java.lang."))
+				|| type.getQualifiedSourceName().startsWith("java.lang.")
+				|| type.getQualifiedSourceName().startsWith("java.math."))
 				return copyValue;
 			
 			// Deep copy arrays

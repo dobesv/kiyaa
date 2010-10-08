@@ -3,6 +3,7 @@
  */
 package com.habitsoft.kiyaa.util;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 
@@ -49,7 +50,8 @@ public interface LocalizedParser {
 	 *         it as you please (you might use it to adjust the currency selection in the UI automatically).
 	 */
 	public long parseCurrency(String currencyString, String currencyCode) throws CurrencyParseException, DifferentCurrencyCodeProvided;
-	
+	public BigDecimal parseCurrencyBigDecimal(String currencyString, String currencyCode) throws CurrencyParseException, DifferentCurrencyCodeProvided;
+
 	/**
 	 * Convert a fixed-point currency amount into a string.  If international is true, the
 	 * international currency symbol will be used; e.g. $5.25 becomes C$5.25 or US$5.25
@@ -66,7 +68,10 @@ public interface LocalizedParser {
 	 * @param showGroupings TODO
 	 */
 	public String formatCurrency(long amount, String currencyCode, boolean international, boolean showGroupings);
-	
+	public String formatCurrency(BigDecimal amount, String currency, boolean international, boolean showGroupings);
+
+	//public String formatCurrencyBigDecimal(BigDecimal amount, String currency,boolean international, boolean showGroupings);
+
 	/**
 	 * Parse a decimal number, supporting the locale-specific convention for decimal and
 	 * thousand seperators.
@@ -99,4 +104,5 @@ public interface LocalizedParser {
 	 * it it is unnecessary.
 	 */
 	public String formatPercentage(double value);
+
 }

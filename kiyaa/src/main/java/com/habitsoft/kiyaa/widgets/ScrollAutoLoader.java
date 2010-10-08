@@ -38,7 +38,7 @@ public class ScrollAutoLoader extends Widget {
 	 * returned the maximum results requested), Boolean.FALSE otherwise.
 	 */
 	public interface Loader {
-		public void load(int offset, int limit, AsyncCallback completionCallback);
+		public void load(int offset, int limit, AsyncCallback<Boolean> completionCallback);
 	}
 
 	/**
@@ -70,13 +70,13 @@ public class ScrollAutoLoader extends Widget {
 	 * 
 	 * The callback is invoked when the initial load is complete. The callback may be null.
 	 */
-	public void fill(final AsyncCallback fillCompleteCallback) {
+	public void fill(final AsyncCallback<Void> fillCompleteCallback) {
 		refreshing = true;
 		final int offsetHeight = getOffsetHeight();
 		if (maxHeight == 0 || offsetHeight <= maxHeight) {
 			lastLoadTime = System.currentTimeMillis();
-			loader.load(offset, limit, new AsyncCallback() {
-				public void onSuccess(Object maybeMore) {
+			loader.load(offset, limit, new AsyncCallback<Boolean>() {
+				public void onSuccess(Boolean maybeMore) {
 					if (fillCompleteCallback != null)
 						fillCompleteCallback.onSuccess(null);
 					if (((Boolean) maybeMore).booleanValue()) {
@@ -141,8 +141,8 @@ public class ScrollAutoLoader extends Widget {
 					+ getOffsetHeight() + " getScrollPosition() = " + getScrollPosition()
 					+ " getOffsetHeight() = " + getOffsetHeight(), null);
 				lastLoadTime = System.currentTimeMillis();
-				loader.load(offset, limit, new AsyncCallback() {
-					public void onSuccess(Object arg0) {
+				loader.load(offset, limit, new AsyncCallback<Boolean>() {
+					public void onSuccess(Boolean arg0) {
 						offset += limit;
 						refreshing = false;
 					}
@@ -159,7 +159,7 @@ public class ScrollAutoLoader extends Widget {
 		}
 	}
 
-	public void waitUntilReady(final AsyncCallback callback) {
+	public void waitUntilReady(final AsyncCallback<Void> callback) {
 		if (refreshing) {
 			new Timer() {
 				@Override

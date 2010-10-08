@@ -37,12 +37,12 @@ public class VerticalForm extends ComplexPanel implements View {
 	
 	class Column {
 		View view;
-		Value test;
+		Value<Boolean> test;
 		Element label;
 		Element value;
 		boolean visible;
 		
-		public Column(View view, Value test, Element label, Element value, boolean visible) {
+		public Column(View view, Value<Boolean> test, Element label, Element value, boolean visible) {
 			super();
 			this.view = view;
 			this.test = test;
@@ -56,10 +56,10 @@ public class VerticalForm extends ComplexPanel implements View {
 		public void setView(View view) {
 			this.view = view;
 		}
-		public Value getTest() {
+		public Value<Boolean> getTest() {
 			return test;
 		}
-		public void setTest(Value test) {
+		public void setTest(Value<Boolean> test) {
 			this.test = test;
 		}
 		public void hide() {
@@ -138,7 +138,7 @@ public class VerticalForm extends ComplexPanel implements View {
 		addField(label, null, field, null, true);
 	}
 	
-	public void addField(String label, View field, Value test) {
+	public void addField(String label, View field, Value<Boolean> test) {
 		addField(label, null, field, test, true);
 	}
 	
@@ -146,11 +146,11 @@ public class VerticalForm extends ComplexPanel implements View {
 		addField(label, styleName, field, null, true);
 	}
 
-	public void addField(String label, String styleName, View field, Value test) {
+	public void addField(String label, String styleName, View field, Value<Boolean> test) {
 		addField(label, styleName, field, test, true);
 	}
 
-	public void addField(String label, String styleName, View field, Value test, boolean addBreak) {
+	public void addField(String label, String styleName, View field, Value<Boolean> test, boolean addBreak) {
 		
 		Element labelTH = DOM.createTH();
 		if(styleName != null) setStylePrimaryName(labelTH, styleName);
@@ -187,7 +187,7 @@ public class VerticalForm extends ComplexPanel implements View {
 		return this;
 	}
 
-	public void load(AsyncCallback callback) {
+	public void load(AsyncCallback<Void> callback) {
 		AsyncCallbackGroup group = new AsyncCallbackGroup();
         for (Column col : columns) {
 			col.load(group.<Void>member());
@@ -195,7 +195,7 @@ public class VerticalForm extends ComplexPanel implements View {
 		group.ready(callback);
 	}
 
-	public void save(AsyncCallback callback) {
+	public void save(AsyncCallback<Void> callback) {
 		AsyncCallbackGroup group = new AsyncCallbackGroup();
 		for (Column col : columns) {
             col.save(group.<Void>member());

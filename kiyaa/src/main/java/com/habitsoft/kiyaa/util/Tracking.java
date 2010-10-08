@@ -14,11 +14,18 @@ public class Tracking {
     }-*/;
 	
 	static native void googleTrackPageView(String href) /*-{
-		$wnd.pageTracker._trackPageview(href);
+		$wnd._gaq.push(["_trackPageview", href]);
 	}-*/;
 	
+	static native void googleTrackEvent(String category, String action, String optionalLabel, String optionalValue) /*-{
+		$wnd._gaq.push(['_trackEvent', category, action, optionalLabel, optionalValue]);
+	}-*/;
+
+	static native void googleTrackEvent(String category, String action) /*-{
+		$wnd._gaq.push(['_trackEvent', category, action]);
+	}-*/;
 	static native boolean haveGoogle() /*-{
-		return $wnd.pageTracker != undefined;
+		return $wnd._gaq != undefined;
 	}-*/;
 
 	static native boolean haveClicky() /*-{
@@ -28,8 +35,7 @@ public class Tracking {
 	public static void logNavigation(String token) {
 		if(googleAnalytics) {
 			try {
-                String href = "/app/_"+token;
-				googleTrackPageView(href);
+				googleTrackEvent("Nav", token, null, null);
 			} catch(Throwable t) {
 				// oh well ...
 			}
@@ -65,7 +71,7 @@ public class Tracking {
 	public static void logError(String message) {
 		if(googleAnalytics) {
 			try {
-				googleTrackPageView("/app/_error/"+message);
+				googleTrackEvent("Error", message, null, null);
 			} catch(Throwable t) {
 				// oh well ...
 			}
@@ -102,6 +108,7 @@ public class Tracking {
 	public static void logConversion(String event) {
 		if(googleAnalytics) {
 			try {
+				// Although using an event would be nice, you can't set event as a goal
 		        String href = "/app/_conversion/"+event;
 				googleTrackPageView(href);
 			} catch(Throwable t) {

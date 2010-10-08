@@ -22,7 +22,7 @@ import com.habitsoft.kiyaa.util.AsyncCallbackDirectProxy;
  */
 public class WhenView extends SimplePanel implements View, TakesElementName {
 
-	ViewFactory viewFactory;
+	ViewFactory<?> viewFactory;
 	boolean shouldShow;
 	View view;
 	String placeholderHtml;
@@ -41,11 +41,11 @@ public class WhenView extends SimplePanel implements View, TakesElementName {
 	/**
 	 * Used to construct view, when the test is set to true.
 	 */
-	public ViewFactory getViewFactory() {
+	public ViewFactory<?> getViewFactory() {
 		return viewFactory;
 	}
 
-	public void setViewFactory(ViewFactory viewFactory) {
+	public void setViewFactory(ViewFactory<?> viewFactory) {
 		this.viewFactory = viewFactory;
 	}
 	
@@ -96,7 +96,7 @@ public class WhenView extends SimplePanel implements View, TakesElementName {
 	 * 
 	 * If the view exists, calls load() on it.
 	 */
-	public void load(AsyncCallback callback) {
+	public void load(AsyncCallback<Void> callback) {
 		if(shouldShow) {
 			if(view == null) {
 				if(viewFactory == null) {
@@ -106,9 +106,9 @@ public class WhenView extends SimplePanel implements View, TakesElementName {
 				createView();
 			}
 			if(wait) {
-    			view.load(new AsyncCallbackDirectProxy(callback) {
+    			view.load(new AsyncCallbackDirectProxy<Void>(callback) {
     				@Override
-    				public void onSuccess(Object result) {
+    				public void onSuccess(Void result) {
     				    if(shouldShow)
     				        showView();
     					super.onSuccess(result);
@@ -150,7 +150,7 @@ public class WhenView extends SimplePanel implements View, TakesElementName {
 	/**
 	 * Proxy the save() call to the view, if it's current existing.
 	 */
-	public void save(AsyncCallback callback) {
+	public void save(AsyncCallback<Void> callback) {
 		if(view != null) {
 			view.save(callback);
 		} else {

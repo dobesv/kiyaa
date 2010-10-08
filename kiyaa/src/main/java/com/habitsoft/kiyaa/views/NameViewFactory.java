@@ -8,7 +8,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.habitsoft.kiyaa.util.NameValueAdapter;
 import com.habitsoft.kiyaa.widgets.Label;
 
-final class NameViewFactory<T> implements ViewFactory<ModelView> {
+final class NameViewFactory<T> implements ViewFactory<ModelView<T>> {
 	public class ModelNameView implements ModelView<T> {
 		T model;
 		Label label = new Label();
@@ -47,7 +47,7 @@ final class NameViewFactory<T> implements ViewFactory<ModelView> {
 		this.nameValueAdapter = nameValueAdapter;
 	}
 
-	public ModelView createView() {
+	public ModelNameView createView() {
 		return new ModelNameView();
 	}
 }

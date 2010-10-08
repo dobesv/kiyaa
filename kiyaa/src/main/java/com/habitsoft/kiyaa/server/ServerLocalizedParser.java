@@ -1,5 +1,6 @@
 package com.habitsoft.kiyaa.server;
 
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -34,7 +35,16 @@ public class ServerLocalizedParser implements LocalizedParser {
         return numberFormat.format(MathUtil.fixedPointToDouble(amount, decimalPlaces));
     }
 
-    protected int getDecimalPlaces(final Currency currency) {
+    @Override
+	public String formatCurrency(BigDecimal amount, String currencyCode, boolean international, boolean showGroupings) {
+    	final Currency currency = Currency.getInstance(currencyCode);
+        final int decimalPlaces = getDecimalPlaces(currency);
+        final NumberFormat numberFormat = getNumberFormat(currency, international, showGroupings);
+        numberFormat.setMaximumFractionDigits(amount.scale());
+        return numberFormat.format(amount.scaleByPowerOfTen(-decimalPlaces).doubleValue());
+	}
+
+	protected int getDecimalPlaces(final Currency currency) {
         return currency.getDefaultFractionDigits();
     }
 
@@ -85,6 +95,21 @@ public class ServerLocalizedParser implements LocalizedParser {
             throw new CurrencyParseException(e);
         }
         return MathUtil.roundToFixedPoint(val, getDecimalPlaces(currency));
+    }
+    
+    @Override
+    public BigDecimal parseCurrencyBigDecimal(String currencyString, String currencyCode) throws CurrencyParseException, DifferentCurrencyCodeProvided {
+        final NumberFormat numberFormat = NumberFormat.getCurrencyInstance(locale);
+        final Currency currency = Currency.getInstance(currencyCode);
+        numberFormat.setCurrency(currency);
+        BigDecimal val = BigDecimal.ZERO;
+        try {
+            // TODO Missing support for DifferentCurrencyCodeProvided and for internation currency formats
+            val = BigDecimal.valueOf(numberFormat.parse(currencyString).doubleValue());
+        } catch (ParseException e) {
+            throw new CurrencyParseException(e);
+        }
+        return val;
     }
 
     @Override

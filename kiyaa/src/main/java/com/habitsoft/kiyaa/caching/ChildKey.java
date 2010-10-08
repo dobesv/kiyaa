@@ -8,6 +8,8 @@ public class ChildKey<T extends Comparable<T>> implements Comparable<ChildKey<T>
     final Long parentId;
     final T childKey;
     public ChildKey(Long parentId, T childKey) {
+    	if(parentId == null) throw new NullPointerException();
+    	if(childKey == null) throw new NullPointerException();
         this.parentId = parentId;
         this.childKey = childKey;
     }

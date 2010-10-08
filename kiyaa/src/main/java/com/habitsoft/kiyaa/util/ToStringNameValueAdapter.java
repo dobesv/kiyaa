@@ -1,19 +1,20 @@
 package com.habitsoft.kiyaa.util;
 
 
-public class ToStringNameValueAdapter implements NameValueAdapter {
+public class ToStringNameValueAdapter<T> implements NameValueAdapter<T> {
 
-	public String getName(Object model) {
+	public String getName(T model) {
 		if(model == null) return "";
 		return String.valueOf(model);
 	}
 
-	public String getValue(Object model) {
+	public String getValue(T model) {
 		return String.valueOf(model);
 	}
 
-	static NameValueAdapter instance = new ToStringNameValueAdapter();
-	public static NameValueAdapter getInstance() {
-		return instance;
+	static NameValueAdapter<Object> instance = new ToStringNameValueAdapter<Object>();
+	@SuppressWarnings("unchecked")
+	public static <T> NameValueAdapter<T> getInstance() {
+		return (NameValueAdapter<T>) instance;
 	}
 }

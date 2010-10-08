@@ -9,7 +9,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 public class GlobalCachedQuery<V> extends CachedQuery<V> {
-    private static final ArrayList<GlobalCachedQuery> globalQueries = new ArrayList();
+    private static final ArrayList<GlobalCachedQuery<?>> globalQueries = new ArrayList<GlobalCachedQuery<?>>();
     private static final Timer timer = new Timer() {
         @Override
         public void run() {
@@ -24,30 +24,30 @@ public class GlobalCachedQuery<V> extends CachedQuery<V> {
 		globalQueries.add(this);
 	}
 	
-	public AsyncCallback flusher(AsyncCallback callback) {
-		if(callback instanceof CachedQueryFlushCallbackProxy) {
-			((CachedQueryFlushCallbackProxy)callback).addGlobalQuery(this);
+	public <T> AsyncCallback<T> flusher(AsyncCallback<T> callback) {
+		if(callback instanceof CachedQueryFlushCallbackProxy<?>) {
+			((CachedQueryFlushCallbackProxy<?>)callback).addGlobalQuery(this);
 			return callback;
 		} else {
-			return new CachedQueryFlushCallbackProxy(callback, this);
+			return new CachedQueryFlushCallbackProxy<T>(callback, this);
 		}
 		
 	}
 
     public static void flushAll() {
-        for(GlobalCachedQuery query : globalQueries) {
+        for(GlobalCachedQuery<?> query : globalQueries) {
             query.flush();
         }
     }
 
     public static void flushAllExpired() {
-        for(GlobalCachedQuery query : globalQueries) {
+        for(GlobalCachedQuery<?> query : globalQueries) {
             if(query.isExpired())
                 query.flush();
         }
     }
 
-    public static ArrayList<GlobalCachedQuery> getGlobalQueries() {
+    public static ArrayList<GlobalCachedQuery<?>> getGlobalQueries() {
         return globalQueries;
     }
 }

@@ -59,7 +59,7 @@ public interface Navigable {
 	 * @param completion Called back when the action is complete; ignored if the method returns false
 	 * @return True if a matching state was found, false otherwise
 	 */
-	public void gotoAction(String verb, Object target, com.google.gwt.user.client.rpc.AsyncCallback completion);
+	public void gotoAction(String verb, Object target, com.google.gwt.user.client.rpc.AsyncCallback<Void> completion);
 
 	/**
 	 * Search for an navigable which can perform the given action.

@@ -28,11 +28,11 @@ public class WidgetWrapperView implements View {
 		return widget;
 	}
 
-	public void load(AsyncCallback callback) {
+	public void load(AsyncCallback<Void> callback) {
 		callback.onSuccess(null);
 	}
 
-	public void save(AsyncCallback callback) {
+	public void save(AsyncCallback<Void> callback) {
 		callback.onSuccess(null);
 	}
 }
