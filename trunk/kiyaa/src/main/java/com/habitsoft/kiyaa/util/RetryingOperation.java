@@ -19,6 +19,9 @@ public abstract class RetryingOperation<T> extends AsyncCallbackDirectProxy<T> {
     @Override
     public final void onFailure(final Throwable caught) {
         if(controller.shouldRetry(caught, retriesSoFar)) {
+        	// Request more time from our caller who might have a timeout
+        	resetTimeout(null); 
+        	
             final int delay = controller.getRetryDelay(caught, retriesSoFar);
             retriesSoFar++;
             if(delay > 0) {

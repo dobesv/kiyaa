@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
-public class AsyncCallbackShared<T> implements AsyncCallback<T> {
+public class AsyncCallbackShared<T> implements AsyncCallback<T>, AsyncCallbackExtensions {
 
 	ArrayList<AsyncCallback<T>> callbacks = new ArrayList<AsyncCallback<T>>();
 	boolean done = false;
@@ -111,4 +111,13 @@ public class AsyncCallbackShared<T> implements AsyncCallback<T> {
 		return caught;
 	}
 
+	@Override
+	public void resetTimeout(Integer expectedTimeNeeded) {
+		if(!done) {
+			for(AsyncCallback<T> callback : callbacks) {
+				if(callback instanceof AsyncCallbackExtensions)
+					((AsyncCallbackExtensions) callback).resetTimeout(expectedTimeNeeded);
+			}
+		}
+	}
 }

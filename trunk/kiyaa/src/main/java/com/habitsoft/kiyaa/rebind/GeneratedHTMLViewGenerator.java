@@ -213,8 +213,9 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
         final boolean loadAfter;
         final String targetView;
 		final String origExpr;
+		final int timeout;
         
-        private ActionInfo(String origExpr, String action, boolean object, boolean async, String targetView, boolean saveBefore, boolean loadAfter) {
+        private ActionInfo(String origExpr, String action, boolean object, boolean async, String targetView, boolean saveBefore, boolean loadAfter, int timeout) {
         	this.origExpr = origExpr;
             this.action = action;
             this.object = object;
@@ -222,6 +223,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             this.saveBefore = saveBefore;
             this.loadAfter = loadAfter;
             this.targetView = targetView;
+            this.timeout = timeout;
         }
         
         /**
@@ -244,6 +246,9 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
         public boolean isloadAfter() {
             return loadAfter;
         }
+        public int getTimeout() {
+			return timeout;
+		}
         
         /**
          * @param callbackExpr AsyncCallback to return errors or success to
@@ -253,7 +258,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
         public String toString(String callbackExpr, boolean callbackOptional) {
             if(object || async || saveBefore) {
                 if(saveBefore || loadAfter) {
-                    return "ViewAction.performOnView("+(action==null?"null":toActionCtor())+", "+targetView+", "+saveBefore+", "+loadAfter+", "+callbackExpr+");";
+                    return "ViewAction.performOnView("+(action==null?"null":toActionCtor())+", "+targetView+", "+saveBefore+", "+loadAfter+(timeout>0?", "+timeout:"")+", "+callbackExpr+");";
                 } else if(action == null) {
                     return "";
                 } else {
@@ -278,13 +283,13 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 
         public String toViewAction() {
             if(saveBefore || loadAfter)
-                return "new ViewAction("+toActionCtor()+", "+targetView+", "+saveBefore+", "+loadAfter+")";
+                return "new ViewAction("+toActionCtor()+", "+targetView+", "+saveBefore+", "+loadAfter+(timeout>0?", "+timeout:"")+")";
             else
                 return toActionCtor();
         }
         private String toActionCtor() {
             String actionObj = object ? action
-                : async ? "new Action(\""+escape(origExpr)+"\") { public void perform(AsyncCallback callback) { "+action+" }}"
+                : async ? "new Action(\""+escape(origExpr)+"\") { public void perform(AsyncCallback callback) { "+(timeout>0?"if(callback instanceof AsyncCallbackExtensions) ((AsyncCallbackExtensions)callback).resetTimeout("+timeout+"); ":"")+action+" }}"
                 : "new Action(\""+escape(origExpr)+"\") { public void perform(AsyncCallback callback) { try { "+action+" callback.onSuccess(null); } catch(Throwable t) { callback.onFailure(t); }}}";
             return actionObj;
         }
@@ -2293,7 +2298,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             		path = path.substring(2, path.length()-1);
                     ExpressionInfo expr = findAccessors(path, true, false);
                     if(expr != null && expr.hasSynchronousGetter())
-                		return new ActionInfo(path, expr.getGetter(), true, true, targetView, saveBefore, loadAfter);
+                		return new ActionInfo(path, expr.getGetter(), true, true, targetView, saveBefore, loadAfter, 0);
                     logger.log(TreeLogger.ERROR, "Unable to resolve action variable at path "+path, null);
                     throw new UnableToCompleteException();
             	}
@@ -2312,18 +2317,20 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 String[] actionSeries = path.split("\\s*;\\s*");
                 if(actionSeries.length > 1) {
                 	ArrayList<String> actionList = new ArrayList<String>();
+                	int timeout=0;
                 	for (int i = 0; i < actionSeries.length; i++) {
                 		ActionInfo action = getAction(actionSeries[i], targetView, false, false);
+                		timeout += action.getTimeout();
                 		if(action != null && action.getAction() != null)
                 		    actionList.add(action.toActionCtor());
                 	}
                 	String ctor = "new ActionSeries("+StringUtils.join(actionList, ",\n\t\t\t")+")";
-                    return new ActionInfo(path, ctor, true, true, targetView, saveBefore, loadAfter);
+                    return new ActionInfo(path, ctor, true, true, targetView, saveBefore, loadAfter, timeout);
                 }
 
                 if("".equals(path) || "null".equals(path)) {
 	                //sw.println("final Action " + actionName + " = new ViewAction(null, "+rootView+", "+saveBefore+", "+loadAfter+");");
-                	return new ActionInfo(path, null, true, true, targetView, saveBefore, loadAfter);
+                	return new ActionInfo(path, null, true, true, targetView, saveBefore, loadAfter, 0);
                 }
                 
                 String[] args = null;
@@ -2354,9 +2361,9 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 		throw new UnableToCompleteException();
                 	}
                 	if(lvalue.asyncSetter == null && rvalue.asyncGetter == null) {
-                        return new ActionInfo(path, lvalue.copyStatement(rvalue), false, false, targetView, saveBefore, loadAfter);
+                        return new ActionInfo(path, lvalue.copyStatement(rvalue), false, false, targetView, saveBefore, loadAfter, 0);
                 	} else {
-                	    return new ActionInfo(path, lvalue.asyncCopyStatement(rvalue, "callback", false), false, true, targetView, saveBefore, loadAfter);
+                	    return new ActionInfo(path, lvalue.asyncCopyStatement(rvalue, "callback", false), false, true, targetView, saveBefore, loadAfter, 0);
                 	}
                 } else {
                     int objectPathEnd = preargs.lastIndexOf('.');
@@ -2458,15 +2465,17 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                     }
                     
                     final ActionMethod annotation = actionMethod.getAnnotation(ActionMethod.class);
+                    int timeout=0;
                     if(annotation != null) {
                         saveBefore = annotation.saveBefore();
                         loadAfter = annotation.loadAfter();
+                        timeout = annotation.timeout();
                     }
                     if (asyncMethod) {
                         return new ActionInfo(path, methodCall + "(" + joinWithCommas(0, args) + (args.length > 0 ? ", " : "")
-                            + "callback);", false, true, targetView, saveBefore, loadAfter);
+                            + "callback);", false, true, targetView, saveBefore, loadAfter, timeout);
                     } else {
-                        return new ActionInfo(path, methodCall + "(" + joinWithCommas(0, args) + ");", false, false, targetView, saveBefore, loadAfter);
+                        return new ActionInfo(path, methodCall + "(" + joinWithCommas(0, args) + ");", false, false, targetView, saveBefore, loadAfter, timeout);
                     }
                 }
             }

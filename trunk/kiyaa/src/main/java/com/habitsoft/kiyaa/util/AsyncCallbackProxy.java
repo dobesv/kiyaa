@@ -3,7 +3,7 @@ package com.habitsoft.kiyaa.util;
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
-public abstract class AsyncCallbackProxy<In,Out> implements AsyncCallback<In> {
+public abstract class AsyncCallbackProxy<In,Out> implements AsyncCallback<In>, AsyncCallbackExtensions {
 	private final AsyncCallback<Out> callback;
 	private final Object marker;
 	private boolean complete;
@@ -24,17 +24,18 @@ public abstract class AsyncCallbackProxy<In,Out> implements AsyncCallback<In> {
 	 * Default failure handler passes the failure onto the delegate.
 	 */
 	public void onFailure(Throwable caught) {
-	    completed();
 	    if(marker != null && (caught instanceof Error || caught instanceof RuntimeException)) try {
 	        Log.error("At "+marker.toString(), caught);
 	    } catch(Exception e) { }
+	    completed();
 		if(callback != null)
 			callback.onFailure(caught);
 	}
 
 	private void completed() {
 	    try {
-	        if(complete) Log.error("AsyncCallbackProxy called twice; at "+marker, new Error());
+	        if(complete)
+	        	Log.error("AsyncCallbackProxy called twice; marker = "+marker, new Error());
         } catch(Exception e) { }
         complete = true;
     }
@@ -84,9 +85,16 @@ public abstract class AsyncCallbackProxy<In,Out> implements AsyncCallback<In> {
 	 * called twice!
 	 */
 	public AsyncCallback<Out> takeCallback() {
+		resetTimeout(null); // Let our delegate chain know that we're still "active" one way or another
 		completed();
     	return callback;
     }
+	
+	@Override
+	public void resetTimeout(Integer expectedTimeNeeded) {
+		if(callback instanceof AsyncCallbackExtensions)
+			((AsyncCallbackExtensions) callback).resetTimeout(null);
+	}
 	
 	/**
 	 * Wrap a callback in a proxy that ignores the incoming value and returns void.  Useful

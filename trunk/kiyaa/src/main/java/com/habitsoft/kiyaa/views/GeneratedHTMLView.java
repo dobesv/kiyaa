@@ -28,6 +28,7 @@ public abstract interface GeneratedHTMLView extends View {
     public @interface ActionMethod {
         boolean saveBefore() default true;
         boolean loadAfter() default true;
+        int timeout() default 0;
     }
     
 

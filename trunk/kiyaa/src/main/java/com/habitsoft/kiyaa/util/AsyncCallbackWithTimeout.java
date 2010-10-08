@@ -15,10 +15,11 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
  *
  */
 public class AsyncCallbackWithTimeout<T> extends AsyncCallbackDirectProxy<T> {
-	public static final int DEFAULT_TIMEOUT = 120000;
+	public static final int DEFAULT_TIMEOUT = 10000;
 	boolean complete;
 	Timer timer;
 	Error timeout;
+	
 	public AsyncCallbackWithTimeout(AsyncCallback<T> callback, int timeoutMillis, Object marker) {
 		super(callback, marker);
 		timer = new Timer() {
@@ -57,6 +58,11 @@ public class AsyncCallbackWithTimeout<T> extends AsyncCallbackDirectProxy<T> {
 		}
 	}
 
+	@Override
+	public void resetTimeout(Integer expectedTimeNeeded) {
+		if(!complete)
+			timer.schedule(expectedTimeNeeded==null?DEFAULT_TIMEOUT:expectedTimeNeeded.intValue());
+	}
 	public static class TimeOutException extends Error {
 		private static final long serialVersionUID = 1L;
 		public TimeOutException() {
