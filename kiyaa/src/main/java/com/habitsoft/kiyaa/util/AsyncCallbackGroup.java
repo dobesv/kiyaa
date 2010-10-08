@@ -58,8 +58,8 @@ public class AsyncCallbackGroup {
 	int pending = 0;
 	Throwable error;
 	boolean ready = false;
-	AsyncCallbackGroupMember sharedMember;
-	AsyncCallback callback;
+	AsyncCallbackGroupMember<?> sharedMember;
+	AsyncCallback<?> callback;
 	Object callbackParam;
 	Object marker;
     private boolean complete;
@@ -152,10 +152,10 @@ public class AsyncCallbackGroup {
 	public <T> AsyncCallback<T> member() {
 		if(sharedMember == null) {
 			sharedMember = new AsyncCallbackGroupMember<T>(this);
-			return sharedMember;
+			return (AsyncCallback<T>) sharedMember;
 		} else {
 			addPending();
-			return sharedMember;
+			return (AsyncCallback<T>) sharedMember;
 		}
 	}
 	
@@ -169,7 +169,7 @@ public class AsyncCallbackGroup {
 			if(error != null) {
 				callback.onFailure((Throwable)error);
 			} else try {
-				callback.onSuccess(callbackParam);
+				((AsyncCallback<Object>)callback).onSuccess(callbackParam);
 			} catch(Throwable t) {
 				callback.onFailure(t);
 			}

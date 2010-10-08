@@ -1,8 +1,10 @@
 package com.habitsoft.kiyaa.metamodel;
 
 import java.util.ArrayList;
+import java.util.Collection;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.habitsoft.kiyaa.util.AsyncCallbackDirectProxy;
 
 /**
  * This Action subclass runs a series of other actions.  If any of them fails,
@@ -10,7 +12,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
  */
 public class ActionSeries extends Action {
 
-	public ArrayList actions = new ArrayList();
+	public ArrayList<Action> actions = new ArrayList<Action>();
 	
 	public ActionSeries() {
 	}
@@ -26,20 +28,68 @@ public class ActionSeries extends Action {
 		actions.add(action);
 	}
 	
-	public void performImpl(int i) {
+	/**
+	 * Class to run each action in order.  If any action fails, returns
+	 * failure to the original callback.
+	 * 
+	 * Note that if actions are added to the list while this is running,
+	 * it WILL pick them up and also run them.
+	 */
+	class Executor extends AsyncCallbackDirectProxy<Void> {
+		int pos=0;
+		
+		public Executor(AsyncCallback<Void> delegate) {
+			super(delegate);
+		}
+
+		@Override
+		public void onSuccess(Void result) {
+			performNext();
+		}
+		
+		public void performNext() {
+			if(pos < actions.size()) {
+				Action nextAction = actions.get(pos);
+				pos++;
+				nextAction.performDeferred(this);
+			} else {
+				returnSuccess(null);
+			}
+		}
 		
 	}
-	
 	@Override
-	public void perform(AsyncCallback callback) {
+	public void perform(AsyncCallback<Void> callback) {
 		if(actions.size() == 0) {
 			callback.onSuccess(null);
 			return;
 		}
-		for(int i=actions.size()-1; i > 0; i--) {
-			Action action = (Action) actions.get(i);
-			callback = action.performOnSuccess(callback);
-		}
-		((Action)actions.get(0)).perform(callback);
+		new Executor(callback).performNext();
 	}
+
+	public boolean addAll(Collection<? extends Action> c) {
+		return actions.addAll(c);
+	}
+
+	public void clear() {
+		actions.clear();
+	}
+
+	public boolean contains(Object o) {
+		return actions.contains(o);
+	}
+
+	public Action get(int index) {
+		return actions.get(index);
+	}
+
+	public boolean isEmpty() {
+		return actions.isEmpty();
+	}
+
+	public int size() {
+		return actions.size();
+	}
+	
+
 }

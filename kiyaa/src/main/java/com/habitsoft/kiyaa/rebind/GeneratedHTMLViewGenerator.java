@@ -212,8 +212,10 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
         final boolean saveBefore;
         final boolean loadAfter;
         final String targetView;
+		final String origExpr;
         
-        private ActionInfo(String action, boolean object, boolean async, String targetView, boolean saveBefore, boolean loadAfter) {
+        private ActionInfo(String origExpr, String action, boolean object, boolean async, String targetView, boolean saveBefore, boolean loadAfter) {
+        	this.origExpr = origExpr;
             this.action = action;
             this.object = object;
             this.async = async;
@@ -282,8 +284,8 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
         }
         private String toActionCtor() {
             String actionObj = object ? action
-                : async ? "new Action() { public void perform(AsyncCallback callback) { "+action+" }}"
-                : "new Action() { public void perform(AsyncCallback callback) { try { "+action+" callback.onSuccess(null); } catch(Throwable t) { callback.onFailure(t); }}}";
+                : async ? "new Action(\""+escape(origExpr)+"\") { public void perform(AsyncCallback callback) { "+action+" }}"
+                : "new Action(\""+escape(origExpr)+"\") { public void perform(AsyncCallback callback) { try { "+action+" callback.onSuccess(null); } catch(Throwable t) { callback.onFailure(t); }}}";
             return actionObj;
         }
     }
@@ -374,11 +376,16 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
         protected Element rootElement;
         private JClassType rootClassType;
         int subviewCounter;
+		protected JClassType valueClassType;
+		protected JClassType actionClassType;
         
         @Override
 		public void init() throws UnableToCompleteException {
             super.init();
 
+            this.valueClassType = getType(Value.class.getName()).getErasedType();
+			this.actionClassType = getType(Action.class.getName());
+            
             // Caching these classes seem to occasionally create some weirdness; we need to
             // re-load the tag libraries each time there is a new compile operation, or we
             // should change it so we can "refresh" them without reparsing the xml files.
@@ -1553,7 +1560,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				    logger.log(TreeLogger.ERROR, "Unable to find a setter for attribute '" + key + "' in "
 				                    + type + "; value is '" + value + "', getter is "+attributeAccessors.getter+" asyncGetter is "+attributeAccessors.asyncGetter, null);
 				    throw new UnableToCompleteException();
-				} else if (attributeAccessors.type.equals(getType(Action.class.getName()))
+				} else if (attributeAccessors.type.equals(actionClassType)
 					        && (pathAccessors == null || !pathAccessors.hasGetter()) 
 					        && (action = getAction(value, false)) != null) {
 					if(attributeAccessors.setter==null) {
@@ -1561,8 +1568,9 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 						throw new UnableToCompleteException();
 					}
                     sw.println(attributeAccessors.setter + "(" + action.toViewAction() + ");");
-				} else if (path != null &&
-					        attributeAccessors.type.equals(getType(Value.class.getName()))
+				} else if (path != null
+						&& attributeAccessors.type.isClassOrInterface() != null
+						&& valueClassType.equals(attributeAccessors.type.isClassOrInterface().getErasedType())
 					        && (valueExpr = getFieldValue(path)) != null) {
 					if(attributeAccessors.setter==null) {
 						logger.log(TreeLogger.ERROR, "Async setters not supported for Values yet.", null);
@@ -1572,7 +1580,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				} else if (pathAccessors != null && pathAccessors.hasGetter()) {
 				    generateAttributeLoadSave(type, attributeAccessors, pathAccessors, readOnly, constant, earlyLoad);
 				} else if (path != null && (valueExpr = getFieldValue(path)) != null) {
-					ExpressionInfo valueAccessors = findAccessors(new ExpressionInfo(valueExpr, getType(Value.class.getName()), true), "value", true, false);
+					ExpressionInfo valueAccessors = findAccessors(new ExpressionInfo(valueExpr, valueClassType, true), "value", true, false);
 					generateAttributeLoadSave(type, attributeAccessors, valueAccessors, readOnly, constant, earlyLoad);
 				} else if(isExpr) {
 					logger.log(TreeLogger.WARN, "Couldn't figure out how to set attribute "+key+" on "+type+"; couldn't find a getter for "+value, null);                    	
@@ -2135,12 +2143,12 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 					}
 					String valueExpr;
 					ActionInfo action;
-					if (parameter.getType().equals(getType(Action.class.getName()))
+					if (parameter.getType().equals(actionClassType)
 				        && (pathAccessors == null || !pathAccessors.hasGetter()) 
 				        && (action = getAction(value, true)) != null) {
 						paramString = action.toViewAction();
 					} else if (path != null
-							    && parameter.getType().equals(getType(Value.class.getName()))
+							    && valueClassType.equals(parameter.getType().isClassOrInterface().getErasedType())
 						        && (valueExpr = getFieldValue(path)) != null) {
 						paramString = valueExpr;
 					} else if (pathAccessors != null) {
@@ -2185,8 +2193,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 }
                 ExpressionInfo accessors = findAccessors(path, true, false);
                 if (accessors != null) {
-                    final JClassType valueClassType = getType(Value.class.getName());
-                	if(accessors.type.equals(valueClassType)) {
+                	if(accessors.type.isClassOrInterface() != null && valueClassType.equals(accessors.type.isClassOrInterface().getErasedType())) {
                 		if(!accessors.hasSynchronousGetter()) {
                 			logger.log(TreeLogger.ERROR, "Can't handle an async Value getter yet; for "+path, null);
                 			throw new UnableToCompleteException();
@@ -2286,7 +2293,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             		path = path.substring(2, path.length()-1);
                     ExpressionInfo expr = findAccessors(path, true, false);
                     if(expr != null && expr.hasSynchronousGetter())
-                		return new ActionInfo(expr.getGetter(), true, true, targetView, saveBefore, loadAfter);
+                		return new ActionInfo(path, expr.getGetter(), true, true, targetView, saveBefore, loadAfter);
                     logger.log(TreeLogger.ERROR, "Unable to resolve action variable at path "+path, null);
                     throw new UnableToCompleteException();
             	}
@@ -2311,12 +2318,12 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 		    actionList.add(action.toActionCtor());
                 	}
                 	String ctor = "new ActionSeries("+StringUtils.join(actionList, ",\n\t\t\t")+")";
-                    return new ActionInfo(ctor, true, true, targetView, saveBefore, loadAfter);
+                    return new ActionInfo(path, ctor, true, true, targetView, saveBefore, loadAfter);
                 }
 
                 if("".equals(path) || "null".equals(path)) {
 	                //sw.println("final Action " + actionName + " = new ViewAction(null, "+rootView+", "+saveBefore+", "+loadAfter+");");
-                	return new ActionInfo(null, true, true, targetView, saveBefore, loadAfter);
+                	return new ActionInfo(path, null, true, true, targetView, saveBefore, loadAfter);
                 }
                 
                 String[] args = null;
@@ -2347,9 +2354,9 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 		throw new UnableToCompleteException();
                 	}
                 	if(lvalue.asyncSetter == null && rvalue.asyncGetter == null) {
-                        return new ActionInfo(lvalue.copyStatement(rvalue), false, false, targetView, saveBefore, loadAfter);
+                        return new ActionInfo(path, lvalue.copyStatement(rvalue), false, false, targetView, saveBefore, loadAfter);
                 	} else {
-                	    return new ActionInfo(lvalue.asyncCopyStatement(rvalue, "callback", false), false, true, targetView, saveBefore, loadAfter);
+                	    return new ActionInfo(path, lvalue.asyncCopyStatement(rvalue, "callback", false), false, true, targetView, saveBefore, loadAfter);
                 	}
                 } else {
                     int objectPathEnd = preargs.lastIndexOf('.');
@@ -2456,10 +2463,10 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                         loadAfter = annotation.loadAfter();
                     }
                     if (asyncMethod) {
-                        return new ActionInfo(methodCall + "(" + joinWithCommas(0, args) + (args.length > 0 ? ", " : "")
+                        return new ActionInfo(path, methodCall + "(" + joinWithCommas(0, args) + (args.length > 0 ? ", " : "")
                             + "callback);", false, true, targetView, saveBefore, loadAfter);
                     } else {
-                        return new ActionInfo(methodCall + "(" + joinWithCommas(0, args) + ");", false, false, targetView, saveBefore, loadAfter);
+                        return new ActionInfo(path, methodCall + "(" + joinWithCommas(0, args) + ");", false, false, targetView, saveBefore, loadAfter);
                     }
                 }
             }
@@ -3435,6 +3442,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                     logger.log(TreeLogger.ERROR, "Not assignable in either direction: "+inType+" and "+classType+" for "+inExpr, null);
                 }
             } else if((arrayType = outType.isArray()) != null) {
+            	arrayType = (JArrayType) arrayType.getErasedType();
             	if(inType.equals(java_lang_String) && arrayType.getComponentType().equals(java_lang_String)) {
             		if(inExpr.startsWith("\"")) {
             			String[] strings = inExpr.substring(1, inExpr.length()-2).split("\\s*,?\\s*");
@@ -3447,14 +3455,16 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             		} else {
             			return inExpr+".split(\"\\\\s*,\\\\s*\")";
             		}
-            	} else if(inExpr.equals("null")) {
-            		attributeValueExpr = inExpr;
-            	} else if((inType.isArray() != null && inType.isArray().getComponentType().getQualifiedSourceName().equals("java.lang.Object")) 
-            		      || inType.getQualifiedSourceName().equals("java.lang.Object")) {
+            	} else if(inType.equals(java_lang_Object)) {
                     // Downcast
                     attributeValueExpr = "((" + arrayType.getComponentType().getErasedType().getQualifiedSourceName() + "[]) " + inExpr + ")";
-            	} else if(arrayType.getComponentType().getErasedType().equals(types.getJavaLangObject())) {
+            	} else if(inType.isArray() != null && (((JClassType)arrayType.getComponentType().getErasedType()).isAssignableFrom((JClassType)inType.isArray().getComponentType().getErasedType())) 
+            			|| inExpr.equals("null") 
+            			|| arrayType.getComponentType().getErasedType().equals(types.getJavaLangObject())) {
             		attributeValueExpr = inExpr;
+            	} else if((inType.isArray() != null && (((JClassType)arrayType.getComponentType().getErasedType()).isAssignableTo((JClassType)inType.isArray().getComponentType().getErasedType())))) {
+                    // Downcast
+                    attributeValueExpr = "((" + arrayType.getComponentType().getErasedType().getQualifiedSourceName() + "[]) " + inExpr + ")";
                 } else {
                 	logger.log(TreeLogger.ERROR, "Can't convert from "+inType+" to array type "+outType+" metaclass "+outType.getClass()+" erased type "+outType.getErasedType()+" element erased type "+arrayType.getComponentType().getErasedType(), null);
                 	return null;

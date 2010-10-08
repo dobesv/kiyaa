@@ -89,7 +89,7 @@ public abstract class AsyncCallbackProxy<In,Out> implements AsyncCallback<In> {
     }
 	
 	/**
-	 * Wrap a callback in a proxy that ignores the income value and returns void.  Useful
+	 * Wrap a callback in a proxy that ignores the incoming value and returns void.  Useful
 	 * if you are just interested in errors and not the actual result.
 	 */
 	public static <T> AsyncCallback<T> toVoid(AsyncCallback<Void> callback) {

@@ -64,4 +64,10 @@ public abstract class Action {
 	public void setLabel(String label) {
 		this.label = label;
 	}
+	
+	@Override
+	public String toString() {
+		if(label == null) return super.toString();
+		return "Action("+label+")";
+	}
 }
