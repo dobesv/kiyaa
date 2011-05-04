@@ -3,15 +3,15 @@ package com.habitsoft.kiyaa.views;
 import java.util.LinkedList;
 
 import com.allen_sauer.gwt.log.client.Log;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.rpc.impl.RemoteServiceProxy;
 import com.habitsoft.kiyaa.metamodel.Action;
-import com.habitsoft.kiyaa.util.AsyncCallbackDirectProxy;
 import com.habitsoft.kiyaa.util.AsyncCallbackExtensions;
 import com.habitsoft.kiyaa.util.AsyncCallbackProxy;
 import com.habitsoft.kiyaa.util.AsyncCallbackShared;
 import com.habitsoft.kiyaa.util.AsyncCallbackWithTimeout;
+import com.habitsoft.kiyaa.util.Stats;
 
 /**
  * Action which can load/save a view before/after being performed.
@@ -50,6 +50,21 @@ public class ViewAction extends Action {
 		performOnView(action, view, saveBefore, loadAfter, timeout, callback);
 	}
 
+	protected static final class ViewLoadingCallback<T> extends
+			AsyncCallbackProxy<T, Void> {
+		private final View view;
+
+		protected ViewLoadingCallback(AsyncCallback<Void> delegate, View view) {
+			super(delegate);
+			this.view = view;
+		}
+
+		@Override
+		public void onSuccess(T result) {
+		    // ViewSaveLoadManager.getInstance().load(view, callback);
+		    view.load(takeCallback());
+		}
+	}
 	static class SaveAction extends Action {
 		final View view;
 
@@ -63,13 +78,18 @@ public class ViewAction extends Action {
 			this.view = view;
 		}
 		
+		@Override
+		public String toString() {
+			return "Save "+view;
+		}
 	}
 	static class ViewActionExecutor {
 		public static final int ACTION_TIMEOUT = 2000; // If an individual action takes longer than this we'll run the next one "concurrently", if there is one
-		public static final int OVERALL_TIMEOUT=60000; // any list of actions on a view shouldn't take longer than this ...
+		public static final int OVERALL_TIMEOUT=120000; // any list of actions on a view shouldn't take longer than this ...
 		long overallTimeoutTime = System.currentTimeMillis() + OVERALL_TIMEOUT;
+		public final int sequence = ++Stats.nextSequence;
 		
-		class ActionQueueItem<T> implements AsyncCallback<T>, AsyncCallbackExtensions {
+		  class ActionQueueItem<T> implements AsyncCallback<T>, AsyncCallbackExtensions {
 			final Action action;
 			final boolean loadAfter;
 			final AsyncCallback<Void> callback;
@@ -87,6 +107,8 @@ public class ViewAction extends Action {
 			
 			@Override
 			public void onSuccess(T result) {
+				if(Stats.enabled())
+					Stats.sendTimingInfo(view.getClass().getName(), sequence, String.valueOf(action)+" success");
 				if(timedOut) {
 					Log.error("Callback timed out but onSuccess got called anyway.", new Exception());
 					return; // Already timed out
@@ -125,6 +147,8 @@ public class ViewAction extends Action {
 			 */
 			@Override
 			public void onFailure(Throwable caught) {
+				if(Stats.enabled())
+					Stats.sendTimingInfo(view.getClass().getName(), sequence, String.valueOf(action)+" failure");
 				if(timedOut) {
 					Log.error("Callback timed out but onFailure got called anyway.", caught);
 					return; // Already timed out
@@ -146,6 +170,11 @@ public class ViewAction extends Action {
 				setTimeout(expectedTimeNeeded == null ? ACTION_TIMEOUT : expectedTimeNeeded.intValue());
 				if(callback instanceof AsyncCallbackExtensions)
 					((AsyncCallbackExtensions) callback).resetTimeout(expectedTimeNeeded);
+			}
+			
+			@Override
+			public boolean isOkayToWaitForCurrentAction() {
+				return currentAction != this || !isCurrentExecutor();
 			}
 		}
 		final LinkedList<ActionQueueItem<Void>> actions = new LinkedList<ActionQueueItem<Void>>();
@@ -189,7 +218,7 @@ public class ViewAction extends Action {
 		 * @param saveBefore If true, save the view before running this action, if not already saved while running an earlier action
 		 * @param loadAfter If true, load the view after running this action and any subsequent ones on the same view
 		 * @param location Stack trace where the view action was enqueued
-		 * @param timeout TODO
+		 * @param timeout Minimum timeout to allow for this callback
 		 * @param callback Callback to invoke after the action has been run.  When loadAfter is true, the callback is invoked after the view is loaded
 		 * @return true if this is the first action added to this executor
 		 */
@@ -211,6 +240,8 @@ public class ViewAction extends Action {
 			
 			if(currentAction != null)
 				setTimeout(timeout);
+			else
+				updateTimeoutTime(timeout);
 		}
 		private void waitForLoad(AsyncCallback<Void> callback) {
 			if(waitingForLoad == null) waitingForLoad = new AsyncCallbackShared<Void>(callback);
@@ -225,14 +256,20 @@ public class ViewAction extends Action {
 				if(loadPending) {
 					loadPending = false;
 					setTimeout();
+					if(Stats.enabled())
+						Stats.sendTimingInfo(view.getClass().getName(), sequence, "Load "+String.valueOf(view)+" begin");
 					view.load(new AsyncCallback<Void>() {
 						@Override
 						public void onSuccess(Void result) {
+							if(Stats.enabled())
+								Stats.sendTimingInfo(view.getClass().getName(), sequence, "Load "+String.valueOf(view)+" success");
 							performNext();
 						}
 						
 						@Override
 						public void onFailure(Throwable caught) {
+							if(Stats.enabled())
+								Stats.sendTimingInfo(view.getClass().getName(), sequence, "Load "+String.valueOf(view)+" failure");
 							if(waitingForLoad != null) {
 								waitingForLoad.onFailure(caught);
 								waitingForLoad = null;
@@ -247,7 +284,7 @@ public class ViewAction extends Action {
 					}
 					
 					// Pass the torch onto the next set of actions
-					if(!actionExecutorQueue.isEmpty() && actionExecutorQueue.getFirst() == this) {
+					if(isCurrentExecutor()) {
 						finished = true;
 						
 						// Kill all the "slow" actions
@@ -268,6 +305,9 @@ public class ViewAction extends Action {
 				}
 			} else {
 				currentAction = actions.removeFirst();
+				if(Stats.enabled() && currentAction.action != null)
+					Stats.sendTimingInfo(view.getClass().getName(), sequence, String.valueOf(currentAction.action)+" begin");
+					
 				if(currentAction.action != null) {
 					setTimeout();
 					currentAction.action.performDeferred(currentAction);
@@ -277,14 +317,21 @@ public class ViewAction extends Action {
 				}
 			}
 		}
+		private boolean isCurrentExecutor() {
+			return !actionExecutorQueue.isEmpty() && actionExecutorQueue.getFirst() == this;
+		}
 		private void setTimeout() {
 			setTimeout(ACTION_TIMEOUT);
 		}
 		private void setTimeout(int minimum) {
+			int timeoutMillis = updateTimeoutTime(minimum);
+			this.timeout.schedule(timeoutMillis);
+		}
+		private int updateTimeoutTime(int minimum) {
 			if(minimum==0) minimum = ACTION_TIMEOUT;
 			int timeoutMillis = Math.max(minimum, actions.size()>0?minimum:(int)(overallTimeoutTime-System.currentTimeMillis()));
 			overallTimeoutTime = Math.max(System.currentTimeMillis()+timeoutMillis, overallTimeoutTime);
-			this.timeout.schedule(timeoutMillis);
+			return timeoutMillis;
 		}
 		
 		public int remaining() {
@@ -312,33 +359,55 @@ public class ViewAction extends Action {
 	 * Tell the view to save, then perform the action, then load.
 	 */
 	public static void performOnView(final Action action, final View view, boolean saveBefore, boolean loadAfter, Exception location, int timeout, AsyncCallback<Void> callback) {
-		ViewActionExecutor executor;
 		boolean onlyExecutor = actionExecutorQueue.isEmpty();
-		boolean newExecutor = onlyExecutor || actionExecutorQueue.getLast().getView() != view;
-		if(newExecutor) {
-			// Add new executor
-			actionExecutorQueue.add(executor = new ViewActionExecutor(view, timeout));
+		if(onlyExecutor || (callback instanceof AsyncCallbackExtensions && ((AsyncCallbackExtensions)callback).isOkayToWaitForCurrentAction())) {
+			ViewActionExecutor executor;
+			boolean newExecutor = onlyExecutor || actionExecutorQueue.getLast().getView() != view;
+			if(newExecutor) {
+				// Add new executor
+				actionExecutorQueue.add(executor = new ViewActionExecutor(view, timeout));
+			} else {
+				executor = actionExecutorQueue.getLast();
+			}
+			
+			executor.add(action, view, saveBefore, loadAfter, location, timeout, callback);
+			
+			//Log.info("ViewAction.performOnView("+action+", "+view+", save="+saveBefore+", load="+loadAfter+" callback="+callback+") actionExecutorQueue().size() == "+actionExecutorQueue.size()+" executor.remaining() == "+executor.remaining(), new Exception());
+			
+			// If this is a new executor and it is the first one in the queue then we need to start running its actions right away.
+			if(onlyExecutor)
+				executor.performNext();
 		} else {
-			executor = actionExecutorQueue.getLast();
+		
+			int sequence=0;
+			boolean statsAvailable = Stats.enabled();
+			if(statsAvailable)
+				sequence = ++Stats.nextSequence;
+			if(loadAfter) {
+				if(statsAvailable)
+					callback = Stats.callbackProxy(String.valueOf(view), sequence, "load: ", callback);
+				callback = loadViewOnSuccess(view, callback);
+			}
+			if(timeout > 0)
+				callback = new AsyncCallbackWithTimeout<Void>(callback, timeout, null);
+			if(statsAvailable)
+				callback = Stats.callbackProxy(String.valueOf(view), sequence, String.valueOf(action)+": ", callback);
+			if(saveBefore) {
+				if(action != null)
+					callback = action.performOnSuccess(callback);
+				if(statsAvailable)
+					callback = Stats.callbackProxy(String.valueOf(view), sequence, "save: ", callback);
+				view.save(callback);
+			} else if(action !=  null) {
+				action.perform(callback);
+			} else {
+				callback.onSuccess(null);
+			}
 		}
-		
-		executor.add(action, view, saveBefore, loadAfter, location, timeout, callback);
-		
-		//Log.info("ViewAction.performOnView("+action+", "+view+", save="+saveBefore+", load="+loadAfter+" callback="+callback+") actionQueue.size() == "+actionQueue.size()+" executor.remaining() == "+executor.remaining(), new Exception());
-		
-		// If this is a new executor and it is the first one in the queue then we need to start running its actions right away.
-		if(onlyExecutor)
-			executor.performNext();
 	}
 	
     public static <T> AsyncCallback<T> loadViewOnSuccess(final View view, AsyncCallback<Void> callback) {
-        return new AsyncCallbackProxy<T,Void>(callback) {
-        	@Override
-        	public void onSuccess(T result) {
-        	    // ViewSaveLoadManager.getInstance().load(view, callback);
-        	    view.load(takeCallback());
-        	}
-        };
+        return new ViewLoadingCallback<T>(callback, view);
     }
 	
 	/**

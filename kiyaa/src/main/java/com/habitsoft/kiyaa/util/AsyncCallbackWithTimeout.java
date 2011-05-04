@@ -15,10 +15,12 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
  *
  */
 public class AsyncCallbackWithTimeout<T> extends AsyncCallbackDirectProxy<T> {
-	public static final int DEFAULT_TIMEOUT = 10000;
+	public static final int DEFAULT_TIMEOUT = 120000;
 	boolean complete;
 	Timer timer;
 	Error timeout;
+	static int nextSequence=0;
+	final int sequence = ++nextSequence;
 	
 	public AsyncCallbackWithTimeout(AsyncCallback<T> callback, int timeoutMillis, Object marker) {
 		super(callback, marker);
@@ -37,6 +39,8 @@ public class AsyncCallbackWithTimeout<T> extends AsyncCallbackDirectProxy<T> {
 	@Override
 	public void onFailure(Throwable caught) {
 		if(!complete) { // If we already timed out, don't pass any events through
+			if(Stats.enabled())
+				Stats.sendTimingInfo(getDelegate().getClass().getName(), sequence, "failure");
 			complete = true;
 			timer.cancel();
 			super.onFailure(caught);
@@ -49,6 +53,8 @@ public class AsyncCallbackWithTimeout<T> extends AsyncCallbackDirectProxy<T> {
 	@Override
 	public void onSuccess(T result) {
 		if(!complete) {
+			if(Stats.enabled())
+				Stats.sendTimingInfo(getDelegate().getClass().getName(), sequence, "success");
 			complete = true;
 			timer.cancel();
 			super.onSuccess(result);
@@ -65,9 +71,12 @@ public class AsyncCallbackWithTimeout<T> extends AsyncCallbackDirectProxy<T> {
 	}
 	public static class TimeOutException extends Error {
 		private static final long serialVersionUID = 1L;
+		final long startTime = System.currentTimeMillis();
 		public TimeOutException() {
-			super("An operation timed out; this may be caused by a slow or unreliable network connection, a server outage, or a bug.");
-		}		
+		}
+		public String getMessage() {
+			return "An operation timed out; this may be caused by a slow or unreliable network connection, a server outage, or a bug. (waited "+(System.currentTimeMillis()-startTime)+" ms)";			
+		}
 	}
 	public void onTimeout() {
 		if(!complete) {

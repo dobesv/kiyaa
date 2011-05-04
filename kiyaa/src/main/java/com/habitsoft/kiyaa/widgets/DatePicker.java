@@ -233,6 +233,7 @@ public class DatePicker extends FlowPanel implements SourcesChangeEvents, Source
 			calendar.setDate(dateParser.parseDate(text));
 			removeStyleName("invalid");
 		} catch(DateParseException dpe) {
+			calendar.setDate(new Date());
 			addStyleName("invalid");
 		}
 		

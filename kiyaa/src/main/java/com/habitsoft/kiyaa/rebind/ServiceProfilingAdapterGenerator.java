@@ -20,8 +20,6 @@ public class ServiceProfilingAdapterGenerator extends BaseGenerator {
     }
 
     class RetryGeneratorInstance extends GeneratorInstance {
-        JClassType asyncCallbackType;
-        
         @Override
         protected void addImports() {
             super.addImports();
@@ -32,7 +30,6 @@ public class ServiceProfilingAdapterGenerator extends BaseGenerator {
         
         @Override
         protected void generateClassBody() throws UnableToCompleteException {
-            asyncCallbackType = getType(AsyncCallback.class.getName());
             // Find the interface to implement
             JClassType[] implementedInterfaces = baseType.getImplementedInterfaces();
             for(JClassType iface : implementedInterfaces) {

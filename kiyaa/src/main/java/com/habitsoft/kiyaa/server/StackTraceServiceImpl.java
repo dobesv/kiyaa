@@ -11,7 +11,10 @@ import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.Level;
+
+import javax.servlet.ServletContext;
 
 import org.apache.commons.io.IOUtils;
 
@@ -23,9 +26,15 @@ public class StackTraceServiceImpl extends RemoteServiceServlet implements Stack
 	
 	@Override
 	public void log(String moduleName, String strongName, String loggerName, String message, String exceptionClassName, StackTraceElement[] obfuscatedTrace) {
+		Throwable exception = createException(moduleName, strongName, exceptionClassName, message, obfuscatedTrace);
+		log(loggerName, message, exception);
+	}
+
+
+	private void log(String loggerName, String message, Throwable exception) {
 		java.util.logging.Logger.getLogger(loggerName).log(
 				Level.SEVERE, message,
-				createException(moduleName, strongName, exceptionClassName, message, obfuscatedTrace));
+				exception);
 	}
 
 
@@ -43,10 +52,17 @@ public class StackTraceServiceImpl extends RemoteServiceServlet implements Stack
 	 */
 	public Throwable createException(String moduleName, String strongName,
 			String exceptionClassName, String message, StackTraceElement[] obfuscatedTrace) {
-		Throwable exceptionInstance;
-		StackTraceElement[] stackTrace = deobfuscateStackTrace(moduleName,
-				strongName, obfuscatedTrace);
+		StackTraceElement[] stackTrace = deobfuscateStackTrace(strongName,
+				obfuscatedTrace);
 		
+		return createException(exceptionClassName, message, stackTrace);
+		
+	}
+
+
+	private Throwable createException(String exceptionClassName,
+			String message, StackTraceElement[] stackTrace) {
+		Throwable exceptionInstance;
 		// Let's create an exception object
 		try {
 			Class<?> exceptionClass = Class.forName(exceptionClassName);
@@ -62,30 +78,30 @@ public class StackTraceServiceImpl extends RemoteServiceServlet implements Stack
 		}
 		exceptionInstance.setStackTrace(stackTrace);
 		return exceptionInstance;
-		
 	}
 
 	/**
 	 * Return a new stack trace, replacing stack information where missing, if available.
 	 * 
 	 * Afterwards, the stack trace will have been improved as best we could.
-	 * 
-	 * @param moduleName Return value of GWT.getModuleName() on the client side
 	 * @param strongName Return value of GWT.getPermutationStrongName() on the client side
 	 * @param obfuscatedTrace Obfuscated stack trace, returned by getStackTrace() on the client side
+	 * 
 	 * @return A new array with some or all stack trace elements replaced
 	 */
 	@Override
-	public StackTraceElement[] deobfuscateStackTrace(String moduleName,
-			String strongName, StackTraceElement[] obfuscatedTrace) {
+	public StackTraceElement[] deobfuscateStackTrace(String strongName,
+			StackTraceElement[] obfuscatedTrace) {
 		HashSet<String> functionsToLookFor = new HashSet<String>(obfuscatedTrace.length);
 		for(StackTraceElement frame : obfuscatedTrace) {
 			if(isMissingData(frame))
 				functionsToLookFor.add(frame.getMethodName());
 		}
+		if(functionsToLookFor.isEmpty())
+			return obfuscatedTrace; // No missing methods
 		HashMap<String,StackTraceElement> symbolMap = new HashMap<String, StackTraceElement>(obfuscatedTrace.length);
 		
-		loadSymbolMap(moduleName, strongName, functionsToLookFor, symbolMap);
+		loadSymbolMap(strongName, functionsToLookFor, symbolMap);
 		
 		// Now make that into a stack trace
 		StackTraceElement[] stackTrace = new StackTraceElement[obfuscatedTrace.length];
@@ -104,47 +120,56 @@ public class StackTraceServiceImpl extends RemoteServiceServlet implements Stack
 		return stackTrace;
 	}
 
+	@Override
+	public StackTraceElement[] logAndDeobfuscate(String moduleName,
+			String strongName, String loggerName, String exceptionClassName,
+			String message, StackTraceElement[] obfuscatedTrace) {
+		StackTraceElement[] trace = deobfuscateStackTrace(strongName, obfuscatedTrace);
+		log(loggerName, message, createException(exceptionClassName, message, trace));
+		return trace;
+	}
 
 	private boolean isMissingData(StackTraceElement obframe) {
 		return obframe.getLineNumber() <= 0 || obframe.getFileName() == null || obframe.getFileName().startsWith("Unknown") || obframe.getClassName().equals("Unknown");
 	}
 
 
-	protected void loadSymbolMap(String moduleName, String strongName,
+	protected void loadSymbolMap(String strongName,
 			HashSet<String> functionsToLookFor,
 			HashMap<String, StackTraceElement> symbolMap) throws Error {
-		InputStream symbolMapStream = findSymbolMapFile(moduleName, strongName);
-		try {
-			BufferedReader reader = new BufferedReader(new InputStreamReader(symbolMapStream, "utf8"));
-			
-			String line;
-			while((line = reader.readLine()) != null) {
-				int idx = line.indexOf(',');
-				if(idx == -1)
-					continue;
-				String jsName = line.substring(0, idx);
-				if(functionsToLookFor.remove(jsName)) {
-					String[] parts = line.split(",");
-				    String className = parts[2];
-				    String memberName = parts[3];
-				    String fileName = parts[4];
-				    String sourceLine = parts[5];
-
-				    // The sourceUri contains the actual file name.
-				    String sourceFileName = fileName.substring(fileName.lastIndexOf('/') + 1,
-				        fileName.length());
-				    
-					symbolMap.put(jsName, new StackTraceElement(className, memberName, sourceFileName, Integer.parseInt(sourceLine)));
-				}
+		InputStream symbolMapStream = findSymbolMapFile(strongName);
+		if(symbolMapStream != null)
+			try {
+				BufferedReader reader = new BufferedReader(new InputStreamReader(symbolMapStream, "utf8"));
 				
+				String line;
+				while((line = reader.readLine()) != null) {
+					int idx = line.indexOf(',');
+					if(idx == -1)
+						continue;
+					String jsName = line.substring(0, idx);
+					if(functionsToLookFor.remove(jsName)) {
+						String[] parts = line.split(",");
+					    String className = parts[2];
+					    String memberName = parts[3];
+					    String fileName = parts[4];
+					    String sourceLine = parts[5];
+	
+					    // The sourceUri contains the actual file name.
+					    String sourceFileName = fileName.substring(fileName.lastIndexOf('/') + 1,
+					        fileName.length());
+					    
+						symbolMap.put(jsName, new StackTraceElement(className, memberName, sourceFileName, Integer.parseInt(sourceLine)));
+					}
+					
+				}
+			} catch (UnsupportedEncodingException e) {
+				throw new Error(e);
+			} catch (IOException e) {
+				e.printStackTrace();
+			} finally {
+				IOUtils.closeQuietly(symbolMapStream);
 			}
-		} catch (UnsupportedEncodingException e) {
-			throw new Error(e);
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			IOUtils.closeQuietly(symbolMapStream);
-		}
 	}
 	
 	/**
@@ -152,40 +177,34 @@ public class StackTraceServiceImpl extends RemoteServiceServlet implements Stack
 	 * 
 	 * @return An input stream reading the appropriate symbolMap, or null if none was found.
 	 */
-	protected InputStream findSymbolMapFile(String moduleName, String strongName) {
+	protected InputStream findSymbolMapFile(String strongName) {
 		// Try build/gwt/extra/<moduleName>/symbolMaps
 		String basename = strongName+".symbolMap";
-		File buildFile = new File(new File(new File("build/gwt/extra", moduleName), "symbolMaps"), basename);
-		if(buildFile.canRead()) {
-			try {
-				return new FileInputStream(buildFile);
-			} catch (FileNotFoundException e) {
-				// Shouldn't really happen, but we don't care anyway
-			}
-		}
-
-		// Try war/WEB-INF/<module>/symbolMaps
-		File warFile = new File(new File(new File("war/WEB-INF", moduleName), "symbolMaps"), basename);
-		if(warFile.canRead()) {
-			try {
-				return new FileInputStream(warFile);
-			} catch (FileNotFoundException e) {
-				// Shouldn't really happen, but we don't care anyway
+		
+		// Try war/WEB-INF/deploy/*/symbolMaps/<strongName>
+		File deployDir = new File("war/WEB-INF/deploy");
+		for(File moduleDir : deployDir.listFiles()) {
+			if(!moduleDir.isDirectory())
+				continue;
+			File symbolMapFile = new File(new File(deployDir, "symbolMaps"), basename);
+			if(symbolMapFile.canRead()) {
+				try {
+					return new FileInputStream(symbolMapFile);
+				} catch (FileNotFoundException e) {
+					// ??
+				}
 			}
 		}
 		
-		// Try WEB-INF/<module>/symbolMaps
-		try {
-			InputStream webInfFile = getServletContext().getResourceAsStream("/WEB-INF/"+moduleName+"/symbolMaps/"+basename);
+		// Try WEB-INF/deploy/<module>/symbolMaps in our servlet context
+		ServletContext servletContext = getServletContext();
+		@SuppressWarnings("unchecked")
+		Set<String> resourcePaths = servletContext.getResourcePaths("/WEB-INF/deploy/");
+		for(String moduleDeployPath : resourcePaths) {
+			String resourcePath = moduleDeployPath+"symbolMaps/"+basename;
+			InputStream webInfFile = servletContext.getResourceAsStream(resourcePath);
 			if(webInfFile != null) return webInfFile;
-		} catch(IllegalStateException ise) {
-			// servlet context missing, maybe.  Don't worry about it too much, I guess
 		}
-		
-		// Try META-INF/<module>/symbolMaps in a jar file on the classpath
-		InputStream classpathFile = getClass().getResourceAsStream("/META-INF/"+moduleName+"/symbolMaps/"+basename);
-		if(classpathFile != null) return classpathFile;
-		
 		// Oh well, give up
 		return null;
 	}

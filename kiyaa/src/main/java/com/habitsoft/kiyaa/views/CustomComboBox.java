@@ -46,7 +46,7 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 
 		public void onLostFocus(Widget sender) {
 			// If the popup is showing, maybe they clicked on something in the popup (like the scroll bar) and that's why we lost focus.
-			// However, if they've tabbed away we want to hide the popup.
+			// However, if they've tabbed away we want to hide the popup.		
 			if(!popupShowing) 
 			    onTabEnterOrLostFocus(false);
 			
@@ -64,10 +64,12 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 	}
 	
     final class MyKeyboardListener extends KeyboardListenerAdapter {
+
 		@Override
 		public void onKeyDown(Widget sender, char keyCode, int modifiers) {
 			if(keyCode == KeyCodes.KEY_ESCAPE) {
 				hidePopup();
+				applySearchTextOperationPending = false;
 				applySearchTextOperation.cancel();
 			} else if(keyCode == KeyCodes.KEY_DOWN) {
 				showPopup(new AsyncCallback<Void>() {
@@ -106,10 +108,16 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 	                    focusGroup.focusNext();
 	            }
 			} else if(keyCode == KeyCodes.KEY_RIGHT || keyCode == KeyCodes.KEY_LEFT) {
-			} else {
+			} else {				
+				applySearchTextOperationPending = true;
 		        applySearchTextOperation.schedule(250);
 			}
 		}
+		
+		protected void onTableClick(){
+			applySearchTextOperationPending = false;
+			applySearchTextOperation.cancel();
+	    }
 		
 		@Override
 		public void onKeyUp(Widget sender, char keyCode, int modifiers) {
@@ -133,6 +141,7 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 
 	}
     NameValueAdapter<T> alternateNameValueAdapter = null;
+	private boolean applySearchTextOperationPending;
 	
 	private Timer applySearchTextOperation = new Timer() {
 		@Override
@@ -195,7 +204,7 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 	private void applySearchText(boolean fromTyping) {
 		// Select any exact match for the search string, if there is one; otherwise select nothing
 		final String text = getText();
-
+		applySearchTextOperationPending = false;
 		if (text == null) {
 			return;
 		}
@@ -337,8 +346,7 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
 	private void onTabEnterOrLostFocus(final boolean tabOrEnter) {
 	    // Popup might become invisible before the timer expires (it's actually quite likely that it will)
         final boolean shouldUseModelFromTable = popupShowing && !searching && table != null && table.getSelectedModel() != null;
-        
-        
+
 	    // Have to schedule a timer so that if we just lost focus due to the user clicking on something we won't
         // hide the popup before the click is processed.
         if(shouldUseModelFromTable) {
@@ -353,6 +361,7 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
         if(selectedModel != null || stickySearchText == false) {
             setText(nameValueAdapter.getName(selectedModel));
         	searching = false;
+			applyFilter(false);
         }
         
         hidePopup();
@@ -453,11 +462,25 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
         if(value == null && model != null)
             value = nameValueAdapter.getValue(model);
         int selectedIndex = indexOfValue(value);
-        if(model == null) {
+        if(model == null) {        	
             T[] models = getModels();
             if(models != null) {
-                if(selectedIndex == -1 && !optional && models.length > 0) {
-                    selectedIndex = 0;
+                if(selectedIndex == -1 && (!optional || searching) && models.length > 0) {
+                	//If the list has been filtered down we want to select the first unfiltered result
+                	 if(isFiltered() || applyDefaultFilter) {  		 
+                		 ModelFilter<T> modelFilter;
+                		 if(isFiltered())
+                			 modelFilter = getFilter();
+                		 else 
+                			 modelFilter = getDefaultFilter();
+                		 for(int i = 0 ; i < models.length ; i++) {
+                			 if(modelFilter.includes(models[i])) { 
+                				selectedIndex = i; 
+                				break;
+                			 }
+                		 }
+                     } else if (!optional)
+                    	 selectedIndex = 0;
                 }
                 if(selectedIndex != -1) {
                     try {
@@ -469,15 +492,14 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
                     }
                 }
             }
+            // Don't allow a null model/value if we're not supposed to.
+            if(selectedIndex == -1 && !optional) {
+                if(value != null)
+                    currentValue = value;
+                return false;
+            }
         }
-        
-        // Don't allow a null model/value if we're not supposed to.
-        if(selectedIndex == -1 && !optional) {
-            if(value != null)
-                currentValue = value;
-            return false;
-        }
-        
+           
         boolean result = (model != this.selectedModel);
         this.selectedModel = model;
         if(model != null)
@@ -543,7 +565,7 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
     }
     
     @Override
-    protected ModelFilter getFilter() {
+    protected ModelFilter<T> getFilter() {
         final String text = getText();
         // Escape any special regex characters in their search pattern
         final String[] words = text.toLowerCase().split("\\s+");
@@ -659,8 +681,10 @@ public class CustomComboBox<T> extends CustomPopup<T> implements View, SourcesCh
     
     @Override
     public void save(AsyncCallback<Void> callback) {
-		applySearchTextOperation.cancel();
-		applySearchText(false);
+		if(applySearchTextOperationPending) {
+			applySearchTextOperation.cancel();
+			applySearchText(false);
+		}
     	super.save(callback);
     }
 

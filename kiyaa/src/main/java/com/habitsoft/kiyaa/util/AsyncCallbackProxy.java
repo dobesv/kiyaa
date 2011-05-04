@@ -96,6 +96,14 @@ public abstract class AsyncCallbackProxy<In,Out> implements AsyncCallback<In>, A
 			((AsyncCallbackExtensions) callback).resetTimeout(null);
 	}
 	
+	@Override
+	public boolean isOkayToWaitForCurrentAction() {
+		if(callback instanceof AsyncCallbackExtensions)
+			return ((AsyncCallbackExtensions) callback).isOkayToWaitForCurrentAction();
+		else
+			return false;
+	}
+	
 	/**
 	 * Wrap a callback in a proxy that ignores the incoming value and returns void.  Useful
 	 * if you are just interested in errors and not the actual result.

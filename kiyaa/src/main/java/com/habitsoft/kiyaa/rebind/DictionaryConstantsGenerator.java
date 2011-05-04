@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import com.google.gwt.core.ext.GeneratorContextExt;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.TreeLogger.Type;
@@ -116,13 +117,14 @@ public class DictionaryConstantsGenerator extends BaseGenerator {
 		    
 		    if(!serializedTypes.isEmpty()) {
 		        final TreeLogger tempLogger = createFilteredLogger(logger.branch(TreeLogger.DEBUG, "Generating serialization code"), TreeLogger.ERROR);
-                SerializableTypeOracleBuilder serializerBuilder = new SerializableTypeOracleBuilder(tempLogger, context.getPropertyOracle(), context.getTypeOracle());
+                SerializableTypeOracleBuilder serializerBuilder = new SerializableTypeOracleBuilder(tempLogger, context.getPropertyOracle(), (GeneratorContextExt) context);
     		    for(JType cls : serializedTypes) {
                     serializerBuilder.addRootType(tempLogger, cls);
     		    }
     		    SerializableTypeOracle serializableTypeOracle = serializerBuilder.build(tempLogger);
                 String serializerClassName = baseType.getQualifiedSourceName()+"_TypeSerializer";
-    		    TypeSerializerCreator typeSerializerCreator = new TypeSerializerCreator(tempLogger, serializableTypeOracle, serializableTypeOracle, context, serializerClassName);
+                String serializerSimpleName = baseType.getSimpleSourceName()+"_TypeSerializer";
+    		    TypeSerializerCreator typeSerializerCreator = new TypeSerializerCreator(tempLogger, serializableTypeOracle, serializableTypeOracle, (GeneratorContextExt) context, serializerClassName, serializerSimpleName);
                 typeSerializerCreator.realize(tempLogger);
                 sw.println("com.google.gwt.user.client.rpc.impl.Serializer serializer = new " + serializerClassName + "();");
                 sw.println("public com.habitsoft.kiyaa.util.DictionaryConstantsSerializationStreamReader createStreamReader(com.google.gwt.core.client.JavaScriptObject encoded)");

@@ -18,4 +18,17 @@ public interface AsyncCallbackExtensions {
 	 */
 	public void resetTimeout(Integer expectedTimeNeeded);
 	
+	/**
+	 * Check if calling this callback is leading back to a pending view action.
+	 * 
+	 * If this callback is delaying the currently running view action, this would
+	 * return false.
+	 * 
+	 * It also returns false if there's a callback waiting for this one which
+	 * isn't a view action callback.
+	 * 
+	 * The typical implementation should delegate this to its delegates.  If any
+	 * of them return false this can return false.
+	 */
+	public boolean isOkayToWaitForCurrentAction();
 }

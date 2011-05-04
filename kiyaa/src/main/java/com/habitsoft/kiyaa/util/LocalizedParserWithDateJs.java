@@ -9,6 +9,7 @@ public class LocalizedParserWithDateJs extends ClientLocalizedParser {
 
     @Override
     public Date parseDate(String dateString) throws DateParseException {
+    	dateString = validateDateString(dateString);
         try {
             // Try the "standard" date format first
             return super.parseDate(dateString);

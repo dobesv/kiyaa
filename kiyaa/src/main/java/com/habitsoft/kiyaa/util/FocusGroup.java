@@ -12,6 +12,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FocusListener;
 import com.google.gwt.user.client.ui.FocusListenerCollection;
 import com.google.gwt.user.client.ui.FocusWidget;
+import com.google.gwt.user.client.ui.Focusable;
 import com.google.gwt.user.client.ui.HasFocus;
 import com.google.gwt.user.client.ui.SourcesFocusEvents;
 import com.google.gwt.user.client.ui.TextBoxBase;
@@ -50,7 +51,7 @@ public class FocusGroup extends ArrayList<Widget> implements FocusListener, Sour
     public Widget first() {
         updateSorted();
         for(Widget w : sorted.values()) {
-            if(canFocus(false, w))
+        	if(canFocus(false, w))
                 return w;
         }
         return null;
@@ -70,6 +71,7 @@ public class FocusGroup extends ArrayList<Widget> implements FocusListener, Sour
             return;
         try {
 	        ((HasFocus)target).setFocus(true);
+	        
 	        if(target instanceof TextBoxBase) {
 	            ((TextBoxBase)target).selectAll();
 	        }
@@ -112,16 +114,29 @@ public class FocusGroup extends ArrayList<Widget> implements FocusListener, Sour
         }
         return null;
     }
-
+    
     private boolean canFocus(boolean buttonOnly, Widget w) {
-        return w.isAttached() 
-            && w.isVisible()
+      return w.isAttached() 
+            && isVisible(w)
             && (!(w instanceof FocusWidget) || ((FocusWidget)w).isEnabled())
             && (!buttonOnly 
                 || w.getClass().getName().matches(".*(Button|Anchor).*"));
     }
-    
-    public void focusNext() {
+    /**
+     * Return true if the widget and all of its parents are visible.
+     * @param w
+     * @return
+     */
+    private boolean isVisible(Widget w) {
+    	while(w != null) {
+    		if(!w.isVisible())
+    			return false;
+    		w = w.getParent();
+    	}
+    	return true;
+	}
+
+	public void focusNext() {
         DeferredCommand.addCommand(new Command() {
             public void execute() {
                 focus(getNext(false));

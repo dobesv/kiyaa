@@ -40,6 +40,7 @@ public class CustomPopup<T> implements PopupListener {
     private ActionSeries actionTests;
     protected T selectedModel;
     private ChangeListenerCollection changeListeners = new ChangeListenerCollection();
+    //if the optional field is set to false it acts more like a list box (ie. you are unable to enter custom text)
     protected boolean optional = true;
     private T[] models;
     private Value<T[]> modelsValue;
@@ -54,7 +55,7 @@ public class CustomPopup<T> implements PopupListener {
     		}
     	};
     protected boolean popupShowing = false;
-    private boolean applyDefaultFilter = true;
+    protected boolean applyDefaultFilter = true;
     public final ModelFilter<T> NOOP_FILTER = new ModelFilter<T>() {
         public boolean includes(T model) {
             return true;
@@ -179,6 +180,7 @@ public class CustomPopup<T> implements PopupListener {
     		public void onClick(Widget sender) {
     		    //GWT.log("Table clicked, enqueueHidePopup(10)", null);
     			enqueueHidePopup(10);
+    			onTableClick();
     		}
     	});
     	table.setSelectable(selectable);
@@ -188,6 +190,10 @@ public class CustomPopup<T> implements PopupListener {
     	}
     	//GWT.log("loading table in custom popup.createTableView()", null);
     	table.load(callback);
+    }
+    
+    protected void onTableClick(){
+    	
     }
 
     public void hidePopup() {
@@ -530,7 +536,7 @@ public class CustomPopup<T> implements PopupListener {
         this.popupShowing = popupShowing;
     }
 
-    public void setModels(Value<T[]> models) {
+    public void setModelsValue(Value<T[]> models) {
         modelsValue = models;
     }
 

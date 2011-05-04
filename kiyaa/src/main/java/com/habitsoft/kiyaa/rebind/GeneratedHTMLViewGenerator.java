@@ -1,17 +1,19 @@
 package com.habitsoft.kiyaa.rebind;
 
+import static org.apache.commons.lang.StringUtils.isEmpty;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.annotation.Annotation;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -35,39 +37,33 @@ import org.xml.sax.helpers.XMLReaderFactory;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
-import com.google.gwt.core.ext.typeinfo.JEnumConstant;
 import com.google.gwt.core.ext.typeinfo.JEnumType;
 import com.google.gwt.core.ext.typeinfo.JField;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
-import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
-import com.google.gwt.core.ext.typeinfo.JRealClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
-import com.google.gwt.core.ext.typeinfo.JTypeParameter;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
-import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.SourcesChangeEvents;
-import com.google.gwt.user.client.ui.SourcesClickEvents;
-import com.google.gwt.user.client.ui.SourcesFocusEvents;
-import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
-import com.habitsoft.kiyaa.metamodel.Action;
-import com.habitsoft.kiyaa.metamodel.Value;
-import com.habitsoft.kiyaa.rebind.GeneratedHTMLViewGenerator.GeneratorInstance.OperatorInfo;
-import com.habitsoft.kiyaa.util.DictionaryConstants;
+import com.habitsoft.kiyaa.rebind.typeinfo.ExpressionInfo;
+import com.habitsoft.kiyaa.rebind.typeinfo.GeneratedClassInfo;
+import com.habitsoft.kiyaa.rebind.typeinfo.GeneratedInnerClassInfo;
+import com.habitsoft.kiyaa.rebind.typeinfo.GeneratorMethodInfo;
+import com.habitsoft.kiyaa.rebind.typeinfo.GeneratorTypeInfo;
+import com.habitsoft.kiyaa.rebind.typeinfo.JClassTypeWrapper;
+import com.habitsoft.kiyaa.rebind.typeinfo.JTypeWrapper;
+import com.habitsoft.kiyaa.rebind.typeinfo.PrimitiveTypeInfo;
+import com.habitsoft.kiyaa.rebind.typeinfo.RuntimeClassWrapper;
 import com.habitsoft.kiyaa.util.Name;
-import com.habitsoft.kiyaa.views.ModelView;
-import com.habitsoft.kiyaa.views.TakesElementName;
-import com.habitsoft.kiyaa.views.View;
-import com.habitsoft.kiyaa.views.ViewFactory;
 import com.habitsoft.kiyaa.views.GeneratedHTMLView.ActionMethod;
 import com.habitsoft.kiyaa.views.GeneratedHTMLView.TemplatePath;
+import com.habitsoft.kiyaa.views.ModelView;
+import com.habitsoft.kiyaa.views.View;
+import com.habitsoft.kiyaa.views.ViewFactory;
 import com.habitsoft.xhtml.dtds.FailingEntityResolver;
 import com.habitsoft.xhtml.dtds.XhtmlEntityResolver;
 import com.sun.facelets.util.Classpath;
@@ -205,7 +201,7 @@ import com.sun.facelets.util.Classpath;
  * 
  */
 public class GeneratedHTMLViewGenerator extends BaseGenerator {
-    public static class ActionInfo {
+	public static class ActionInfo {
         final String action;
         final boolean object;
         final boolean async;
@@ -315,8 +311,8 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 			this.defaults = defaults;
 		}
 
-		public JClassType getViewClass(TypeOracle types) throws NotFoundException {
-			return types.getType(getViewClassName());
+		public GeneratorTypeInfo getViewClass(TypeOracle types) throws NotFoundException {
+			return JTypeWrapper.wrap(types.getType(getViewClassName()));
 		}
 
 		public String getContentAttribute() {
@@ -344,7 +340,22 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 		}
     }
     
-//    static class Prof {
+    /**
+	 * Provide access to a non-async value in transition in order
+	 * to perform some kind of transformation on it.
+	 * @author dobes
+	 *
+	 */
+    public static class OperatorInfo {
+		public String onGetExpr(String expr) throws UnableToCompleteException {
+			return expr;
+		}
+		public String onSetExpr(String expr) throws UnableToCompleteException {
+			return expr;
+		}
+	}
+	
+    //    static class Prof {
 //    	static String msg;
 //    	static long startTime;
 //    	static long elapsed() { return (new Date().getTime() - startTime); }
@@ -368,8 +379,11 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 //    }
     public static class GeneratorInstance extends BaseGenerator.GeneratorInstance {
 
-        static final String KIYAA_CORE_TAGS_NAMESPACE = "http://habitsoft.com/kiyaa/core";
-        static final String KIYAA_VIEW_TAGS_NAMESPACE = "http://habitsoft.com/kiyaa/ui";
+    	public static final String KIYAA_CORE_TAGS_NAMESPACE = "http://habitsoft.com/kiyaa/core";
+        public static final String KIYAA_VIEW_TAGS_NAMESPACE = "http://habitsoft.com/kiyaa/ui";
+        public static final String SUBVIEW_CLASS_NAME_ATTRIBUTE = "subviewClassName";
+		public static final String PARENT_VIEW_FIELD_NAME = "_pv";
+    	public static final String ROOT_VIEW_FIELD_NAME = "_root";
 
         static final String XHTML_NAMESPACE = "http://www.w3.org/1999/xhtml";
         static boolean tagLibrariesLoaded=false;
@@ -377,20 +391,27 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
         static HashMap<String, TagLibrary> tagLibraries = new HashMap<String, TagLibrary>();
         static HashMap<String, String> namespaces = new HashMap<String, String>();
         protected ClassGenerator rootClassGenerator;
-        protected TypeOracle myTypes = new TypeOracle();
         protected Element rootElement;
-        private JClassType rootClassType;
-        int subviewCounter;
-		protected JClassType valueClassType;
-		protected JClassType actionClassType;
+        protected int subviewNumber;
+        
+        public static class SubviewToGenerate {
+        	public String name;
+        	public Element element;        	
+        	public GeneratedClassInfo parentViewClass;
+			public SubviewToGenerate(String name, Element element, GeneratedClassInfo parentViewClass) {
+				super();
+				this.name = name;
+				this.element = element;
+				this.parentViewClass = parentViewClass;
+			}
+        	
+        }
+        protected LinkedList<SubviewToGenerate> subviewsToGenerate = new LinkedList<SubviewToGenerate>();
         
         @Override
 		public void init() throws UnableToCompleteException {
             super.init();
 
-            this.valueClassType = getType(Value.class.getName()).getErasedType();
-			this.actionClassType = getType(Action.class.getName());
-            
             // Caching these classes seem to occasionally create some weirdness; we need to
             // re-load the tag libraries each time there is a new compile operation, or we
             // should change it so we can "refresh" them without reparsing the xml files.
@@ -403,27 +424,17 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             }
             
             rootClassGenerator = new ClassGenerator();
-            String templatePath = getClassMetadata(baseType, baseType, "kiyaa.template");
-            if(templatePath == null) {
-                //System.out.println("Checking for TemplatePath annotation on "+baseType);
-                final TemplatePath annotation = baseType.getAnnotation(TemplatePath.class);
-                if(annotation != null) {
-                    templatePath = annotation.value();
-                    //System.out.println("Found TemplatePath annotation on "+baseType+" with value "+templatePath);
-                }
+            String templatePath = getSimpleClassName(baseType, ".") + ".xhtml";
+            final TemplatePath annotation = baseType.getAnnotation(TemplatePath.class);
+            if(annotation != null) {
+                templatePath = annotation.value();
+                //System.out.println("Found TemplatePath annotation on "+baseType+" with value "+templatePath);
             }
-            if (templatePath == null) {
-                templatePath = getSimpleClassName(baseType, ".") + ".xhtml";
-            }
-            rootClassType = new JRealClassType(myTypes, myTypes.getOrCreatePackage(baseType.getPackage().getName()), null,
-                            false, implName, false);
-            rootClassType.setSuperclass(baseType);
-
+            
             rootElement = loadAndParseTemplate(templatePath);
             if (rootElement.getAttribute("with-model") != null) {
                 final String modelViewClassName = ModelView.class.getName();
                 this.composerFactory.addImplementedInterface(modelViewClassName);
-                rootClassType.addImplementedInterface(getType(modelViewClassName));
             }
         }
 
@@ -569,42 +580,72 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 
         @Override
 		protected void generateClassBody() throws UnableToCompleteException {
-            rootClassGenerator.generateClassBody(rootElement, rootClassType, false);
+            GeneratedClassInfo rootViewClass = new GeneratedClassInfo(implName, JClassTypeWrapper.wrap(baseType));
+			rootClassGenerator.generateClassBody(rootElement, rootViewClass, null, rootViewClass);
+			
+			// Now generate the subview classes create as part of creating those views
+			generateSubviewClasses(rootViewClass);
         }
 
+        private void generateSubviewClasses(GeneratedClassInfo rootViewClass) throws UnableToCompleteException {
+            while(!subviewsToGenerate.isEmpty()) {
+            	SubviewToGenerate sv = subviewsToGenerate.removeFirst();
+                Element elem = sv.element;
+                String subviewClassName = sv.name;
+                
+                pushLogger("Inside subview element "+elem.getQualifiedName()+" class name "+subviewClassName);
+                try {
+                    boolean isModelView = elem.getAttribute("with-model") != null;
+                    sw.println("protected static class " + subviewClassName
+                                    + " implements "+(isModelView?"ModelView":"View")+" {");
+                    sw.indent();
+                    GeneratedClassInfo genClass = new GeneratedInnerClassInfo(subviewClassName, rootViewClass, commonTypes.object, true);
+                    
+                    if(isModelView)
+                        genClass.addImplementedInterface(getType(ModelView.class.getName()));
+                    new ClassGenerator().generateClassBody(elem, genClass, sv.parentViewClass, rootViewClass);
+                    sw.outdent();
+                    sw.println("}");
+                } finally {
+                	popLogger();
+                }
+            }
+        }
+
+        
         class ClassGenerator {
-            HashMap<String, Element> insertedViews = new HashMap<String, Element>();
-            HashMap<String, String> insertedText = new HashMap<String, String>();
-            HashMap<String, String> values = new HashMap<String, String>();
-            HashMap<String,ActionInfo> actions = new HashMap<String, ActionInfo>();
-            ArrayList<String> ctor = new ArrayList<String>();
-            ArrayList<String> memberDecls = new ArrayList<String>();
-            ArrayList<String> calculations = new ArrayList<String>();
-            ArrayList<String> asyncProxies = new ArrayList<String>();
-            ArrayList<String> earlyLoads = new ArrayList<String>();
-            ArrayList<String> earlyAsyncLoads = new ArrayList<String>();
-            ArrayList<String> loads = new ArrayList<String>();
-            ArrayList<String> asyncLoads = new ArrayList<String>();
-            ArrayList<String> subviewLoads = new ArrayList<String>();
-            ArrayList<String> saves = new ArrayList<String>();
-            ArrayList<String> clearFields = new ArrayList<String>();
-            LinkedHashSet<String> fieldNames = new LinkedHashSet<String>();
-            //ArrayList<String> setModels = new ArrayList();
-            ArrayList<Element> subviewClasses = new ArrayList<Element>();
-            JClassType myModelClass;
-            String myModelVarName;
-            boolean subviewClass;
-            JClassType myClass;
+			protected HashMap<String, Element> insertedViews = new HashMap<String, Element>();
+            protected HashMap<String, String> insertedText = new HashMap<String, String>();
+            protected HashMap<String, String> values = new HashMap<String, String>();
+            protected HashMap<String,ActionInfo> actions = new HashMap<String, ActionInfo>();
+            protected ArrayList<String> memberDecls = new ArrayList<String>();
+            protected ArrayList<String> calculations = new ArrayList<String>();
+            protected ArrayList<String> asyncProxies = new ArrayList<String>();
+            protected ArrayList<String> earlyLoads = new ArrayList<String>();
+            protected ArrayList<String> earlyAsyncLoads = new ArrayList<String>();
+            protected ArrayList<String> loads = new ArrayList<String>();
+            protected ArrayList<String> asyncLoads = new ArrayList<String>();
+            protected ArrayList<String> subviewLoads = new ArrayList<String>();
+            protected ArrayList<String> saves = new ArrayList<String>();
+            protected ArrayList<String> clearFields = new ArrayList<String>();
+            protected LinkedHashSet<String> fieldNames = new LinkedHashSet<String>();
+            protected GeneratorTypeInfo myModelClass;
+            protected String myModelVarName;
 			protected final ArrayList<SubviewInfo> subviews = new ArrayList<SubviewInfo>();
-			private boolean hasHtml=false;
-			boolean useInnerHTML=false;
-			Element myRootElement;
+			protected boolean hasHtml=false;
+			protected boolean useInnerHTML=false;
+			protected Element myRootElement;
+			protected GeneratedClassInfo myClass;
+			protected GeneratedClassInfo parentViewClass;
+			protected GeneratedClassInfo rootViewClass;
 			
-			private void generateClassBody(Element rootElement, JClassType myClass, boolean subviewClass)
+			private void generateClassBody(Element rootElement, GeneratedClassInfo myClass, GeneratedClassInfo parentViewClass, GeneratedClassInfo rootViewClass)
                             throws UnableToCompleteException {
-				myRootElement = rootElement;
-				this.myClass = myClass;
-                this.subviewClass = subviewClass;
+				this.myRootElement = rootElement;
+                this.myClass = myClass;
+                this.parentViewClass = parentViewClass;
+                this.rootViewClass = rootViewClass;
+                
                 String withModel = rootElement.getAttributeValue("with-model");
                 if (withModel != null) {
                     String[] pieces = withModel.split("\\s+");
@@ -617,12 +658,8 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                         myModelVarName = pieces[1];
                     }
                     this.myModelClass = getType(modelTypeName);
-                    String fieldName = myModelVarName;
-                    JType fieldType = myModelClass;
-                    generateField(fieldName, fieldType);
-                } else if (implementsInterface(myClass, getType(ModelView.class.getName()))
-                                && (findMethod(myClass.getSuperclass(), "getModel", 0, false, false) == null || findMethod(myClass
-                                                .getSuperclass(), "setModel", 2, false, false) == null)) {
+                    generateField(myModelVarName, myModelClass);
+                } else if (myClass.implementsInterface(commonTypes.modelView)) {
                     logger.log(TreeLogger.WARN, "Generated views that implement ModelView should define"
                                     + " an attribute with-model='Type modelName'"
                                     + " on their root element ("+rootElement.getQualifiedName()+"), or implement"
@@ -658,25 +695,28 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                     		logger.log(TreeLogger.ERROR, "Can't find any type matching "+varTypeName, null);
                     		throw new UnableToCompleteException();
 						}
-	                    generateField(fieldName, fieldType);
+	                    generateField(fieldName, JTypeWrapper.wrap(fieldType));
 					}
                 }
-                JClassType enclosingClass = myClass.getEnclosingType();
-                if((myClass.isStatic() || subviewClass) && enclosingClass != null) {
-                    generateField("my"+enclosingClass.getSimpleSourceName(), enclosingClass);
+                if(parentViewClass != null) {
+                    generateField(PARENT_VIEW_FIELD_NAME, parentViewClass);
+                    generateField(ROOT_VIEW_FIELD_NAME, rootViewClass);
                 }
                 if (myModelClass != null && !myModelVarName.equals("model")) {
+                    myClass.addField(myModelVarName, myModelClass);
                     sw.println("public Object getModel() {");
                     sw.indentln("return " + myModelVarName + ";");
                     sw.println("}");
-                    new JMethod(myClass, "getModel", Collections.<Class<? extends Annotation>, Annotation>emptyMap(), new JTypeParameter[0]).setReturnType(getType("java.lang.Object")); 
-                    // Provide access to model as "model"
+                    myClass.addGetter("model", RuntimeClassWrapper.OBJECT, "getModel", false);
                 }
+                
                 sw.println("public void validate(AsyncCallback callback) {");
                 sw.indentln("callback.onFailure(new Error(\"Not implemented\"));");
                 sw.println("}");
+                myClass.addMethod("validate", PrimitiveTypeInfo.VOID, commonTypes.asyncCallback);
+                
                 // Make clearFields available as an action
-                new JMethod(myClass, "clearFields", Collections.<Class<? extends Annotation>, Annotation>emptyMap(), new JTypeParameter[0]).setReturnType(JPrimitiveType.VOID); 
+                myClass.addMethod("clearFields", PrimitiveTypeInfo.VOID);
 
                 // Two results of this operation:
                 // the template string
@@ -703,7 +743,8 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 sw.println("}");
                 sw.outdent();
                 sw.println("}");
-
+                myClass.addMethod("addFields", PrimitiveTypeInfo.VOID);
+                
                 generatePanel();
                 
                 generateRemoveFields();
@@ -730,7 +771,6 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 
                 if (myModelClass != null)
                     generateSetModel();
-                generateSubviewClasses();
             }
 
 			private void generatePanel() throws UnableToCompleteException {
@@ -747,7 +787,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                     sw.indentln("panel.add("+rootView+".maybeEnsureDebugId(id, widget));");
                     sw.println("}");
                 }
-				if(!subviewClass) {
+				if(parentViewClass == null) {
 	                sw.println("protected <T extends View> T maybeEnsureDebugId(String id, T view) { maybeEnsureDebugId(id, view.getViewWidget()); return view; }");
 	                sw.println("protected Widget maybeEnsureDebugId(String id, Widget widget) {");
 	                sw.indent();
@@ -770,22 +810,10 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 sw.println("}");
 			}
 
-            protected void generateField(String fieldName, JType fieldType) {
-            	JParameterizedType parameterized = fieldType.isParameterized();
-            	if(parameterized != null) fieldType = parameterized.getErasedType();
-                final JField field = new JField(this.myClass, fieldName, Collections.<Class<? extends Annotation>, Annotation>emptyMap());
-                field.setType(fieldType);
-                JMethod getter = new JMethod(this.myClass, "get" + capitalize(fieldName), Collections.<Class<? extends Annotation>, Annotation>emptyMap(), new JTypeParameter[0]);
-                getter.setReturnType(fieldType);
-                // Workaround a bug in GWT where it is emitting "<>" for some object types, like an inner class of a generic class
-                memberDecls.add(getter.toString().replace("<>", "") + "{ return " + fieldName + "; }");
-                final JMethod setter = new JMethod(this.myClass, "set" + capitalize(fieldName), Collections.<Class<? extends Annotation>, Annotation>emptyMap(), new JTypeParameter[0]);
-                setter.setReturnType(JPrimitiveType.VOID);
-                new JParameter(setter, fieldType, fieldName, Collections.<Class<? extends Annotation>, Annotation>emptyMap());
-                memberDecls.add(setter.toString().replace("<>", "") + "{ this." + fieldName + " = " + fieldName + "; }");
-                memberDecls.add(fieldType.getQualifiedSourceName() + " " + fieldName + ";");
+			protected void generateField(String fieldName, GeneratorTypeInfo fieldType) {
+                myClass.addField(fieldName, fieldType);
+                memberDecls.add(fieldType.getParameterizedQualifiedSourceName() + " " + fieldName + ";");
                 fieldNames.add(fieldName);
-                flushMethodsCache(this.myClass);
             }
 
             protected void generateConstructor(Element rootElement) throws UnableToCompleteException {
@@ -794,15 +822,15 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 // In fact, this form might operate perfectly well on a null
                 // model.
             	String ctorArgs = "";
-            	final String enclosingClassName = subviewClass?myClass.getEnclosingType().getSimpleSourceName():null;
-				if(subviewClass) {
-            		ctorArgs = enclosingClassName+" my"+enclosingClassName;            		
+				if(parentViewClass != null) {
+            		ctorArgs = parentViewClass.getName()+" parentView, "+rootViewClass.getName()+" rootView";            		
             	}
                 sw.println("public " + myClass.getSimpleSourceName() + "("+ctorArgs+") {");
                 sw.indent();
                 
-            	if(subviewClass) {
-                    sw.println("this.my"+enclosingClassName+" = my"+enclosingClassName+";");
+            	if(parentViewClass != null) {
+                    sw.println("this."+PARENT_VIEW_FIELD_NAME+" = parentView;");
+                    sw.println("this."+ROOT_VIEW_FIELD_NAME+" = rootView;");
             	}
             	Attribute styleClass = rootElement.getAttribute("class");
             	if(styleClass != null) {
@@ -835,8 +863,8 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 // if(!usesModel && subviewClass) {
                 // sw.println("setModel(null, null);");
                 // }
-                if (!subviewClass)
-                    generateAttributes(rootElement, baseType, "this");
+                if (parentViewClass == null)
+                    generateAttributes(rootElement, JTypeWrapper.wrap(baseType), "this");
                 sw.println("return this;");
                 sw.outdent();
                 sw.println("}");
@@ -942,7 +970,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 
 			private void generateMemberDecls() {
 				for (String line : memberDecls) {
-                    sw.println(line.replaceAll("<[^>]+>", "")); // stripping generics
+                    sw.println(line.replaceAll("<[^>]*>", "")); // strip generics
                 }
 			}
 
@@ -958,11 +986,12 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             private void generateLoad() throws UnableToCompleteException {
             	String name = "load";
                 final boolean nothingToLoad = loads.isEmpty() && subviewLoads.isEmpty() && asyncLoads.isEmpty() && earlyLoads.isEmpty() && earlyAsyncLoads.isEmpty();
-            	JMethod loadMethod = findMethod(myClass, "load", 0, true, false);
-            	final boolean baseClassLoads = loadMethod != null && loadMethod.getParameters().length == 1;
-                if(baseClassLoads) {
-            	    if(nothingToLoad)
-            	        return;
+            	boolean baseClassHasSyncLoad = myClass.getSuperclass().hasMethodMatching("load", false, PrimitiveTypeInfo.VOID);
+				boolean baseClassHasAsyncLoad = myClass.getSuperclass().hasMethodMatching("load", false, PrimitiveTypeInfo.VOID, commonTypes.asyncCallback);
+				final boolean baseClassLoads = baseClassHasSyncLoad || baseClassHasAsyncLoad;
+                if(baseClassHasAsyncLoad) {
+                	if(nothingToLoad)
+                		return;
             		sw.println("public void load(AsyncCallback<Void> callback) {");
             		sw.indent();
             		sw.println("try { init(); } catch(Throwable t) { callback.onFailure(t); return; }");
@@ -986,9 +1015,9 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             	}
                 sw.println("public void "+name+"(final AsyncCallback callback) {");
                 sw.indent();
-                if(loadMethod == null)
+                if(!baseClassLoads)
                     sw.println("try { init(); } catch(Throwable t) { callback.onFailure(t); return; }");
-                if(loadMethod != null && loadMethod.getParameters().length == 0)
+                if(baseClassHasSyncLoad)
                     sw.println("try { init(); super.load(); } catch(Throwable t) { callback.onFailure(t); return; }");
                 if(nothingToLoad) {
                 	sw.println("callback.onSuccess(null);");
@@ -996,7 +1025,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                     sw.println("try {");
                     sw.indent();
                     sw.println("final AsyncCallbackGroup group = new AsyncCallbackGroup(\""+myClass.getName()+".load()\");");
-                    if(!baseClassLoads) {
+                    if(!baseClassHasAsyncLoad) {
                         for (String load : earlyAsyncLoads) {
                             sw.println(load);
                         }
@@ -1047,9 +1076,10 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 
             private void generateSave() throws UnableToCompleteException {
             	String name;
-            	boolean hasSave=(findMethod(myClass,"save", new JType[] {getType(AsyncCallback.class.getName())}) != null);
-            	if(hasSave) {
-                	if(saves.isEmpty())
+            	boolean baseClassHasSave=myClass.getSuperclass().hasMethodMatching("save", false, PrimitiveTypeInfo.VOID, commonTypes.asyncCallback);
+            	boolean nothingToSave = saves.isEmpty();
+            	if(baseClassHasSave) {
+					if(nothingToSave)
                 		return;
             		name="saveImpl";
             		sw.println("public void save(AsyncCallback<Void> callback) {");
@@ -1062,7 +1092,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             	}
                 sw.println("public void "+name+"(final AsyncCallback<Void> callback) {");
                 sw.indent();
-                if(saves.isEmpty()) {
+                if(nothingToSave) {
                 	sw.println("callback.onSuccess(null);");
                 } else {
                     sw.println("if(!didInit) return;");
@@ -1085,8 +1115,8 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 sw.println("public void clearFields() {");
                 sw.indent();
                 sw.println("if(!didInit) return;");
-            	JMethod superMethod = findMethod(myClass.getSuperclass(), "clearFields", 0, false, false);
-            	if(superMethod != null && !superMethod.isAbstract()) {
+            	boolean baseClassHasClearFields = myClass.getSuperclass().hasMethodMatching("clearFields", false, PrimitiveTypeInfo.VOID);
+            	if(baseClassHasClearFields) {
         			sw.println("super.clearFields();");
             	}
                 for (String clearField : clearFields) {
@@ -1104,7 +1134,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 sw.indent();
                 sw.println("init();");
                 sw.println("if(model == null) { callback.onFailure(new NullPointerException()); return; }");
-                sw.println("this." + myModelVarName + " = (" + myModelClass.getQualifiedSourceName() + ") model;");
+                sw.println("this." + myModelVarName + " = (" + myModelClass.getName() + ") model;");
 //                sw.println("AsyncCallbackGroup group = new AsyncCallbackGroup();");
 //                for (String call : setModels) {
 //                    sw.println(call);
@@ -1117,50 +1147,6 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 sw.println("}");
                 sw.outdent();
                 sw.println("}");
-            }
-
-            private void generateSubviewClasses() throws UnableToCompleteException {
-                for (int i = 0; i < subviewClasses.size(); i++) {
-                    Element elem = subviewClasses.get(i);
-                    String subviewClassName = myClass.getSimpleSourceName()+"S" + i;
-                    
-                    pushLogger("Inside subview "+i+" element "+elem.getQualifiedName()+" class name "+subviewClassName);
-                    try {
-                        boolean isModelView = elem.getAttribute("with-model") != null;
-                        sw.println("protected static class " + subviewClassName
-                                        + " implements "+(isModelView?"ModelView":"View")+" {");
-                        sw.indent();
-                        JRealClassType genClass = new JRealClassType(myTypes, 
-                        		myTypes.getOrCreatePackage(baseType.getPackage().getName()), 
-                        		myClass.getName(), false, subviewClassName, false);
-                        genClass.setEnclosingType(myClass);
-                        if(isModelView)
-                            genClass.addImplementedInterface(getType(ModelView.class.getName()));
-                        genClass.setSuperclass(getType("java.lang.Object"));
-                        genClass.addModifierBits(0x00000010 /*TypeOracle.MOD_STATIC*/); // HACK, don't know how to set static otherwise
-                        new ClassGenerator().generateClassBody(elem, genClass, true);
-                        /*
-                        sw.println("public static ViewFactory getFactory(final "+myClass.getSimpleSourceName()+" my"+myClass.getSimpleSourceName()+") {");
-                        sw.indent();
-                        sw.println("return new ViewFactory() {");
-                        sw.indent();
-                        sw.println("public View createView() {");
-                        sw.indent();
-                        sw.println("return new " + subviewClassName + "(my"+myClass.getSimpleSourceName()+");");
-                        sw.outdent();
-                        sw.println("}");
-                        sw.outdent();
-                        sw.println("};");
-                        sw.outdent();
-                        sw.println("}");
-                        */
-                        
-                        sw.outdent();
-                        sw.println("}");
-                    } finally {
-                    	popLogger();
-                    }
-                }
             }
 
             protected void parseTree(Element rootElement) throws UnableToCompleteException {
@@ -1208,19 +1194,13 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 							parseTree(newElem);
                     		continue;
                         }
-                        JClassType tagClass = getTagClass(elem);
+                        GeneratorTypeInfo tagClass = getTagClass(elem);
                         Element viewElem = new Element(XHTML_NAMESPACE.equals(elem.getNamespaceURI())?elem.getLocalName():"div", XHTML_NAMESPACE);
                         String id = identifier(elem.getAttributeValue("id"));
                         if (id == null)
                             id = "view" + insertedViews.size();
                         else {
-                            new JField(myClass, id, Collections.<Class<? extends Annotation>, Annotation>emptyMap()).setType(tagClass);
-                            new JMethod(myClass, "get" + capitalize(id), Collections.<Class<? extends Annotation>, Annotation>emptyMap(), new JTypeParameter[0])
-                                            .setReturnType(tagClass);
-                            // new JParameter(new JMethod(myClass,
-                            // "set"+capitalize(myModelVarName), 0, 0, 0, 0),
-                            // myModelClass, myModelVarName);
-                            flushMethodsCache(myClass);
+                        	myClass.addField(id, tagClass);
                         }
     
                         viewElem.addAttribute(new Attribute("id", id));
@@ -1256,11 +1236,11 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				return namespaceAndTag;
 			}
 
-			protected JClassType getTagClass(Element elem) throws UnableToCompleteException {
+			protected GeneratorTypeInfo getTagClass(Element elem) throws UnableToCompleteException {
 				String[] namespaceAndTag = getNamespaceAndTag(elem);
 				String namespace = namespaceAndTag[0];
 				String tag = namespaceAndTag[1];
-				JClassType tagClass = null;
+				GeneratorTypeInfo tagClass = null;
 				if (tag.equals("custom") && namespace.equals(KIYAA_VIEW_TAGS_NAMESPACE)) {
 				    String viewClassName = elem.getAttributeValue("viewClass");
 				    if (viewClassName != null) {
@@ -1364,14 +1344,9 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 			stringBuildExpr.append(" + \"").append(backslashEscape(text.substring(textMarker))).append('"');
                 		}
                         
-                        JClassType fieldType = getType("java.lang.String");
-                        final JField field = new JField(this.myClass, id, Collections.<Class<? extends Annotation>, Annotation>emptyMap());
-    					field.setType(fieldType);
-                        final JMethod setter = new JMethod(this.myClass, "set" + capitalize(id), Collections.<Class<? extends Annotation>, Annotation>emptyMap(), new JTypeParameter[0]);
-                        setter.setReturnType(JPrimitiveType.VOID);
-                        new JParameter(setter, fieldType, id, Collections.<Class<? extends Annotation>, Annotation>emptyMap());
-                        memberDecls.add(setter + "{ panel.setText(\"" + id + "\", " + id + "); }");
-                        flushMethodsCache(myClass);
+                        String setterName = "set" + capitalize(id);
+                        memberDecls.add("public final void "+ setterName + "(String newValue) { panel.setText(\"" + id + "\", newValue); }");
+                        myClass.addMethod(setterName, PrimitiveTypeInfo.VOID, RuntimeClassWrapper.STRING);
                         
                         //System.out.println("Using string build expression: "+stringBuildExpr+" for "+text);
                 		ExpressionInfo expr = findAccessors(stringBuildExpr.toString(), true, true);
@@ -1380,8 +1355,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 			throw new UnableToCompleteException();
                 		}
                         //System.out.println("Got getter: "+expr.getter);
-                		ExpressionInfo textExpr = new ExpressionInfo(id, setter.getName(), fieldType);
-                		if(textExpr == null) throw new Error("Weird, couldn't find the field I just added: "+id+" to hold text for "+stringBuildExpr+" even though I added a method "+setter+" and a field "+field+"?");
+                		ExpressionInfo textExpr = new ExpressionInfo(expr.getOriginalExpr(), id, setterName, RuntimeClassWrapper.STRING);
                 		if((expr.isConstant() || areConstant) && expr.hasSynchronousGetter()) {
                 			sw.println(textExpr.copyStatement(expr));
                 		} else if(areEarly) {
@@ -1407,9 +1381,9 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				public String id;
 				public String namespace;
 				public String tag;
-				public JClassType subviewClass;
+				public GeneratorTypeInfo subviewClass;
 
-				public SubviewInfo(Element elem, String id, String namespace, String tag, JClassType subviewClass) {
+				public SubviewInfo(Element elem, String id, String namespace, String tag, GeneratorTypeInfo subviewClass) {
 					this.elem = elem;
 					this.id = id;
 					this.namespace = namespace;
@@ -1425,11 +1399,11 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				try {
                     generateField(sv.id, sv.subviewClass);
                     if (sv.subviewClass.isAbstract()) {
-                        sw.println(sv.id + " = (" + sv.subviewClass.getQualifiedSourceName() + ") GWT.create("
-                                        + sv.subviewClass.getQualifiedSourceName() + ".class);");
+                        sw.println(sv.id + " = (" + sv.subviewClass.getParameterizedQualifiedSourceName() + ") GWT.create("
+                                        + sv.subviewClass.getName() + ".class);");
                     } else {
-                        boolean takesTag = implementsInterface(sv.subviewClass, getType(TakesElementName.class.getName()));
-                        sw.println(sv.id + " = new " + sv.subviewClass.getQualifiedSourceName() + (takesTag?"(\""+escape(sv.elem.getLocalName())+"\", \""+escape(sv.elem.getNamespaceURI())+"\");":"();"));
+                        boolean takesTag = sv.subviewClass.implementsInterface(JClassTypeWrapper.wrap(types.findType("com.habitsoft.kiyaa.views.TakesElementName")));
+                        sw.println(sv.id + " = new " + sv.subviewClass.getName() + (takesTag?"(\""+escape(sv.elem.getLocalName())+"\", \""+escape(sv.elem.getNamespaceURI())+"\");":"();"));
                     }
                     generateContents(sv.elem, sv.subviewClass, sv.id);
                     generateAttributes(sv.elem, sv.subviewClass, sv.id);
@@ -1439,50 +1413,32 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				}
             }
 
+			/**
+			 * Generate code to pass along any load(), save(), and clearFields() calls
+			 * to subviews that support those operations.
+			 */
             private void generateSubviewCommon(Element elem, String id, String viewExpr, String modelExpr,
-                            JClassType viewClass, boolean readOnly) throws UnableToCompleteException {
-            	String addMethod = viewClass.isAssignableTo(getType(Widget.class.getName()))?"addWidget":"addView";
+                            GeneratorTypeInfo viewClass, boolean readOnly) throws UnableToCompleteException {
+            	boolean isWidget = viewClass.isSubclassOf(commonTypes.widget);
+				String addMethod = isWidget?"addWidget":"addView";
                 sw.println(addMethod+"(\"" + id + "\", " + viewExpr + ");");
-                if (getClassMetadata(viewClass, "kiyaa.staticView") == null) {
-                    boolean canLoad = implementsInterface(viewClass, getType(View.class.getName()));
-                    boolean canSave = canLoad;
-//                    boolean canSetModel = implementsInterface(viewClass, getType(ModelView.class.getName()));
-                    JMethod[] methods = viewClass.getOverridableMethods();
-                    for (int i = 0; i < methods.length; i++) {
-                        JMethod method = methods[i];
-                        if (method.getName().equals("load")
-                                        && method.getParameters().length == 1
-                                        && method.getParameters()[0].getType().getQualifiedSourceName().equals(AsyncCallback.class.getName())) {
-                            canLoad = true;
-                        } else if (method.getName().equals("save")
-                                        && method.getParameters().length == 1
-                                        && method.getParameters()[0].getType().getQualifiedSourceName().equals(AsyncCallback.class.getName())) {
-                            canSave = true;
-//                        } else if (method.getName().equals("setModel")
-//                                        && method.getParameters().length == 2
-//                                        && implementsInterface(
-//                                                        method.getParameters()[1].getType().isClassOrInterface(),
-//                                                        getType(AsyncCallback.class.getName()))) {
-//                            canLoad = true;
-                        }
-                    }
-                    if (canLoad) {
-                        subviewLoads.add(viewExpr + ".load(group.<Void>member());");
-                    }
-                    if (!readOnly) {
-                        if (canSave)
-                            saves.add(viewExpr + ".save(group.<Void>member());");
-                    }
-                    if(canLoad) {
-                    	clearFields.add(viewExpr + ".clearFields();");
-                    }
-                    //if (canSetModel)
-                    //    setModels.add(viewExpr + ".setModel(" + modelExpr + ", group.<Void>member());");
-
+                boolean isView = viewClass.implementsInterface(commonTypes.view);
+				boolean hasLoad = isView || viewClass.hasMethodMatching("load", true, PrimitiveTypeInfo.VOID, commonTypes.asyncCallback);
+                if (hasLoad) {
+                    subviewLoads.add(viewExpr + ".load(group.<Void>member());");
+                }
+                if (!readOnly) {
+                    boolean hasSave = isView || viewClass.hasMethodMatching("save", true, PrimitiveTypeInfo.VOID, commonTypes.asyncCallback);
+                    if (hasSave)
+                        saves.add(viewExpr + ".save(group.<Void>member());");
+                }
+                boolean hasClearFields = isView || viewClass.hasMethodMatching("clearFields", true, PrimitiveTypeInfo.VOID);
+                if(hasClearFields) {
+                	clearFields.add(viewExpr + ".clearFields();");
                 }
             }
 
-            protected void generateAttributes(Element elem, JClassType type, String name)
+            protected void generateAttributes(Element elem, GeneratorTypeInfo type, String name)
                             throws UnableToCompleteException {
                 for (int j = 0; j < elem.getAttributeCount(); j++) {
                     final Attribute attr = elem.getAttribute(j);
@@ -1506,157 +1462,168 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 
             }
 
-			private void generateAttribute(JClassType type, String name, final String key, final String value)
+			private void generateAttribute(GeneratorTypeInfo type, String name, final String key, final String value)
 				throws UnableToCompleteException {
-				ExpressionInfo baseExpr = new ExpressionInfo(name, type, false);
-				ExpressionInfo attributeAccessors = findAccessors(baseExpr, key, true, false);
-				// Automatically propagate some properties to the getViewWidget()
-				if(attributeAccessors == null && key.matches("visible|width|height|title") && type.isAssignableTo(getType(View.class.getName()))) 
-					attributeAccessors = findAccessors(baseExpr, "viewWidget."+key, true, false);
-				if(key.equals("class")) {
-					if(type.isAssignableTo(getType(View.class.getName())))
-						attributeAccessors = findAccessors(baseExpr, "viewWidget.styleName", false, false);
-					else if(type.isAssignableTo(getType(UIObject.class.getName())))
-						attributeAccessors = findAccessors(baseExpr, "styleName", false, false);
-					else
-						logger.log(TreeLogger.WARN, "Found attribute 'class' on something that isn't a View or Widget.");
-				}
-				boolean readOnly = false;
-				boolean constant = false;
-				boolean earlyLoad = false;
-				boolean isExpr=false;
-				String path = null;
-				ExpressionInfo pathAccessors = null;
-				if (((readOnly = (value.startsWith("${") || (earlyLoad = value.startsWith("@{")) || (constant = value.startsWith("%{")))) || value.startsWith("#{")) && value.endsWith("}")) {
-				    path = value.substring(2, value.length() - 1).trim();
-				    pathAccessors = findAccessors(path, false, true);
-				    isExpr=true;
-				}
-				String valueExpr;
-				ActionInfo action;
-				if ("class".equals(key) && pathAccessors == null) {
-                    generateSetClass(type, name, value);
-                } else if ("style".equals(key)) {
-                    generateSetStyle(type, name, key, value);
-                } else if ("binding".equals(key)) {
-                    generateBinding(type, name, value);
-                } else if (attributeAccessors == null) {
-	                if ("onclick".equals(key)) {
-	                    generateOnClickHandler(type, name, value, pathAccessors);
-	                } else if ("onchange".equals(key)) {
-	                    generateOnChangeListener(type, name, value, pathAccessors);
-	                } else if ("onfocus".equals(key)) {
-	                    generateOnFocusListener(type, name, value, pathAccessors);
-	                } else if ("onblur".equals(key)) {
-	                    generateOnBlurListener(type, name, value, pathAccessors);
-	                } else if ("onPressEnter".equalsIgnoreCase(key)) {
-	                    generateKeyPressHandler(type, name, value, "KEY_ENTER");
-	                } else if ("onPressSpace".equalsIgnoreCase(key)) {
-	                    generateKeyPressHandler(type, name, value, "' '");
-	                } else if ("onPressEscape".equalsIgnoreCase(key)) {
-	                    generateKeyPressHandler(type, name, value, "KEY_ESCAPE");
-	                } else if ("onKeyPress".equalsIgnoreCase(key)) {
-	                    generateKeyPressHandler(type, name, value, null);
-	                } else {
-	                    logger.log(TreeLogger.ERROR, "Unable to find a property '" + key + "' in " + type + "; value is '" + value + "'", null);
-	                    throw new UnableToCompleteException();
-	                }
-				} else if (!attributeAccessors.hasSetter()) {
-				    logger.log(TreeLogger.ERROR, "Unable to find a setter for attribute '" + key + "' in "
-				                    + type + "; value is '" + value + "', getter is "+attributeAccessors.getter+" asyncGetter is "+attributeAccessors.asyncGetter, null);
-				    throw new UnableToCompleteException();
-				} else if (attributeAccessors.type.equals(actionClassType)
-					        && (pathAccessors == null || !pathAccessors.hasGetter()) 
-					        && (action = getAction(value, false)) != null) {
-					if(attributeAccessors.setter==null) {
-						logger.log(TreeLogger.ERROR, "Async setters do not support for Actions yet.", null);
-						throw new UnableToCompleteException();
+				LocalTreeLogger.pushLogger(logger.branch(TreeLogger.INFO, "Attribute "+key+"='"+value+"' in element "+name+" which is a "+type));
+				try {
+					ExpressionInfo baseExpr = new ExpressionInfo(name, name, type, false);
+					ExpressionInfo attributeAccessors = findAccessors(baseExpr, key, true, false);
+					// Automatically propagate some properties to the getViewWidget()
+					if(attributeAccessors == null && key.matches("visible|width|height|title") && type.implementsInterface(commonTypes.view)) 
+						attributeAccessors = findAccessors(baseExpr, "viewWidget."+key, true, false);
+					if(key.equals("class")) {
+						if(type.implementsInterface(commonTypes.view))
+							attributeAccessors = findAccessors(baseExpr, "viewWidget.styleName", false, false);
+						else if(type.isSubclassOf(commonTypes.uiObject))
+							attributeAccessors = findAccessors(baseExpr, "styleName", false, false);
+						else
+							logger.log(TreeLogger.WARN, "Found attribute 'class' on something that isn't a View or Widget (a "+type+")");
 					}
-                    sw.println(attributeAccessors.setter + "(" + action.toViewAction() + ");");
-				} else if (path != null
-						&& attributeAccessors.type.isClassOrInterface() != null
-						&& valueClassType.equals(attributeAccessors.type.isClassOrInterface().getErasedType())
-					        && (valueExpr = getFieldValue(path)) != null) {
-					if(attributeAccessors.setter==null) {
-						logger.log(TreeLogger.ERROR, "Async setters not supported for Values yet.", null);
-						throw new UnableToCompleteException();
+					boolean readOnly = false;
+					boolean constant = false;
+					boolean earlyLoad = false;
+					boolean isExpr=false;
+					String path = null;
+					ExpressionInfo pathAccessors = null;
+					if (((readOnly = (value.startsWith("${") 
+							|| (earlyLoad = value.startsWith("@{")) 
+							|| (constant = value.startsWith("%{")))) 
+							|| value.startsWith("#{")) && value.endsWith("}")) {
+					    path = value.substring(2, value.length() - 1).trim();
+					    pathAccessors = findAccessors(path, false, true);
+					    isExpr=true;
 					}
-				    sw.println(attributeAccessors.setter + "(" + valueExpr + ");");
-				} else if (pathAccessors != null && pathAccessors.hasGetter()) {
-				    generateAttributeLoadSave(type, attributeAccessors, pathAccessors, readOnly, constant, earlyLoad);
-				} else if (path != null && (valueExpr = getFieldValue(path)) != null) {
-					ExpressionInfo valueAccessors = findAccessors(new ExpressionInfo(valueExpr, valueClassType, true), "value", true, false);
-					generateAttributeLoadSave(type, attributeAccessors, valueAccessors, readOnly, constant, earlyLoad);
-				} else if(isExpr) {
-					logger.log(TreeLogger.WARN, "Couldn't figure out how to set attribute "+key+" on "+type+"; couldn't find a getter for "+value, null);                    	
-				} else if (attributeAccessors.type.equals(getType("java.lang.String"))) {
-					ExpressionInfo valueAccessors = new ExpressionInfo("\"" + backslashEscape(value) + "\"", getType("java.lang.String"), true);
-					generateAttributeLoadSave(type, attributeAccessors, valueAccessors, true, true, true);
-				} else if (attributeAccessors.type.isEnum() != null) {
-				    final JEnumType et = attributeAccessors.type.isEnum();
-				    final JEnumConstant[] consts = et.getEnumConstants();
-				    boolean found_it = false;
-				    for(JEnumConstant c : consts) {
-				        if(c.getName().equalsIgnoreCase(value)) {
-		                    ExpressionInfo valueAccessors = new ExpressionInfo(et.getQualifiedSourceName()+"."+c.getName(), et, true);
-		                    generateAttributeLoadSave(type, attributeAccessors, valueAccessors, true, true, true);
-		                    found_it = true;
-		                    break;
-				        }
-				    }
-				    if(!found_it) {
-                        logger.log(TreeLogger.ERROR, "Enum constant '" + value + "' not found in enum "+et.getQualifiedSourceName()+" for attribute "+key,
-                            null);
-                        throw new UnableToCompleteException();
-				    }
-				} else if (attributeAccessors.type.equals(getType("java.lang.Boolean"))) {
-				    if (!"true".equals(value) && !"false".equals(value)) {
-				        logger.log(TreeLogger.ERROR, "Boolean attribute '" + key + "' should be true or false; got '"+value+"'",
-				                        null);
-				        throw new UnableToCompleteException();
-				    }
-					ExpressionInfo valueAccessors = new ExpressionInfo("Boolean." + value.toUpperCase(), attributeAccessors.type, true);
-					generateAttributeLoadSave(type, attributeAccessors, valueAccessors, true, true, true);
-				} else if (attributeAccessors.type == JPrimitiveType.BOOLEAN) {
-				    if (!"true".equals(value) && !"false".equals(value)) {
-				        logger.log(TreeLogger.ERROR, "Boolean attribute '" + key + "' should be true or false; got '"+value+"'",
-				                        null);
-				        throw new UnableToCompleteException();
-				    }
-					ExpressionInfo valueAccessors = new ExpressionInfo(value, attributeAccessors.type, true);
-					generateAttributeLoadSave(type, attributeAccessors, valueAccessors, true, true, true);
-				} else if (attributeAccessors.type == JPrimitiveType.CHAR) {
-					ExpressionInfo valueAccessors = new ExpressionInfo("'"+backslashEscape(value)+"'", attributeAccessors.type, true);
-					generateAttributeLoadSave(type, attributeAccessors, valueAccessors, true, true, true);					
-				} else if (attributeAccessors.type.isPrimitive() != null) {
-					ExpressionInfo valueAccessors = new ExpressionInfo(value, attributeAccessors.type, true);
-					generateAttributeLoadSave(type, attributeAccessors, valueAccessors, true, true, true);
-				} else if (attributeAccessors.type.equals(getType("java.lang.Class"))) {
-				    try {
-				    	ExpressionInfo valueAccessors = new ExpressionInfo(types.getType(value).getQualifiedSourceName()
-				            + ".class", attributeAccessors.type, true);
-				    	generateAttributeLoadSave(type, attributeAccessors, valueAccessors, true, true, true);
-				    } catch (NotFoundException caught) {
-				        logger.log(TreeLogger.ERROR, "Unable to find class '" + value + "' for class attribute '"
-				                        + key + "'", null);
-				        throw new UnableToCompleteException();
-				    }
-				} else {
-					if(path != null) {
-				    	logger.log(TreeLogger.WARN, "Couldn't figure out how to set attribute "+key+" on "+type+"; couldn't find a getter for "+value, null);                    		
+					String valueExpr;
+					ActionInfo action;
+					if ("class".equals(key) && pathAccessors == null) {
+	                    generateSetClass(type, name, value);
+	                } else if ("style".equals(key)) {
+	                    generateSetStyle(type, name, key, value);
+	                } else if ("binding".equals(key)) {
+	                    generateBinding(type, name, value);
+	                } else if (attributeAccessors == null) {
+		                if ("onclick".equals(key)) {
+		                    generateOnClickHandler(type, name, value, pathAccessors);
+		                } else if ("onchange".equals(key)) {
+		                    generateOnChangeListener(type, name, value, pathAccessors);
+		                } else if ("onfocus".equals(key)) {
+		                    generateOnFocusListener(type, name, value, pathAccessors);
+		                } else if ("onblur".equals(key)) {
+		                    generateOnBlurListener(type, name, value, pathAccessors);
+		                } else if ("onPressEnter".equalsIgnoreCase(key)) {
+		                    generateKeyPressHandler(type, name, value, "KEY_ENTER");
+		                } else if ("onPressSpace".equalsIgnoreCase(key)) {
+		                    generateKeyPressHandler(type, name, value, "' '");
+		                } else if ("onPressEscape".equalsIgnoreCase(key)) {
+		                    generateKeyPressHandler(type, name, value, "KEY_ESCAPE");
+		                } else if ("onKeyPress".equalsIgnoreCase(key)) {
+		                    generateKeyPressHandler(type, name, value, null);
+		                } else {
+		                    logger.log(TreeLogger.ERROR, "Unable to find a property '" + key + "' in " + type + "; value is '" + value + "'", null);
+		                    throw new UnableToCompleteException();
+		                }
+					} else if (!attributeAccessors.hasSetter()) {
+					    logger.log(TreeLogger.ERROR, "Unable to find a setter for attribute '" + key + "' in "
+					                    + type + "; value is '" + value + "', getter is "+attributeAccessors+" asyncGetter is "+attributeAccessors.getAsyncGetter(), null);
+					    throw new UnableToCompleteException();
 					} else {
-						logger.log(TreeLogger.WARN, "Couldn't figure out how to set attribute "+key+" on "+type+" with value "+value+" (did you forget to use ${...}?)", null);
+						final GeneratorTypeInfo attributeType = attributeAccessors.getType();
+						if (attributeType.equals(commonTypes.action)
+							        && (pathAccessors == null || !pathAccessors.hasGetter()) 
+							        && (action = getAction(value, false)) != null) {
+							if(attributeAccessors.hasSynchronousSetter() == false) {
+								logger.log(TreeLogger.ERROR, "Async setters do not support for Actions yet.", null);
+								throw new UnableToCompleteException();
+							}
+						    sw.println(attributeAccessors.callSetter(action.toViewAction()).toString());
+						} else if (path != null // If this is a ${...} or #{...}
+								&& commonTypes.value.equals(attributeType) // and the target attribute accepts a Value object
+							    ) {
+							valueExpr = getFieldValue(path);
+							if(valueExpr == null) {
+								logger.log(TreeLogger.ERROR, "Failed to evaluate expression to construct Value object for "+key+"="+path+" on "+type, null);
+								throw new UnableToCompleteException();
+							}
+							if(attributeAccessors.hasSynchronousSetter() == false) {
+								if(attributeAccessors.hasAsynchronousSetter())
+									logger.log(TreeLogger.ERROR, "Async setters not supported for Value yet; found use of async setter "+attributeAccessors.getAsyncSetter()+" for attribute "+key+" on "+type+" to store value "+path, null);
+								else
+									logger.log(TreeLogger.ERROR, "No setter found for attribute "+key+" on "+type, null);
+								throw new UnableToCompleteException();
+							}
+						    sw.println(attributeAccessors.callSetter(valueExpr).toString());
+						} else if (pathAccessors != null && pathAccessors.hasGetter()) {
+						    generateAttributeLoadSave(type, attributeAccessors, pathAccessors, readOnly, constant, earlyLoad);
+						} else if (path != null && (valueExpr = getFieldValue(path)) != null) {
+							logger.log(TreeLogger.WARN, "Using a Value "+valueExpr+"to read "+path+" for attribute "+key+"="+path);
+							ExpressionInfo valueAccessors = findAccessors(new ExpressionInfo(path, valueExpr, commonTypes.value, true), "value", true, false);
+							generateAttributeLoadSave(type, attributeAccessors, valueAccessors, readOnly, constant, earlyLoad);
+						} else if(isExpr) {
+							logger.log(TreeLogger.WARN, "Couldn't figure out how to set attribute "+key+" on "+type+"; couldn't find a getter for "+value, null);                    	
+						} else if (attributeType.equals(getType("java.lang.String"))) {
+							ExpressionInfo valueAccessors = new ExpressionInfo(path, "\"" + backslashEscape(value) + "\"", getType("java.lang.String"), true);
+							generateAttributeLoadSave(type, attributeAccessors, valueAccessors, true, true, true);
+						} else if (attributeType.isEnum()) {
+							if(attributeType.getEnumMembers().contains(value)) {
+						        ExpressionInfo valueAccessors = new ExpressionInfo(path, attributeType.getParameterizedQualifiedSourceName()+"."+value, attributeType, true);
+						        generateAttributeLoadSave(type, attributeAccessors, valueAccessors, true, true, true);
+						    } else {
+						        logger.log(TreeLogger.ERROR, "Enum constant '" + value + "' not found in enum "+attributeType.getParameterizedQualifiedSourceName()+" for attribute "+key,
+						            null);
+						        throw new UnableToCompleteException();
+						    }
+						} else if (attributeType.equals(getType("java.lang.Boolean"))) {
+						    if (!"true".equals(value) && !"false".equals(value)) {
+						        logger.log(TreeLogger.ERROR, "Boolean attribute '" + key + "' should be true or false; got '"+value+"'",
+						                        null);
+						        throw new UnableToCompleteException();
+						    }
+							ExpressionInfo valueAccessors = new ExpressionInfo(path, "Boolean." + value.toUpperCase(), attributeType, true);
+							generateAttributeLoadSave(type, attributeAccessors, valueAccessors, true, true, true);
+						} else if (attributeType.getName().equals("boolean")) {
+						    if (!"true".equals(value) && !"false".equals(value)) {
+						        logger.log(TreeLogger.ERROR, "Boolean attribute '" + key + "' should be true or false; got '"+value+"'",
+						                        null);
+						        throw new UnableToCompleteException();
+						    }
+							ExpressionInfo valueAccessors = new ExpressionInfo(path, value, attributeType, true);
+							generateAttributeLoadSave(type, attributeAccessors, valueAccessors, true, true, true);
+						} else if (attributeType.getName().equals("char")) {
+							ExpressionInfo valueAccessors = new ExpressionInfo(path, "'"+backslashEscape(value)+"'", attributeType, true);
+							generateAttributeLoadSave(type, attributeAccessors, valueAccessors, true, true, true);					
+						} else if (attributeType.isPrimitive()) {
+							ExpressionInfo valueAccessors = new ExpressionInfo(path, value, attributeType, true);
+							generateAttributeLoadSave(type, attributeAccessors, valueAccessors, true, true, true);
+						} else if (attributeType.equals(getType("java.lang.Class"))) {
+						    try {
+						    	ExpressionInfo valueAccessors = new ExpressionInfo(path, types.getType(value).getQualifiedSourceName()
+									    + ".class", attributeType, true);
+						    	generateAttributeLoadSave(type, attributeAccessors, valueAccessors, true, true, true);
+						    } catch (NotFoundException caught) {
+						        logger.log(TreeLogger.ERROR, "Unable to find class '" + value + "' for class attribute '"
+						                        + key + "'", null);
+						        throw new UnableToCompleteException();
+						    }
+						} else {
+							if(path != null) {
+						    	logger.log(TreeLogger.WARN, "Couldn't figure out how to set attribute "+key+" on "+type+"; couldn't find a getter for "+value, null);                    		
+							} else {
+								logger.log(TreeLogger.WARN, "Couldn't figure out how to set attribute "+key+" on "+type+" with value "+value+" (did you forget to use ${...}?)", null);
+							}
+						}
 					}
+				} finally {
+					LocalTreeLogger.popLogger();
 				}
 			}
 
-			private String generateSetStyle(JClassType type, String name, final String key, final String value)
+			private String generateSetStyle(GeneratorTypeInfo type, String name, final String key, final String value)
 				throws UnableToCompleteException {
 				// Assuming that we either have a View or a Widget ...
 				String widgetExpr;
-				if (implementsInterface(type, getType(View.class.getName()))) {
+				if (type.implementsInterface(commonTypes.view)) {
 				    widgetExpr = name + ".getViewWidget()";
-				} else if (type.isAssignableTo(getType(Widget.class.getName()))) {
+				} else if (type.isSubclassOf(commonTypes.widget)) {
 				    widgetExpr = name;
 				} else {
 				    logger.log(TreeLogger.ERROR, "Don't know how to set the style of a " + type, null);
@@ -1667,12 +1634,12 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				return widgetExpr;
 			}
 
-			private String generateSetClass(JClassType type, String name, final String value)
+			private String generateSetClass(GeneratorTypeInfo type, String name, final String value)
 				throws UnableToCompleteException {
 				String widgetExpr;
-				if (implementsInterface(type, getType(View.class.getName()))) {
+				if (type.implementsInterface(commonTypes.view)) {
 				    widgetExpr = name + ".getViewWidget()";
-				} else if (type.isAssignableTo(getType(Widget.class.getName()))) {
+				} else if (type.isSubclassOf(commonTypes.widget)) {
 				    widgetExpr = name;
 				} else {
 				    logger.log(TreeLogger.ERROR, "Don't know how to set the style of a " + type, null);
@@ -1687,40 +1654,22 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				return widgetExpr;
 			}
 
-			private String generateSetVisible(JClassType type, String name, final String value, ExpressionInfo pathAccessors)	throws UnableToCompleteException {
-				String widgetExpr;
-				if (implementsInterface(type, getType(View.class.getName()))) {
-				    widgetExpr = name + ".getViewWidget()";
-				} else if (type.isAssignableTo(getType(Widget.class.getName()))) {
-				    widgetExpr = name;
-				} else {
-				    logger.log(TreeLogger.ERROR, "Don't know how to set the visibility of a " + type, null);
-				    throw new UnableToCompleteException();
-				}
-				String[] styleNames = value.split("\\s+");
-				for (int i = 0; i < styleNames.length; i++) {
-				    String string = styleNames[i];
-				    sw.println(widgetExpr + ".setVisible(" + pathAccessors.conversionExpr(JPrimitiveType.BOOLEAN) + ");");
-				}
-				return widgetExpr;
-			}
-			
-			private void generateBinding(JClassType type, String name, String value)
+			private void generateBinding(GeneratorTypeInfo type, String name, String value)
 				throws UnableToCompleteException {
 				if(value.startsWith("${") || value.startsWith("#{") || value.startsWith("%{") || value.startsWith("@{")) value = value.substring(2);
 				if(value.endsWith("}")) value = value.substring(0, value.length()-1);
 				
 				ExpressionInfo accessors = findAccessors(value, false, false);
-				if (accessors != null && accessors.setter != null) {
-				    sw.println(accessors.copyStatement(new ExpressionInfo(name, type, false)));
+				if (accessors != null && accessors.hasSetter()) {
+				    sw.println(accessors.copyStatement(new ExpressionInfo(name, name, type, false)));
 				} else {
 				    logger.log(TreeLogger.WARN, "Unable to find a "+(accessors == null?"property":"setter method")+" for binding expression: " + value, null);
 				}
 			}
 
-			private ActionInfo generateOnChangeListener(JClassType type, String name, final String value,
+			private ActionInfo generateOnChangeListener(GeneratorTypeInfo type, String name, final String value,
 				ExpressionInfo pathAccessors) throws UnableToCompleteException {
-				if(!implementsInterface(type, getType(SourcesChangeEvents.class.getName()))) {
+				if(!type.implementsInterface(commonTypes.sourcesChangeEvents)) {
 				    logger.log(TreeLogger.ERROR, "onchange attribute must be on a View/Widget" +
 				    		" that implements SourcesChangeEvents.", null);
 				    throw new UnableToCompleteException();
@@ -1734,9 +1683,9 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				return actionExpr;
 			}
 
-			private ActionInfo generateOnFocusListener(JClassType type, String name, final String value,
+			private ActionInfo generateOnFocusListener(GeneratorTypeInfo type, String name, final String value,
 				ExpressionInfo pathAccessors) throws UnableToCompleteException {
-				if(!implementsInterface(type, getType(SourcesFocusEvents.class.getName()))) {
+				if(!type.implementsInterface(commonTypes.sourcesFocusEvents)) {
 				    logger.log(TreeLogger.ERROR, "onfocus attribute must be on a View/Widget" +
 				    		" that implements SourcesFocusEvents.", null);
 				    throw new UnableToCompleteException();
@@ -1759,9 +1708,9 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				return actionExpr;
 			}
 
-			private ActionInfo generateOnBlurListener(JClassType type, String name, final String value,
+			private ActionInfo generateOnBlurListener(GeneratorTypeInfo type, String name, final String value,
 				ExpressionInfo pathAccessors) throws UnableToCompleteException {
-				if(!implementsInterface(type, getType(SourcesFocusEvents.class.getName()))) {
+				if(!type.implementsInterface(commonTypes.sourcesFocusEvents)) {
 				    logger.log(TreeLogger.ERROR, "onblur attribute must be on a View/Widget" +
 				    		" that implements SourcesFocusEvents.", null);
 				    throw new UnableToCompleteException();
@@ -1784,9 +1733,9 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				return actionExpr;
 			}
 			
-			private ActionInfo generateOnClickHandler(JClassType type, String name, final String value,
+			private ActionInfo generateOnClickHandler(GeneratorTypeInfo type, String name, final String value,
 				ExpressionInfo pathAccessors) throws UnableToCompleteException {
-				if(!implementsInterface(type, getType(SourcesClickEvents.class.getName()))) {
+				if(!type.implementsInterface(commonTypes.sourcesClickEvents)) {
 				    logger.log(TreeLogger.ERROR, "onclick attribute must be on a View/Widget" +
 				    		" that implements SourceClickEvents.", null);
 				    throw new UnableToCompleteException();
@@ -1800,9 +1749,9 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				attachWidgetEventListener(name, actionExpr, "ClickListener", "onClick(Widget sender)", null, value);
 				return actionExpr;
 			}
-			private ActionInfo generateKeyPressHandler(JClassType type, String name, final String value, String keyName)
+			private ActionInfo generateKeyPressHandler(GeneratorTypeInfo type, String name, final String value, String keyName)
 			throws UnableToCompleteException {
-    			if(!implementsInterface(type, getType(SourcesClickEvents.class.getName()))) {
+    			if(!type.implementsInterface(commonTypes.sourcesClickEvents)) {
     			    logger.log(TreeLogger.ERROR, name+" attribute must be on a View/Widget" +
     			    		" that implements SourcesKeyEvents.", null);
     			    throw new UnableToCompleteException();
@@ -1817,44 +1766,50 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 attachWidgetEventListener(name, actionExpr, "KeyboardListenerAdapter", "onKeyPress(Widget sender, char keyCode, int modifiers)", condition, value);
     			return actionExpr;
     		}
-			protected void generateAttributeLoadSave(JClassType type, ExpressionInfo attributeAccessors, ExpressionInfo pathAccessors,
+			protected void generateAttributeLoadSave(GeneratorTypeInfo type, ExpressionInfo attributeAccessors, ExpressionInfo pathAccessors,
 				boolean readOnly, boolean constant, boolean earlyLoad)
 				throws UnableToCompleteException {
-				String loadExpr = attributeAccessors.asyncCopyStatement(pathAccessors, "group.<Void>member()", true);
-				// Put the value into the widget on load()
-				//if(attributeAccessors.getter != null && attributeAccessors.getType().equals(getType(String.class.getName())) && pathAccessors.getter != null) {
-					// It turns out that calling setText() and setValue to the same value is a high-cost operation
-				//	loadExpr = "if(!"+attributeAccessors.getter+".equals("+pathAccessors.conversionExpr(attributeAccessors.getType())+")) { "+loadExpr+" }";
-				//}
-				// Constant values stored to a non-async setter are set during initialization
-				boolean constantLoad = (constant || pathAccessors.isConstant()) 
-					&& pathAccessors.hasSynchronousGetter() 
-					&& attributeAccessors.hasSynchronousSetter();
-				boolean asyncLoad = pathAccessors.asyncGetter != null || attributeAccessors.asyncSetter != null;
-				if(constantLoad)
-					sw.println(loadExpr);
-				else if(earlyLoad) {
-				    if(asyncLoad)
-				        earlyAsyncLoads.add(loadExpr);
-				    else
-				        earlyLoads.add(loadExpr);
-				} else if(asyncLoad)
-				    asyncLoads.add(loadExpr);
-				else
-					loads.add(loadExpr);
-				if (!(readOnly || constant)) {
-				    if (!attributeAccessors.hasGetter()) {
-				        logger.log(TreeLogger.ERROR, "Missing matching getter for attribute '"+attributeAccessors.setter+"' on "+type+"; use ${} to set the value only.  Value is "+pathAccessors, null);
-				        throw new UnableToCompleteException();
-				    } else if(!pathAccessors.hasSetter()) {
-				        logger.log(TreeLogger.ERROR, "Missing matching setter for '" + pathAccessors + "' for attribute '"+attributeAccessors.setter+"' on "+type+"; use ${} to set the value only.", null);
-				        throw new UnableToCompleteException();
-				    }
-				    
-				    // If it's a two-way affair, copy the value back on save()
-				    String saveExpr = pathAccessors.asyncCopyStatement(attributeAccessors, "group.<Void>member()", true);
-				    saves.add(saveExpr);
+				LocalTreeLogger.pushLogger(logger.branch(TreeLogger.INFO, "Attribute load/save for "+attributeAccessors.setterString()+(readOnly?" = ":" <=> ")+pathAccessors));
+				try {
+					String loadExpr = attributeAccessors.asyncCopyStatement(pathAccessors, "group.<Void>member()", true);
+					// Put the value into the widget on load()
+					//if(attributeAccessors.getter != null && attributeAccessors.getType().equals(getType(String.class.getName())) && pathAccessors.getter != null) {
+						// It turns out that calling setText() and setValue to the same value is a high-cost operation
+					//	loadExpr = "if(!"+attributeAccessors.getter+".equals("+pathAccessors.conversionExpr(attributeAccessors.getType())+")) { "+loadExpr+" }";
+					//}
+					// Constant values stored to a non-async setter are set during initialization
+					boolean constantLoad = (constant || pathAccessors.isConstant()) 
+						&& pathAccessors.hasSynchronousGetter() 
+						&& attributeAccessors.hasSynchronousSetter();
+					boolean asyncLoad = pathAccessors.hasAsynchronousGetter() || attributeAccessors.hasAsynchronousSetter();
+					if(constantLoad)
+						sw.println(loadExpr);
+					else if(earlyLoad) {
+					    if(asyncLoad)
+					        earlyAsyncLoads.add(loadExpr);
+					    else
+					        earlyLoads.add(loadExpr);
+					} else if(asyncLoad)
+					    asyncLoads.add(loadExpr);
+					else
+						loads.add(loadExpr);
+					if (!(readOnly || constant)) {
+					    if (!attributeAccessors.hasGetter()) {
+					        logger.log(TreeLogger.ERROR, "Missing matching getter for attribute '"+attributeAccessors.getSetter()+"' on "+type+"; use ${} to set the value only.  Value is "+pathAccessors, null);
+					        throw new UnableToCompleteException();
+					    } else if(!pathAccessors.hasSetter()) {
+					        logger.log(TreeLogger.ERROR, "Missing matching setter for '" + pathAccessors + "' for attribute '"+attributeAccessors.getSetter()+"' on "+type+"; use ${} to set the value only.", null);
+					        throw new UnableToCompleteException();
+					    }
+					    
+					    // If it's a two-way affair, copy the value back on save()
+					    String saveExpr = pathAccessors.asyncCopyStatement(attributeAccessors, "group.<Void>member()", true);
+					    saves.add(saveExpr);
+					}
+				} finally {
+					LocalTreeLogger.popLogger();
 				}
+				
 			}
 
             private void attachWidgetEventListener(String name, ActionInfo action, String listenerClass,
@@ -1878,8 +1833,11 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 sw.println("});");
             }
 
-            private void generateContents(Element elem, JClassType type, String name)
+            private void generateContents(Element elem, GeneratorTypeInfo type, String name)
                             throws UnableToCompleteException {
+            	// Assuming for now this is an existing GWT defined class; not the one we're generating and not a primitive type
+        		final JClassType classType = ((JClassTypeWrapper)type).getClassType();
+        		
                 // Now, if there are nested tags, decide what to do with them
                 // We do this before the attributes, because we want to call
                 // setViewFactory() before setting the other
@@ -1891,13 +1849,14 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             		boolean foundSetter=false;
                 	if(childElems.size() > 0) {
                     	// TODO Currently this is order-dependent for overloads :-(
-                		JMethod[] methods = getAllMethods(type, false);
+						JMethod[] methods = classType.getOverridableMethods();
                 		ArrayList<Element> missingSetter=new ArrayList<Element>();
                 		ArrayList<ArrayList<JMethod>> missingSetterCandidates = new ArrayList<ArrayList<JMethod>>();
                     	for(int i=0; i < childElems.size(); i++) {
                     		Element childElem = childElems.get(i);
-                    		String setMethod = "set"+capitalize(childElem.getLocalName());
-                    		String addMethod = "add"+capitalize(childElem.getLocalName());
+                    		String capChildElementName = capitalize(childElem.getLocalName());
+							String setMethodName = "set"+capChildElementName;
+                    		String addMethodName = "add"+capChildElementName;
                     		boolean elemProcessed = false;
                     		ArrayList<JMethod> foundSetters = new ArrayList<JMethod>(methods.length);
                     		for (int j = 0; j < methods.length; j++) {
@@ -1907,8 +1866,8 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
     							if(methodNameAnnotation != null) {
     								if(!methodNameAnnotation.value().equalsIgnoreCase(childElem.getLocalName()))
     									continue;
-    							} else if(!method.getName().equalsIgnoreCase(setMethod) &&
-    								!method.getName().equalsIgnoreCase(addMethod)) {
+    							} else if(!method.getName().equalsIgnoreCase(setMethodName) &&
+    								!method.getName().equalsIgnoreCase(addMethodName)) {
     								continue;
     							}
     							foundSetters.add(method);
@@ -1972,6 +1931,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
     							break;
     						}
                     		if(!elemProcessed) {
+                    			//System.out.println("NOT PROCESSED: " + elem);
                     			missingSetter.add(childElem);
                     			missingSetterCandidates.add(foundSetters);
                     		}
@@ -1990,8 +1950,8 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                     // setView() - set a view directly
                     // setViewFactory() - set a view factory (used by lists)
                 	if(!foundSetter) {
-                        boolean factory = findMethod(type, "setViewFactory", 1, false, false)!=null;
-                        boolean widget = !factory && findMethod(type, "setWidget", 1, false, false)!=null;
+                        boolean factory = type.hasMethodMatching("setViewFactory", true, null, commonTypes.viewFactory);
+                        boolean widget = !factory && type.hasMethodMatching("setWidget", true, null, commonTypes.widget);
                         
                         String fieldName = "sv"+memberDecls.size();
                         String id = elem.getAttributeValue("id");
@@ -2000,10 +1960,10 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                         }
                     	String createViewExpr = generateCreateSubview(elem, factory, false, id);
                         final boolean modelView = elem.getAttribute("with-model") != null;
-                        generateField(fieldName, getType(factory?ViewFactory.class.getName():
-                                                          //widget?Widget.class.getName():
-                                                          modelView?ModelView.class.getName():
-                                                          View.class.getName()));
+                        generateField(fieldName, factory?commonTypes.viewFactory:
+                                                  //widget?commonTypes.widget:
+                                                  modelView?commonTypes.modelView:
+                                                  commonTypes.view);
                         sw.println(fieldName + " = " + createViewExpr + ";");
 						if (factory) {
                             sw.println(name + ".setViewFactory("+fieldName+");");
@@ -2012,8 +1972,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 							subviewLoads.add(fieldName + ".load(group.<Void>member());");
                             saves.add(fieldName + ".save(group.<Void>member());");
                             clearFields.add(fieldName + ".clearFields();");
-                        } else if (findMethod(type, "setView", 1, false, false) != null
-                        	 || (modelView && findMethod(type, "setView", 1, false, false) != null)) {
+                        } else if (type.hasMethodMatching("setView", true, null, commonTypes.view)) {
                             sw.println(name + ".setView("+fieldName+");");                        	
                         } else if(childElems.size() > 0){
                             logger.log(TreeLogger.WARN,
@@ -2097,8 +2056,10 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 //						}
 //					}
 //				} else {
-					String className = addSubviewClass(elem);
-					createViewExpr = getRootView(factory)+".maybeEnsureDebugId(\""+id+"\", new "+className+"("+myClass.getQualifiedSourceName()+".this)).init()";
+					String className = enqueueSubviewClass(elem);
+					String thisViewExpr = myClass.getParameterizedQualifiedSourceName()+".this";
+					String rootViewExpr = parentViewClass != null ? ROOT_VIEW_FIELD_NAME : thisViewExpr; // If we have no parent, we are the root view
+					createViewExpr = getRootView(factory) + ".maybeEnsureDebugId(\"" + id + "\", new " + className + "(" + thisViewExpr + ", " + rootViewExpr + ")).init()";
 //				}
 				if(factory)
 					createViewExpr = "new ViewFactory() { public View createView() { return "+createViewExpr+"; } }";
@@ -2148,12 +2109,13 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 					}
 					String valueExpr;
 					ActionInfo action;
-					if (parameter.getType().equals(actionClassType)
+					if (parameter.getType().isClass() != null 
+						&& parameter.getType().isClass().isAssignableTo(commonTypes.action.getJClassType())
 				        && (pathAccessors == null || !pathAccessors.hasGetter()) 
 				        && (action = getAction(value, true)) != null) {
 						paramString = action.toViewAction();
 					} else if (path != null
-							    && valueClassType.equals(parameter.getType().isClassOrInterface().getErasedType())
+							    && commonTypes.value.getJClassType().getErasedType().equals(parameter.getType().isClassOrInterface().getErasedType())
 						        && (valueExpr = getFieldValue(path)) != null) {
 						paramString = valueExpr;
 					} else if (pathAccessors != null) {
@@ -2161,107 +2123,125 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 							logger.log(TreeLogger.ERROR, "Async/write-only values when calling a setter with multiple parameters is not supported currently.", null);
 							throw new UnableToCompleteException();
 						}
-						paramString = pathAccessors.conversionExpr(parameter.getType());
+						paramString = pathAccessors.conversionExpr(JTypeWrapper.wrap(parameter.getType()));
 						if(paramString == null) {
-							logger.log(TreeLogger.ERROR, "Cannot convert "+path+" to "+parameter.getType()+" for call to "+method, null);
+							logger.log(TreeLogger.ERROR, "Cannot convert "+pathAccessors.getType()+" '"+path+"' to "+parameter.getType()+" for call to "+method, null);
 							throw new UnableToCompleteException();
 						}
-					} else if(parameter.getType().equals(getType("java.lang.String"))) {
+					// If we get here, there's no "${...}" or "#{...}" so it's a constant value / string or an action
+					} else if(parameter.getType().getQualifiedSourceName().equals("java.lang.String")) {
 					    if(value.startsWith("${") || value.startsWith("%{") || value.startsWith("#{") || value.startsWith("@{"))
 					        System.out.println("Warning: expression "+value+" treated as string...");
 						paramString = '"'+escape(value)+'"';
 					} else {
-						logger.log(TreeLogger.ERROR, "Cannot convert "+value+" to "+parameter.getType()+" for call to "+method, null);
+						logger.log(TreeLogger.ERROR, "Cannot convert '"+value+"' to "+parameter.getType()+" for call to "+method, null);
 						throw new UnableToCompleteException();
 					}
 				}
 				return paramString;
 			}
 
-            protected String addSubviewClass(Element childElem) {
-                String className = myClass.getSimpleSourceName()+ "S" + subviewClasses.size();
-                subviewClasses.add(childElem);
+			/**
+			 * Add a subview to the list of subview that need to be generated after this class.
+			 */
+            protected String enqueueSubviewClass(Element childElem) {
+            	String className = subviewClassName(childElem.getLocalName());
+				subviewsToGenerate.add(new SubviewToGenerate(className, childElem, myClass));
                 return className;
             }
 
+			protected String subviewClassName(String localName) {
+            	subviewNumber++;
+				StringBuffer sb = new StringBuffer();
+				char[] chars = localName.toCharArray();
+            	boolean capNext = true;
+            	for(char ch : chars) {
+            		if(ch == '_' || ch == '-') {
+            			capNext = true;
+            			continue;
+            		}
+            		if(Character.isJavaIdentifierPart(ch)) {
+                		if(capNext) { ch = Character.toUpperCase(ch); capNext = false; }
+            			sb.append(ch);
+            		}
+            	}
+            	sb.append(subviewNumber);
+            	String className = sb.toString();
+				return className;
+			}
+
             /**
-             * Return an expression which is a value that accesses the given field.
+             * Return an expression which is a Value that accesses the given field.
              * 
-             * @param path
-             * @return
-             * @throws UnableToCompleteException
+             * A Value is an object that can be given to a class to dynamically load
+             * or set a value without knowing much about it - a kind of wrapper for
+             * a variable.
              */
             protected String getFieldValue(String path) throws UnableToCompleteException {
-                String existingValue = values.get(path);
-                if (existingValue != null) {
-                    return existingValue;
+            	LocalTreeLogger.pushLogger(logger.branch(TreeLogger.INFO, "Trying to create a Value object for path '"+path+"'"));
+            	try {
+	                String existingValue = values.get(path);
+	                if (existingValue != null) {
+	                    return existingValue;
+	                }
+	                ExpressionInfo accessors = findAccessors(path, true, true);
+	                if (accessors != null) {
+	                	if(commonTypes.value.equals(accessors.getType())) {
+	                		if(!accessors.hasSynchronousGetter()) {
+	                			logger.log(TreeLogger.ERROR, "Can't handle an async Value getter yet; for "+path, null);
+	                			throw new UnableToCompleteException();
+	                    	}
+	                		return accessors.getterExpr();
+	                	}
+	                    String valueName = "value" + values.size();
+	                    values.put(path, valueName);
+						generateField(valueName, commonTypes.value);
+	                    sw.println(valueName + " = new Value() { ");
+	                    if(accessors.hasSynchronousGetter()) {
+	                        sw.indentln("public void getValue(AsyncCallback callback) { callback.onSuccess(" + accessors.getterExpr() + "); } ");
+	                    } else if(accessors.hasAsynchronousGetter()) {
+	                        sw.indentln("public void getValue(AsyncCallback callback) {\n\t\t\t\t"+accessors.callAsyncGetter("callback")+";\n\t\t\t\t} ");
+	                    } else {
+	                        sw.indentln("public void getValue(AsyncCallback callback) { callback.onFailure(null); } ");
+	                    }
+	                    if (accessors.hasSynchronousSetter()) {
+	                        sw.indentln("public void setValue(Object value, AsyncCallback callback) { try {\n\t\t\t\t" +
+	                        		accessors.callSetter(ExpressionInfo.converter("value", RuntimeClassWrapper.OBJECT, accessors.getType())) +
+	                        				"\n\t\t\t\tcallback.onSuccess(null); } catch(Throwable caught) { callback.onFailure(caught); } }");
+	                    } else if(accessors.hasAsynchronousSetter()) {
+	                        sw.indentln("public void setValue(Object value, AsyncCallback callback) { " + 
+	                        		accessors.callAsyncSetter(ExpressionInfo.converter("value", RuntimeClassWrapper.OBJECT, accessors.getType()), "callback") 
+	                        		+"}");
+	                        
+	                    } else {
+	                        sw.indentln("public void setValue(Object value, AsyncCallback callback) { callback.onFailure(null); }");
+	                    }
+	                    sw.println("};");
+	                    return valueName;
+	                }
+	                /*
+	                 * ExpressionInfo metadata = getFieldMetadata(path); if(metadata != null) { String
+	                 * valueName = "value"+values.size(); values.put(path, valueName);
+	                 * addDeclaration(getType(Value.class.getName()), valueName); sw.println(valueName+" =
+	                 * "+metadata.getter+".getMetadata().getFieldByPath(\""+metadata.setter+"\").bindToModel(new
+	                 * Value() {"); sw.indentln("public void getValue(AsyncCallback callback) {
+	                 * callback.onSuccess("+metadata.getter+"); }"); sw.indentln("public void
+	                 * setValue(Object value, AsyncCallback callback) { throw new Error(); }");
+	                 * sw.println("});"); return valueName; }
+	                 */
+	                return null;
+                } finally {
+                	LocalTreeLogger.popLogger();
                 }
-                ExpressionInfo accessors = findAccessors(path, true, false);
-                if (accessors != null) {
-                	if(accessors.type.isClassOrInterface() != null && valueClassType.equals(accessors.type.isClassOrInterface().getErasedType())) {
-                		if(!accessors.hasSynchronousGetter()) {
-                			logger.log(TreeLogger.ERROR, "Can't handle an async Value getter yet; for "+path, null);
-                			throw new UnableToCompleteException();
-                    	}
-                		return accessors.getterExpr();
-                	}
-                    String valueName = "value" + values.size();
-                    values.put(path, valueName);
-					generateField(valueName, valueClassType);
-                    sw.println(valueName + " = new Value() { ");
-                    if(accessors.hasSynchronousGetter()) {
-                        sw.indentln("public void getValue(AsyncCallback callback) { callback.onSuccess(" + accessors.getterExpr() + "); } ");
-                    } else if(accessors.asyncGetter != null) {
-                        sw.indentln("public void getValue(AsyncCallback callback) { "+callAsyncGetter(accessors.asyncGetter, "callback")+"; } ");
-                    } else {
-                        sw.indentln("public void getValue(AsyncCallback callback) { callback.onFailure(null); } ");
-                    }
-                    if (accessors.setter != null) {
-                        sw.indentln("public void setValue(Object value, AsyncCallback callback) { try {" +
-                        		"" + accessors.setter+"("+converter("value", types.getJavaLangObject(), accessors.type)+");" +
-                        				"callback.onSuccess(null); " +
-                       			"} catch(Throwable caught) { callback.onFailure(caught); } }");
-                    } else if(accessors.asyncSetter != null) {
-                        sw.indentln("public void setValue(Object value, AsyncCallback callback) { " + accessors.setter
-                            + "("+converter("value", types.getJavaLangObject(), accessors.type)+", callback); }");
-                    } else {
-                        sw.indentln("public void setValue(Object value, AsyncCallback callback) { callback.onFailure(null); }");
-                    }
-                    sw.println("};");
-                    return valueName;
-                }
-                /*
-                 * ExpressionInfo metadata = getFieldMetadata(path); if(metadata != null) { String
-                 * valueName = "value"+values.size(); values.put(path, valueName);
-                 * addDeclaration(getType(Value.class.getName()), valueName); sw.println(valueName+" =
-                 * "+metadata.getter+".getMetadata().getFieldByPath(\""+metadata.setter+"\").bindToModel(new
-                 * Value() {"); sw.indentln("public void getValue(AsyncCallback callback) {
-                 * callback.onSuccess("+metadata.getter+"); }"); sw.indentln("public void
-                 * setValue(Object value, AsyncCallback callback) { throw new Error(); }");
-                 * sw.println("});"); return valueName; }
-                 */
-                return null;
             }
 
             protected String getRootView(boolean innerClass) throws UnableToCompleteException {
-            	if(!subviewClass) {
+            	if(parentViewClass == null) {
             		if(innerClass) return myClass.getSimpleSourceName()+".this";
             		return "this";
+            	} else {
+            		return ROOT_VIEW_FIELD_NAME;
             	}
-            	JClassType classToSearch = myClass;
-            	String expr = null;
-            	while(classToSearch != null) {
-            		classToSearch = classToSearch.getEnclosingType();
-            		if(classToSearch == null) {
-            			logger.log(TreeLogger.ERROR, myClass+" is not an inner class of the root view "+rootClassType+", but we were expecting it to be", new Exception());
-            			throw new UnableToCompleteException();
-            		}
-            		expr = (expr!=null?expr+".":"")+"my"+classToSearch.getSimpleSourceName();
-            		if(classToSearch == rootClassType) {
-            			return expr;
-            		}
-            	}
-            	throw new Error("Generator is not an inner class of the root view !?!?");
             }
             
 			ActionInfo getAction(String expr, boolean innerClass) throws UnableToCompleteException {
@@ -2273,7 +2253,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                         logger.log(TreeLogger.ERROR, "Unable to resolve target view expression '"+matcher.group(1)+"' for action '"+expr+"'", null);
                         throw new UnableToCompleteException();
                     }
-                    targetView = targetViewExpr.getter;
+                    targetView = targetViewExpr.getGetter();
                     expr = matcher.group(2);
                 } else {
                     targetView = getRootView(innerClass);
@@ -2333,7 +2313,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 	return new ActionInfo(path, null, true, true, targetView, saveBefore, loadAfter, 0);
                 }
                 
-                String[] args = null;
+                String[] args;
                 String preargs = path;
                 int argstart;
                 if (path.endsWith(")") && (argstart = smartIndexOf(path, '(')) != -1) {
@@ -2351,7 +2331,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 	String left = path.substring(0, assignmentIndex).trim();
                 	String right = path.substring(assignmentIndex+1).trim();
                 	ExpressionInfo lvalue = findAccessors(left, true, true);
-                	if(lvalue == null || (lvalue.setter == null && lvalue.asyncSetter == null)) {
+                	if(lvalue == null || (lvalue.hasSynchronousSetter() == false && lvalue.hasAsynchronousSetter() == false)) {
                 		logger.log(TreeLogger.ERROR, "Can't find any setter for the left side of "+path, null);
                 		throw new UnableToCompleteException();
                 	}
@@ -2360,7 +2340,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 		logger.log(TreeLogger.ERROR, "Can't find any getter for the right side of "+path, null);
                 		throw new UnableToCompleteException();
                 	}
-                	if(lvalue.asyncSetter == null && rvalue.asyncGetter == null) {
+                	if(lvalue.hasAsynchronousSetter() == false && rvalue.hasAsynchronousGetter() == false) {
                         return new ActionInfo(path, lvalue.copyStatement(rvalue), false, false, targetView, saveBefore, loadAfter, 0);
                 	} else {
                 	    return new ActionInfo(path, lvalue.asyncCopyStatement(rvalue, "callback", false), false, true, targetView, saveBefore, loadAfter, 0);
@@ -2370,7 +2350,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                     String objectPath;
                     String methodName;
                     String getter;
-                    final JClassType objectType;
+                    final GeneratorTypeInfo objectType;
                     boolean searchingThis = (objectPathEnd == -1);
                     if (searchingThis) {
                         objectPath = getter = "this";
@@ -2380,60 +2360,48 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                         objectPath = preargs.substring(0, objectPathEnd);
                         methodName = preargs.substring(objectPathEnd+1);
                         ExpressionInfo accessors = findAccessors(objectPath, true, false);
-                        if (accessors == null || !accessors.hasSynchronousGetter() || accessors.type == null) {
+                        if (accessors == null || !accessors.hasSynchronousGetter() || accessors.getType() == null) {
                             logger.log(TreeLogger.ERROR, "Can't find any object for " + objectPath + " for action "+ path, null);
                             return null;
                         }
                         getter = accessors.getterExpr();
-                        objectType = accessors.type.isClassOrInterface();
-                        if (objectType == null) {
-                            logger.log(TreeLogger.ERROR, "Can't call a method on a non-class object of type "
-                                            + accessors.type + " for expression " + path, null);
+                        objectType = accessors.getType();
+                        if (objectType.isPrimitive()) {
+                            logger.log(TreeLogger.ERROR, "Can't call a method on a primitive "
+                                            + accessors.getType() + " for expression " + path, null);
                             throw new UnableToCompleteException();
                         }
                     }
     
                     boolean asyncMethod = false;
-                    JMethod actionMethod = null;
-                	JClassType searchType = objectType;
+                    GeneratorMethodInfo actionMethod = null;
+                    GeneratorTypeInfo searchType = objectType;
+                    if(searchType == null) {
+                        logger.log(TreeLogger.ERROR, "Can't call a method on a " + objectType + " for expression " + path, null);
+                        throw new UnableToCompleteException();
+                    }
                     final String asyncCallbackClassName = AsyncCallback.class.getName();
                     for(;;) {
-                        JMethod[] methods = getAllMethods(searchType, false);
-                        //if(methodName.equals("getContact")) System.out.println("Looking for "+methodName+" in "+searchType+" with "+methods.length+" methods to search");
-                        for (int i = 0; i < methods.length; i++) {
-                            JMethod method = methods[i];
-                            if (method.getName().equals(methodName)) {
-                            	//System.out.println("Found "+method+" "+method.getName()+" in "+searchType+" getter "+getter+" looking for "+methodName+" with "+args.length+" parameters");
-                                int nParams = method.getParameters().length;
-                                if(nParams == 0) {
-                                	if(args.length == 0) {
-                                		actionMethod = method;
-                                		asyncMethod = false;
-                                		break;
-                                	}
-                                } else {
-                                    final JType lastParameterType = method.getParameters()[nParams - 1].getType();
-                                    //System.out.println("Last parameter type is "+lastParameterType.getQualifiedSourceName()+" == async callback? "+lastParameterType.getQualifiedSourceName().equals(asyncCallbackClassName));
-									asyncMethod = lastParameterType.getQualifiedSourceName().equals(asyncCallbackClassName);
-                                    if (asyncMethod) {
-                                        if (nParams == args.length + 1) {
-                                            actionMethod = method;
-                                            break;
-                                        }
-                                    } else if (nParams == args.length) {
-                                        actionMethod = method;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                        if(actionMethod != null)
-                        	break;
-                        if(searchingThis && subviewClass) {
-                        	searchType = searchType.getEnclosingType();
+                    	// Look for a synchronous action method with the right number of parameters
+                    	actionMethod = searchType.findMethodMatching(methodName, PrimitiveTypeInfo.VOID, new GeneratorTypeInfo[args.length]);
+                    	if(actionMethod != null) {
+                    		asyncMethod = false;
+                    		break;
+                    	}
+                    	
+                    	// Look for the method with one extra parameter which is the async callback
+                    	GeneratorTypeInfo[] asyncParamTypes = new GeneratorTypeInfo[args.length+1];
+                    	asyncParamTypes[args.length] = commonTypes.asyncCallback;
+						actionMethod = searchType.findMethodMatching(methodName, PrimitiveTypeInfo.VOID, asyncParamTypes );
+                    	if(actionMethod != null) {
+                    		asyncMethod = true;
+                    		break;
+                    	}
+                        if(searchingThis && searchType instanceof GeneratedInnerClassInfo) {
+                        	searchType = searchType.getFieldType(PARENT_VIEW_FIELD_NAME, true);
                         	if(searchType == null)
                         		break;
-                        	getter = getter+".my"+searchType.getSimpleSourceName();
+                        	getter = getter+"."+PARENT_VIEW_FIELD_NAME;
                         	//System.out.println("Looking up into "+searchType+" getter "+getter+" for "+methodName);
                         } else break;
                     }
@@ -2448,11 +2416,10 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                         String arg = args[i].trim();
                         ExpressionInfo argAccessors = findAccessors(arg, true, false);
                         if (argAccessors == null) {
-                            logger.log(TreeLogger.ERROR, "Couldn't evaluate '" + arg + "' as argument to '" + path + "'",
-                                            null);
+                            logger.log(TreeLogger.ERROR, "Couldn't evaluate '" + arg + "' as argument to '" + path + "'", null);
                             throw new UnableToCompleteException();
                         }
-                        args[i] = argAccessors.conversionExpr(actionMethod.getParameters()[i].getType());
+                        args[i] = argAccessors.conversionExpr(actionMethod.getParameterTypes()[i]);
                     }
     
                     String methodCall;
@@ -2481,359 +2448,374 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             }
 
             /**
-             * Find a Field object for the given path in the given type. This will carry on through
-             * fields and accessors, choosing the deepest object that implements HasMetadata, then
-             * call getMetadata() on it and use that to fetch the path.
+             * Find getter and setter for the given expression (path) relative to the given base expression (base).
              * 
-             * @param inType
-             *                The type of the object to search
-             * @param expr
-             *                The expression which yields an object of that type, with a trailing
-             *                '.'
-             * @param path
-             *                The remainder of the path to search
-             * @return A HasMetadata which has the field, plus the remaining path to pass to
-             *         getMetadata().getFieldByPath(...)
-             * @throws UnableToCompleteException
-             *                 If an error occurs
+             * @param base Starting point, used as the prefix for the returned expression info
+             * @param path Path relative to that starting point
+             * @param matchAsync If true, allow an asynchronous getter and/or setter to be returned
+             * @param staticAccess If true, use static methods instead if instance methods
+             * @return A new ExpressionInfo representing whatever getter and setter could be found
+             * @throws UnableToCompleteException If it fails to figure out the expression
              */
-            protected ExpressionInfo getFieldMetadata(JClassType inType, String expr, String path)
-                            throws UnableToCompleteException {
-                // System.out.println("findField("+inType+", "+expr+",
-                // "+path+")");
-                if (inType == null)
-                    return null;
-                String[] splitPath = path.split("\\.", 2);
-                String name = splitPath[0].trim();
-                if (name.length() == 0) {
-                    // TODO Could/should we convert this into a field?
-                    return null;
-                }
-                if (splitPath.length > 1) {
-                    JField field = findField(inType, name);
-                    // System.out.println("field is "+field);
-                    if (field != null) {
-                        if (field.isPublic()
-                                        || (field.isPrivate() && inType == baseType)
-                                        || (field.isProtected() && inType.isAssignableFrom(baseType))
-                                        || (field.isDefaultAccess() && inType.getPackage()
-                                                        .equals(baseType.getPackage()))) {
-                            return getFieldMetadata(field.getType().isClassOrInterface(), expr + "." + name,
-                                            splitPath[1]);
-                        } else {
-                            String methodName = "get" + capitalize(name);
-                            JMethod method = findMethod(inType, name, new JType[] {});
-                            if (method != null)
-                                return getFieldMetadata(field.getType().isClass(), expr + "." + methodName + "()",
-                                                splitPath[1]);
-                        }
-                    }
-                }
-                if (implementsInterface(inType, getType("com.habitsoft.kiyaa.metamodel.HasMetadata"))) {
-                    return new ExpressionInfo(expr, path, getType("java.lang.Object"), false, false, false);
-                }
-                return null;
-            }
-
-            /**
-             * Find a Field object given an in-page path. See getFieldMetadata(JClassType inType,
-             * String expr, String path) for details.
-             */
-            protected ExpressionInfo getFieldMetadata(String path) throws UnableToCompleteException {
-                return getFieldMetadata(baseType, "this", path);
-            }
-
-            protected JField findField(JClassType cls, String name) {
-                // System.out.println("findField("+cls+", "+name+")");
-                JField field = cls.findField(name);
-                if (field != null)
-                    return field;
-                JClassType superclass = cls.getSuperclass();
-                if (superclass == null)
-                    return null;
-                return findField(superclass, name);
-            }
-
             protected ExpressionInfo findAccessors(ExpressionInfo base, final String path, final boolean matchAsync, boolean staticAccess) throws UnableToCompleteException {
-                JClassType inType = base.type.isClassOrInterface();
-                if(inType == null) {
-                    logger.log(TreeLogger.ERROR, "Can't find any member inside of non-class type "+base.type+" with path "+path);
-                    throw new UnableToCompleteException();
-                }
-                String expr = base.getGetter();
-                
-                //System.out.println("findAccessors("+inType+", '"+expr+"', '"+path+"', "+matchAsync+")");
-                String[] splitPath = smartSplit(path, '.', 2);
-                String name = splitPath[0];
-                if (name.length() == 0) {
-                    return null;
-                }
-                String getter;
-                boolean asyncGetter;
-                String setter;
-                boolean asyncSetter;
-                JType type;
-                /*if(name.endsWith("]")) {
-            		int openBraceIdx = smartIndexOf(name, '[');
-            		if(openBraceIdx == -1) {
-            			logger.log(TreeLogger.ERROR, "Can't find opening [ for ] in "+name, null);
-            			throw new UnableToCompleteException();
-            		}
-            		// TODO array indexing
-        			throw new UnableToCompleteException();
-            	} else */ 
-                boolean endsWithParen = name.endsWith(")");
-                if(endsWithParen || findMethod(inType, name, 0, matchAsync, false) != null) {
-                    String getterMethodName;
-                    String[] args;
-                    if(endsWithParen) {
-                		int openIdx = smartIndexOf(name, '(');
-                		if(openIdx == -1) {
-                			logger.log(TreeLogger.ERROR, "Can't find opening ( for ) in "+name, null);
-                			throw new UnableToCompleteException();
-                		}
-                		
-                        args = smartSplit(name.substring(openIdx + 1, name.length() - 1), ',', 100);
-                        //System.out.println("Splitting '"+name.substring(openIdx + 1, name.length() - 1)+" around ',' gives "+args.length+" args: "+joinWithCommas(0, args));
-                        // Check for an empty parameter list
-                        if(args.length == 1 && args[0].length() == 0)
-                            args = new String[0];
-                        getterMethodName = identifier(name.substring(0, openIdx));
-                    } else {
-                        getterMethodName = identifier(name);
-                        args = new String[0];
-                    }
-                    JClassType objectType = inType;
-    
-                    boolean asyncMethod = false;
-                    JMethod getterMethod = null;
-                	String getName = getterMethodName.matches("^get[A-Z]")?null:"get"+capitalize(getterMethodName);
-                	String isName = getterMethodName.matches("^is[A-Z]")?null:"is"+capitalize(getterMethodName);
-                    boolean searchingThis = objectType.equals(myClass);
-                    //System.out.println("inType = "+inType+" myClass = "+myClass+" path = "+path+" expr = "+expr+" searchingThis = "+searchingThis);
-                    for(;;) {
-                        JMethod[] methods = getAllMethods(objectType, staticAccess);
-                        for (int i = 0; i < methods.length; i++) {
-                            JMethod method = methods[i];
-                            if (method.getName().equals(getterMethodName) ||
-                            	method.getName().equals(getName) ||
-                            	method.getName().equals(isName)) {
-                            	//System.out.println("Found "+method+" in "+objectType+" looking for "+path);
-                                int nParams = method.getParameters().length;
-                                if(nParams == 0) {
-                                	if(args.length == 0) {
-                                		getterMethod = method;
-                                		asyncMethod = false;
-                                		break;
-                                	}
-                                } else {
-                                    final JType lastParameterType = method.getParameters()[nParams - 1].getType();
-                                    asyncMethod = lastParameterType.getQualifiedSourceName().equals(AsyncCallback.class.getName());
-                                    if (asyncMethod) {
-                                        if (nParams == args.length + 1) {
-                                            getterMethod = method;
-                                            break;
-                                        }
-                                    } else if (nParams == args.length) {
-                                        getterMethod = method;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                        if(searchingThis && subviewClass && getterMethod == null) {
-                        	objectType = objectType.getEnclosingType();
-                        	if(objectType == null)
-                        		break;
-                        	expr = expr+".my"+objectType.getSimpleSourceName();
-                        	//System.out.println("Ascending to "+expr+" "+objectType);
-                        } else break;
-                    }
-                    if (getterMethod == null) {
-                        logger.log(TreeLogger.ERROR, "findAccessors(): Unable to find a "+(staticAccess?"static":"instance")+" method with the right number of arguments ("
-                                        + args.length + " [ + AsyncCallback]) with name '" + getterMethodName + "' in " + inType
-                                        + " for expression " + path, null);
-                        throw new UnableToCompleteException();
-                    }
-                    getterMethodName = getterMethod.getName();
-    
-                    for (int i = 0; i < args.length; i++) {
-                        String arg = args[i].trim();
-                        ExpressionInfo argAccessors = findAccessors(arg, true, false);
-                        if (argAccessors == null) {
-                            logger.log(TreeLogger.ERROR, "Couldn't evaluate '" + arg + "' as argument to '" + name + "'",
-                                            null);
-                            throw new UnableToCompleteException();
-                        }
-                        args[i] = argAccessors.conversionExpr(getterMethod.getParameters()[i].getType());
-                    }
-    
-                    getter = expr + "." + getterMethodName + (asyncMethod && args.length==0?"":"("+joinWithCommas(0, args)+(asyncMethod?",":")"));
-                    
-                    asyncGetter = asyncMethod;
-                    type = asyncMethod?getAsyncReturnType(getterMethod):getterMethod.getReturnType();
-                    
-                    String setterMethodName = getterMethodName.replaceFirst("^(is|get)", "set");
-                    //if(getterMethodName.equals("getAdjustmentAccount"))
-                    //	System.out.println("Looking for "+setterMethodName+" to match "+getter+" with "+args.length+" arguments, matchAsync = "+matchAsync+" objectType = "+objectType);
-					JMethod setterMethod = findMethod(objectType, setterMethodName, args.length+1, matchAsync, false);
-					if(setterMethod != null) {
-						setter = expr + "." + setterMethodName + (asyncMethod && args.length==0?"":"("+joinWithCommas(0, args)+",");
-						asyncSetter = setterMethod.getParameters().length == args.length+2;
-					} else {
-						setter = null;
-						asyncSetter = false;
-					}
-            	} else {
-            		// No array or function specifier, so look for a normal property
-                    String baseExpr = (expr.equals("this") ? "" : expr + ".");
-                    name = identifier(name);
-                    String getterName = "get" + capitalize(name);
-                    String setterName = "set" + capitalize(name);
-                    JMethod getterMethod = findMethod(inType, getterName, 0, matchAsync, false);
-                    if (getterMethod == null) {
-                        getterName = "is" + capitalize(name);
-                        getterMethod = findMethod(inType, getterName, 0, matchAsync, false);
-                    }
-                    if (getterMethod != null) {
-                        asyncGetter = matchAsync && getterMethod.getParameters().length == 1 
-                                      && getType(AsyncCallback.class.getName()).isAssignableFrom(getterMethod.getParameters()[0].getType().isClassOrInterface());
-                        getter = baseExpr + getterName + (asyncGetter?"":"()"); // No trailing brackets for an async call
-                        if(asyncGetter) {
-                        	type = getAsyncReturnType(getterMethod);
-                        } else {
-                            type = getterMethod.getReturnType();
-                        }
-                    } else {
-                    	getter = null;
-                    	asyncGetter = false;
-                    	type = null;
-                    }
-                    JMethod setterMethod;
-                    if(splitPath.length == 1 && (setterMethod = findMethod(inType, setterName, 1, matchAsync, false))!=null) {
-                    	//System.out.println("Found setter "+setterMethod);
-                        setter = baseExpr + setterName;
-                        asyncSetter = matchAsync && setterMethod.getParameters().length == 2;
-//                        if(!asyncGetter && type != null && !type.isAssignableTo(setterMethod.getParameters()[0].getType())) {
-//                        	logger.log(TreeLogger.ERROR, "Setter and getter don't have the same type: "+setter+" and "+getter, null);
-//                        	throw new UnableToCompleteException();
-//                        } else {
-                        	type = setterMethod.getParameters()[0].getType();
-                        //}
-                    } else {
-                    	setter = null;
-                    	asyncSetter = false;
-                    }
+            	LocalTreeLogger.pushLogger(logger.branch(TreeLogger.INFO, "findAccessors('"+base+"', path='"+path+"', matchAsync="+matchAsync+", staticAccess="+staticAccess+")"));
+            	try {
+	            	
+	                GeneratorTypeInfo inType = base.getType();
+	                if(inType.isPrimitive()) {
+	                    logger.log(TreeLogger.ERROR, "Can't find any member inside of non-class type "+base.getType()+" with path "+path);
+	                    throw new UnableToCompleteException();
+	                }
+	                String expr = base.getGetter();
+	                
+	                //System.out.println("findAccessors("+inType+", '"+expr+"', '"+path+"', "+matchAsync+")");
+	                // Split "path" into two parts - the part before the first dot and the "rest" of the expression
+	                String[] splitPath = smartSplit(path, '.', 2);
+	                String name = splitPath[0];
+	                if (name.length() == 0) {
+	                    return null;
+	                }
+	                String getter;
+	                boolean asyncGetter = false;
+	                String setter = null;
+	                boolean asyncSetter = false;
+	                GeneratorTypeInfo type;
+	                /*if(name.endsWith("]")) {
+	            		int openBraceIdx = smartIndexOf(name, '[');
+	            		if(openBraceIdx == -1) {
+	            			logger.log(TreeLogger.ERROR, "Can't find opening [ for ] in "+name, null);
+	            			throw new UnableToCompleteException();
+	            		}
+	            		// TODO array indexing
+	        			throw new UnableToCompleteException();
+	            	} else */ 
+	                boolean endsWithParen = name.endsWith(")");
+					boolean methodInvokation = endsWithParen // Has (), assume method call
+							|| inType.hasMethodMatching(name, true, null) // no parens, but expression has the same name as a zero-arg method
+							|| (matchAsync && inType.hasMethodMatching(name, true, null, commonTypes.asyncCallback)); // no parens, but expression has the same name as an async method and async is OK
+					boolean lastOrOnlyPartOfTheExpression = splitPath.length == 1;
+					if(methodInvokation) {
+	                    String getterMethodName;
+	                    ExpressionInfo[] args;
+	                    GeneratorTypeInfo[] argTypes;
+	                    if(endsWithParen) {
+	                		int openIdx = smartIndexOf(name, '(');
+	                		if(openIdx == -1) {
+	                			logger.log(TreeLogger.ERROR, "Can't find opening ( for ) in "+name, null);
+	                			throw new UnableToCompleteException();
+	                		}
+	                		
+	                        String[] argExprs = smartSplit(name.substring(openIdx + 1, name.length() - 1), ',', 100);
+	                        //System.out.println("Splitting '"+name.substring(openIdx + 1, name.length() - 1)+" around ',' gives "+args.length+" args: "+joinWithCommas(0, args));
+	                        // Check for an empty parameter list
+	                        if(argExprs.length == 1 && argExprs[0].length() == 0)
+	                            argExprs = new String[0];
+	                        getterMethodName = identifier(name.substring(0, openIdx));
+	                        args = new ExpressionInfo[argExprs.length];
+	                        argTypes = new GeneratorTypeInfo[argExprs.length];
+	                        for(int i=0; i < argExprs.length; i++) {
+	                        	String arg = argExprs[i].trim();
+	                            ExpressionInfo argAccessors = findAccessors(arg, true, false);
+	                            if (argAccessors == null) {
+	                                logger.log(TreeLogger.ERROR, "Couldn't evaluate '" + arg + "' as argument to '" + name + "'", null);
+	                                throw new UnableToCompleteException();
+	                            }
+	                            args[i] = argAccessors;
+	                            argTypes[i] = argAccessors.getType();
+	                        }
+	                    } else {
+	                        getterMethodName = identifier(name);
+	                        args = new ExpressionInfo[0];
+	                        argTypes = new GeneratorTypeInfo[0];
+	                    }
+	                    GeneratorTypeInfo objectType = inType;
+	                    boolean searchingThis = objectType.equals(myClass);
+	                    boolean asyncMethod = false;
+	                    GeneratorMethodInfo getterMethod = null;
+	                    for(;;) {
+		                    GeneratorTypeInfo[] syncArgTypesWildcard = new GeneratorTypeInfo[argTypes.length];
+		                    
+		                    GeneratorTypeInfo[] asyncArgTypesWildcard = new GeneratorTypeInfo[argTypes.length+1];
+		                    asyncArgTypesWildcard[argTypes.length] = commonTypes.asyncCallback;
+		                    GeneratorTypeInfo[] asyncArgTypes = Arrays.copyOf(argTypes, argTypes.length+1);
+		                    asyncArgTypes[argTypes.length] = commonTypes.asyncCallback;
+		                    
+		                    HashSet<String> candidates = new HashSet<String>();
+		                    candidates.add(getterMethodName);
+		                    String capGetterMethodName = capitalize(getterMethodName);
+							candidates.add("get"+capGetterMethodName);
+		                    candidates.add("is"+capGetterMethodName);
+		                    for(String candidate : candidates) {
+		                    	getterMethod = objectType.findMethodMatching(candidate, null, argTypes);
+		                    	if(getterMethod == null)
+		                    		getterMethod = objectType.findMethodMatching(candidate, null, syncArgTypesWildcard);
+		                    	if(getterMethod != null) {
+		                    		asyncMethod = false;
+		                    		type = getterMethod.getReturnType();
+		                    		break;
+		                    	}
+		                    	
+		                    	if(matchAsync) {
+		                    		getterMethod = objectType.findMethodMatching(candidate, null, asyncArgTypes);
+		                    		if(getterMethod == null)
+		                    			getterMethod = objectType.findMethodMatching(candidate, null, asyncArgTypesWildcard);
+			                    	if(getterMethod != null) {
+			                    		asyncMethod = true;
+			                    		type = getterMethod.getAsyncReturnType();
+			                    		if(type == null) type = commonTypes.object;
+			                    		break;
+			                    	}
+		                    	}
+		                    }
+		                    if(searchingThis && getterMethod == null && objectType instanceof GeneratedInnerClassInfo) {
+	                        	objectType = objectType.getFieldType(PARENT_VIEW_FIELD_NAME, true);
+	                        	if(objectType == null)
+	                        		break;
+	                        	expr = expr+"."+PARENT_VIEW_FIELD_NAME;
+	                        	//System.out.println("Ascending to "+expr+" "+objectType);
+	                        } else break;
+	                    }
+	                    if (getterMethod == null) {
+	                        logger.log(TreeLogger.ERROR, "findAccessors(): Unable to find a "+(staticAccess?"static":"instance")+" method with the right number of arguments ("
+	                                        + args.length + (matchAsync?" [ + optional AsyncCallback]":"")+") with name '" + getterMethodName + "' in " + inType
+	                                        + " for expression '" + path + "'", null);
+	                        throw new UnableToCompleteException();
+	                    }
+	    
+	                    StringBuffer getterBuf = new StringBuffer();
+	                    getterBuf.append(expr).append('.').append(getterMethod.getName()).append('(');
+	                    
+	                    for (int i = 0; i < args.length; i++) {
+	                    	if(i > 0) getterBuf.append(", ");
+	                    	getterBuf.append(args[i].conversionExpr(getterMethod.getParameterTypes()[i]));
+	                    }
+	                    
+	                    if(asyncMethod) {
+	                    	if(args.length > 0) getterBuf.append(","); // trailing comma for async methods so we can append the callback parameter when we call the method
+	                    } else getterBuf.append(')');
+	    
+	                    getter = getterBuf.toString();
+	                    
+	                    asyncGetter = asyncMethod;
+	                    type = asyncMethod?getterMethod.getAsyncReturnType():getterMethod.getReturnType();
+	                    
+	                    // Find the matching setter method (if any).
+	                    String setterMethodName = getterMethod.getName().replaceFirst("^(is|get)", "set");
+	                    GeneratorTypeInfo[] setterArgTypes = Arrays.copyOf(argTypes, argTypes.length+1);
+	                    setterArgTypes[argTypes.length] = type;
+	                    GeneratorMethodInfo setterMethod = objectType.findMethodMatching(setterMethodName, null, setterArgTypes);
+	                    
+	                    // If searching for something matching the types we got doesn't work, try it a wildcard for the type
+	                    if(setterMethod == null) {
+	                    	setterArgTypes = new GeneratorTypeInfo[argTypes.length+1];
+	                    	setterArgTypes[argTypes.length] = type;
+	                    	setterMethod = objectType.findMethodMatching(setterMethodName, null, setterArgTypes);
+	                    }
+	                    
+	                    if(setterMethod == null) {
+	                    	setterArgTypes = Arrays.copyOf(argTypes, argTypes.length+2);
+	                    	setterArgTypes[argTypes.length] = type;
+	                    	setterArgTypes[argTypes.length+1] = commonTypes.asyncCallback;
+	                        setterMethod = objectType.findMethodMatching(setterMethodName, PrimitiveTypeInfo.VOID, setterArgTypes);
+	                        if(setterMethod == null) {
+	                        	setterArgTypes = new GeneratorTypeInfo[argTypes.length+2];
+	                        	setterArgTypes[argTypes.length] = type;
+	                        	setterArgTypes[argTypes.length+1] = commonTypes.asyncCallback;
+	                            setterMethod = objectType.findMethodMatching(setterMethodName, PrimitiveTypeInfo.VOID, setterArgTypes);
+	                        }
+	                        if(setterMethod != null)
+	                        	asyncSetter = true;
+	                    } else {
+	                    	asyncSetter = false;
+	                    }
+						if(setterMethod != null) {
+		                    StringBuffer setterBuf = new StringBuffer();
+		                    setterBuf.append(expr).append('.').append(setterMethod.getName()).append('(');
+		                    
+		                    for (int i = 0; i < args.length; i++) {
+		                    	if(i > 0) setterBuf.append(", ");
+		                    	String convertedArg = args[i].conversionExpr(setterMethod.getParameterTypes()[i]);
+		                    	if(convertedArg.isEmpty()) {
+		                    		throw new IllegalStateException("Got empty result back from "+args[i]+" converted to "+setterMethod.getParameterTypes()[i]);
+		                    	}
+								setterBuf.append(convertedArg);
+		                    }
+		                    
+		                    if(args.length > 0)
+		                    	setterBuf.append(","); // trailing comma for setters so we can append the value parameter and possibly the async callback 
+		    
+		                    setter = setterBuf.toString();
+						}
+	            	} else {
+	            		// No array or function specifier, so look for a normal property or field
+	                    String baseExpr = (expr.equals("this") ? "" : expr + ".");
+	                    name = identifier(name);
+	                    String getterName = "get" + capitalize(name);
+	                    String setterName = "set" + capitalize(name);
+	                    GeneratorMethodInfo getterMethod = inType.findMethodMatching(getterName, null);
+	                    if(getterMethod == null && matchAsync) { // Check for async version, if allowed in this context
+	                    	getterMethod = inType.findMethodMatching(getterName, PrimitiveTypeInfo.VOID, commonTypes.asyncCallback);
+	                    	asyncGetter = getterMethod != null;
+	                    }
+	                    if (getterMethod == null) {
+	                        getterName = "is" + capitalize(name);
+	                        getterMethod = inType.findMethodMatching(getterName, null);
+	                        if(getterMethod == null && matchAsync) { // Check for async version, if allowed in this context
+	                        	getterMethod = inType.findMethodMatching(getterName, PrimitiveTypeInfo.VOID, commonTypes.asyncCallback);
+	                        	asyncGetter = getterMethod != null;
+	                        }
+	                    }
+	                    if (getterMethod != null) {
+	                        getter = baseExpr + getterName + (asyncGetter?"":"()"); // No trailing brackets for an async call
+	                        if(asyncGetter) {
+	                        	type = getterMethod.getAsyncReturnType();
+	                        	if(type == null) type = commonTypes.object;
+	                        } else {
+	                            type = getterMethod.getReturnType();
+	                        }
+	                    } else {
+	                    	asyncGetter = false;
+	                    	
+	                    	// Try direct field access
+	                    	type = inType.getFieldType(name, baseExpr.startsWith("this."));
+	                    	if(type != null) {
+	                    		getter = baseExpr + name;
+	                    		setter = baseExpr + name + "=";
+	                    		asyncSetter = false;
+	                    		asyncGetter = false;
+	                    	} else {
+	                        	getter = null;
+	                    	}
+	                    }
+	                    if(setter == null) {
+		                    GeneratorMethodInfo setterMethod;
+		                    // Only look for the setter if this is the last (or only) part of the chain.  i.e. for an expression
+		                    // a.b.c we would only look for a setter for c, not a or b.
+		                    if(lastOrOnlyPartOfTheExpression) {
+		                    	setterMethod = inType.findMethodMatching(setterName, null, (GeneratorTypeInfo)null);
+		                    	if(setterMethod == null) {
+		                        	setterMethod = inType.findMethodMatching(setterName, PrimitiveTypeInfo.VOID, (GeneratorTypeInfo)null, commonTypes.asyncCallback);
+		                        	asyncSetter = setterMethod != null;
+		                    	}
+		                    	if(setterMethod != null) {
+			                    	//System.out.println("Found setter "+setterMethod);
+			                        setter = baseExpr + setterName + "(";
+			                    	type = setterMethod.getParameterTypes()[0];
+		                    	}
+		                    }
+	                    }
+	            	}
+	                
+	                //System.out.println("Looking for "+name+" in "+inType+", found "+getter+" and "+setter);
+	                if(getter != null && splitPath.length == 2) {
+	                	if(type.isArray()) {
+	                		if("length".equals(splitPath[1])) {
+	                			return new ExpressionInfo(path, getter+"."+splitPath[1], PrimitiveTypeInfo.INT, false);
+	                		} else {
+	                        	logger.log(TreeLogger.ERROR, "Attempting to access a property of array that I don't recognize: "+getter+"."+splitPath[1], null);
+	                            throw new UnableToCompleteException();
+	                		}
+	                	} else if(type.isPrimitive()) {
+	                    	logger.log(TreeLogger.ERROR, "Attempting to access a property of a primitive type: "+getter+" of type "+type+" async = "+asyncGetter, null);
+	                        throw new UnableToCompleteException();
+	                	}
+	
+	                    if(asyncGetter == false) {
+	                    	// Easy... just get them to create a new getter based on this one
+	                    	return findAccessors(new ExpressionInfo(path, getter, type, isConstants(type)), splitPath[1], matchAsync, staticAccess);
+	                    } else {
+	                    	// Oops, we're getting a property of an async property, time for some magic
+	                    	// The trick: generate a new method that does the first async operation and
+	                    	// then returns the result of the getter of the proceeding attributes.
+	                    	ExpressionInfo subexpr = findAccessors(new ExpressionInfo(path, "base", type, false), splitPath[1], matchAsync, staticAccess);
+	                    	if(subexpr == null) {
+	                    		logger.log(TreeLogger.ERROR, "Failed to find property '"+splitPath[1]+"' of type '"+type+"' of expression '"+getter+"'", null);
+	                            throw new UnableToCompleteException();
+	                    	}
+	                    	String getterName = "getAsync"+asyncProxies.size();
+	                    	if(subexpr.hasGetter()) {
+	                        	if(subexpr.hasSynchronousGetter()) {
+	                        		// Synchronous sub-expression, how merciful! 
+	                            	asyncProxies.add("    public void "+getterName+"(AsyncCallback<Object> callback) {\n"+
+	                            		             "        "+ExpressionInfo.callAsyncGetter(getter, "new AsyncCallbackDirectProxy<Object>(callback, \""+path+"\") {\n"+
+	                            		             "            public void onSuccess(Object result) {\n"+
+	                            		             "                "+type.getParameterizedQualifiedSourceName()+" base = ("+type.getParameterizedQualifiedSourceName()+") result;\n"+
+	                            		             "                returnSuccess("+subexpr.getterExpr()+");\n"+
+	                            		             "            }\n"+
+	                            		             "        }")+";\n"+
+	                            		             "    }\n");
+	                        	} else if(subexpr.hasAsyncGetter()) {
+	                            	asyncProxies.add("    public void "+getterName+"(AsyncCallback<Object> callback) {\n"+
+	               		             "        "+ExpressionInfo.callAsyncGetter(getter, "new AsyncCallbackDirectProxy<Object>(callback, \""+path+"\") {\n"+
+	               		             "            public void onSuccess(Object result) {"+
+	               		             "                "+type.getParameterizedQualifiedSourceName()+" base = ("+type.getParameterizedQualifiedSourceName()+") result;\n"+
+	               		             "                "+subexpr.callAsyncGetter("callback")+";\n"+
+	               		             "            }\n"+
+	               		             "        }")+";\n"+
+	               		             "    }\n");
+	                        	}
+	                    	} else getterName = null;
+	                    	String setterName = "setAync"+asyncProxies.size();
+	                    	if(subexpr.hasSetter()) {
+	                        	if(subexpr.hasSynchronousSetter()) {
+	                        		// Synchronous sub-expression, how merciful! 
+	                            	asyncProxies.add("    public void "+setterName+"(final "+subexpr.getType().getParameterizedQualifiedSourceName()+" value, AsyncCallback<Void> callback) {\n"+
+	                  		             "        "+ExpressionInfo.callAsyncGetter(getter, "new AsyncCallbackDirectProxy<Void>(callback, \""+path+"\") {\n"+
+	                            		             "            public void onSuccess(Void result) {\n"+
+	                            		             "                "+type.getParameterizedQualifiedSourceName()+" base = ("+type.getParameterizedQualifiedSourceName()+") result;\n"+
+	                            		             "                "+subexpr.callSetter("value")+"\n"+
+	                            		             "                returnSuccess(null);\n"+
+	                            		             "            }\n"+
+	                   		             "        }")+";\n"+
+	                            		             "    }");
+	                        	} else if(subexpr.hasAsynchronousSetter()) {
+	                            	asyncProxies.add("    public void "+setterName+"(final "+subexpr.getType().getParameterizedQualifiedSourceName()+" value, AsyncCallback<Void> callback) {\n"+
+	                 		             "        "+ExpressionInfo.callAsyncGetter(getter, "new AsyncCallbackDirectProxy<Void>(callback, \""+path+"\") {\n"+
+	               		             "            public void onSuccess(Void result) {\n"+
+	               		             "                "+type.getParameterizedQualifiedSourceName()+" base = ("+type.getParameterizedQualifiedSourceName()+") result;\n"+
+	               		             "                "+subexpr.callAsyncSetter("value", "callback")+"\n"+
+	               		             "            }\n"+
+	              		             "        }")+";\n"+
+	               		             "    }");
+	                        	}
+	                    	} else setterName = null;
+	                    	return new ExpressionInfo(path, getterName, setterName, subexpr.getType(), true, true, false);
+	                    }
+	                } else if(setter != null && lastOrOnlyPartOfTheExpression) {
+	                	return new ExpressionInfo(path, getter, setter, type, asyncGetter, asyncSetter, false);
+	                }
+	                
+	                /*
+	                JClassType superclass = inType.getSuperclass();
+	                if (superclass != null && !ReflectedClassInfo.OBJECT.equals(superclass)) {
+	                	ExpressionInfo inherited = findAccessors(superclass, expr, path, matchAsync);
+	                	if(inherited != null) {
+	                		if(getter == null) { 
+	                			if(inherited.getter != null) { getter = inherited.getter; asyncGetter = false; }
+	                			else if(inherited.hasAsynchronousGetter()) { getter = inherited.asyncGetter; asyncGetter = true; }
+	                		}
+	                		if(setter == null) { 
+	                			if(inherited.hasSynchronousSetter()) { setter = inherited.setter; asyncSetter = false; }
+	                			else if(inherited.hasAsynchronousSetter()) { setter = inherited.asyncSetter; asyncSetter = true; }
+	                		}
+	                		if(type == null) type = inherited.getType();
+	                	}
+	                }
+	                */
+	                if(type != null) {
+	                    if((getter != null) && (setter == null) && !asyncGetter 
+	                        && (isConstants(inType))) {
+	                        //logger.log(TreeLogger.INFO, "Considering value to be constant since it is part of a Constants or DictionaryConstants: "+getter);
+	                        return new ExpressionInfo(path, getter, type, base.isConstant());
+	                    } else {
+	                        return new ExpressionInfo(path, getter, setter, type, asyncGetter, asyncSetter, false);
+	                    }
+	                }
+	                //System.out.println("Failed to find property "+name+" on "+inType);
+	                return null;
+            	} finally {
+            		LocalTreeLogger.popLogger();
             	}
-                
-                //System.out.println("Looking for "+name+" in "+inType+", found "+getter+" and "+setter);
-                if(getter != null && splitPath.length == 2) {
-                    final JClassType classType = type.isClassOrInterface();
-                    if(classType == null) {
-                    	if(type.isArray() != null) {
-                    		if("length".equals(splitPath[1])) {
-                    			return new ExpressionInfo(getter+"."+splitPath[1], JPrimitiveType.INT, false);
-                    		} else {
-                            	logger.log(TreeLogger.ERROR, "Attempting to access a property of array that I don't recognize: "+getter+"."+splitPath[1], null);
-                                throw new UnableToCompleteException();
-                    		}
-                    	}
-                    	logger.log(TreeLogger.ERROR, "Attempting to access a property of something that isn't a class or interface: "+getter+" of type "+type+" async = "+asyncGetter, null);
-                        throw new UnableToCompleteException();
-                    }
-                    if(asyncGetter == false) {
-                    	// Easy... just get them to create a new getter based on this one
-                    	return findAccessors(new ExpressionInfo(getter, classType, isConstants(classType)), splitPath[1], matchAsync, staticAccess);
-                    } else {
-                    	// Oops, we're getting a property of an async property, time for some magic
-                    	// The trick: generate a new method that does the first async operation and
-                    	// then returns the result of the getter of the proceeding attributes.
-                    	ExpressionInfo subexpr = findAccessors(new ExpressionInfo("base", classType, false), splitPath[1], matchAsync, staticAccess);
-                    	if(subexpr == null) {
-                    		logger.log(TreeLogger.ERROR, "Failed to find property '"+splitPath[1]+"' of type '"+classType+"' of expression '"+getter+"'", null);
-                            throw new UnableToCompleteException();
-                    	}
-                    	String getterName = "getAsync"+asyncProxies.size();
-                    	if(subexpr.hasGetter()) {
-                        	if(subexpr.hasSynchronousGetter()) {
-                        		// Synchronous sub-expression, how merciful! 
-                            	asyncProxies.add("    public void "+getterName+"(AsyncCallback<Object> callback) {\n"+
-                            		             "        "+callAsyncGetter(getter, "new AsyncCallbackDirectProxy<Object>(callback, \""+path+"\") {\n"+
-                            		             "            public void onSuccess(Object result) {\n"+
-                            		             "                "+type.getQualifiedSourceName()+" base = ("+type.getQualifiedSourceName()+") result;\n"+
-                            		             "                returnSuccess("+subexpr.getterExpr()+");\n"+
-                            		             "            }\n"+
-                            		             "        }")+";\n"+
-                            		             "    }\n");
-                        	} else if(subexpr.hasAsyncGetter()) {
-                            	asyncProxies.add("    public void "+getterName+"(AsyncCallback<Object> callback) {\n"+
-               		             "        "+callAsyncGetter(getter, "new AsyncCallbackDirectProxy<Object>(callback, \""+path+"\") {\n"+
-               		             "            public void onSuccess(Object result) {"+
-               		             "                "+type.getQualifiedSourceName()+" base = ("+type.getQualifiedSourceName()+") result;\n"+
-               		             "                "+callAsyncGetter(subexpr.asyncGetter, "callback")+";\n"+
-               		             "            }\n"+
-               		             "        }")+";\n"+
-               		             "    }\n");
-                        	}
-                    	} else getterName = null;
-                    	String setterName = "setAync"+asyncProxies.size();
-                    	if(subexpr.hasSetter()) {
-                        	if(subexpr.setter != null) {
-                        		// Synchronous sub-expression, how merciful! 
-                            	asyncProxies.add("    public void "+setterName+"(final "+subexpr.type.getQualifiedSourceName()+" value, AsyncCallback<Void> callback) {\n"+
-                  		             "        "+callAsyncGetter(getter, "new AsyncCallbackDirectProxy<Void>(callback, \""+path+"\") {\n"+
-                            		             "            public void onSuccess(Void result) {\n"+
-                            		             "                "+type.getQualifiedSourceName()+" base = ("+type.getQualifiedSourceName()+") result;\n"+
-                            		             "                "+subexpr.setter+"(value);\n"+
-                            		             "                returnSuccess(null);\n"+
-                            		             "            }\n"+
-                   		             "        }")+";\n"+
-                            		             "    }");
-                        	} else if(subexpr.asyncSetter != null) {
-                            	asyncProxies.add("    public void "+setterName+"(final "+subexpr.type.getQualifiedSourceName()+" value, AsyncCallback<Void> callback) {\n"+
-                 		             "        "+callAsyncGetter(getter, "new AsyncCallbackDirectProxy<Void>(callback, \""+path+"\") {\n"+
-               		             "            public void onSuccess(Void result) {\n"+
-               		             "                "+type.getQualifiedSourceName()+" base = ("+type.getQualifiedSourceName()+") result;\n"+
-               		             "                "+subexpr.asyncSetter+"(value, callback);\n"+
-               		             "            }\n"+
-              		             "        }")+";\n"+
-               		             "    }");
-                        	}
-                    	} else setterName = null;
-                    	return new ExpressionInfo(getterName, setterName, subexpr.type, true, true, false);
-                    }
-                } else if(setter != null && splitPath.length == 1) {
-                	return new ExpressionInfo(getter, setter, type, asyncGetter, asyncSetter, false);
-                }
-                
-                /*
-                JClassType superclass = inType.getSuperclass();
-                if (superclass != null && !types.getJavaLangObject().equals(superclass)) {
-                	ExpressionInfo inherited = findAccessors(superclass, expr, path, matchAsync);
-                	if(inherited != null) {
-                		if(getter == null) { 
-                			if(inherited.getter != null) { getter = inherited.getter; asyncGetter = false; }
-                			else if(inherited.asyncGetter != null) { getter = inherited.asyncGetter; asyncGetter = true; }
-                		}
-                		if(setter == null) { 
-                			if(inherited.setter != null) { setter = inherited.setter; asyncSetter = false; }
-                			else if(inherited.asyncSetter != null) { setter = inherited.asyncSetter; asyncSetter = true; }
-                		}
-                		if(type == null) type = inherited.getType();
-                	}
-                }
-                */
-                if(type != null) {
-                    if((getter != null) && (setter == null) && !asyncGetter 
-                        && (isConstants(inType))) {
-                        //logger.log(TreeLogger.INFO, "Considering value to be constant since it is part of a Constants or DictionaryConstants: "+getter);
-                        return new ExpressionInfo(getter, type, base.isConstant());
-                    } else {
-                        return new ExpressionInfo(getter, setter, type, asyncGetter, asyncSetter, false);
-                    }
-                }
-                //System.out.println("Failed to find property "+name+" on "+inType);
-                return null;
             }
 
             
@@ -3004,11 +2986,11 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             			return new ExpressionInfo(accessors, new OperatorInfo() {
             				@Override
 							public String onGetExpr(String expr) throws UnableToCompleteException {
-            					return "!(" + converter(expr, accessors.type, JPrimitiveType.BOOLEAN) + ')';
+            					return "!(" + ExpressionInfo.converter(expr, accessors.getType(), PrimitiveTypeInfo.BOOLEAN) + ')';
             				}
             				@Override
 							public String onSetExpr(String expr) throws UnableToCompleteException {
-            					return converter("!(" + expr + ')', JPrimitiveType.BOOLEAN, accessors.type);
+            					return ExpressionInfo.converter("!(" + expr + ')', PrimitiveTypeInfo.BOOLEAN, accessors.getType());
             				}
             			});
             		} else {
@@ -3035,35 +3017,35 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
             	} else if(path.length() > 0 && (Character.isDigit(path.charAt(0)) || (path.length() >= 2 && path.charAt(0) == '-' && Character.isDigit(path.charAt(1))))) {
             		if(smartIndexOf(path, '.') != -1) {
             			// floating-point
-            			return new ExpressionInfo(path, JPrimitiveType.DOUBLE, true);
+            			return new ExpressionInfo(path, path, JPrimitiveType.DOUBLE, true);
             		} else if(path.endsWith("L")) {
-            			return new ExpressionInfo(path, JPrimitiveType.LONG, true);
+            			return new ExpressionInfo(path, path, JPrimitiveType.LONG, true);
             		} else {
-            			return new ExpressionInfo(path, JPrimitiveType.INT, true);
+            			return new ExpressionInfo(path, path, JPrimitiveType.INT, true);
             		}
             	} else if(path.equals("true") || path.equals("false")) {
-            		return new ExpressionInfo(path, JPrimitiveType.BOOLEAN, true);
+            		return new ExpressionInfo(path, path, JPrimitiveType.BOOLEAN, true);
             	} else if(path.equals("null")) {
-            		return new ExpressionInfo(path, types.getJavaLangObject(), true);
+            		return new ExpressionInfo(path, path, RuntimeClassWrapper.OBJECT, true);
             		
             	} else if(path.startsWith("\"") && path.endsWith("\"")) {
-            		return new ExpressionInfo(path, getType("java.lang.String"), true);
+            		return new ExpressionInfo(path, path, getType("java.lang.String"), true);
             		
             	}
             	String thisExpr = innerType ? myClass.getSimpleSourceName() + ".this" : "this";
-                JClassType classToSearch = myClass;
+                GeneratorTypeInfo classToSearch = myClass;
                 if (path.equals("this")) {
-                	while(classToSearch != rootClassType) {
-                		classToSearch = classToSearch.getEnclosingType();
+                	while(classToSearch instanceof GeneratedInnerClassInfo) {
+                		classToSearch = ((GeneratedInnerClassInfo)classToSearch).getFieldType(PARENT_VIEW_FIELD_NAME, true);
                 		if(classToSearch == null)
                 			break;
-                		thisExpr = thisExpr+".my"+classToSearch.getSimpleSourceName();
+                		thisExpr = thisExpr+"."+PARENT_VIEW_FIELD_NAME;
                 	}
                 	
                 	// When they use the expression "this", be sure to use the superclass of the generated class;
                 	// the generated class won't behave well with isAssignableFrom() and isAssignableTo() because
                 	// it's a fake object we created and isn't "known" by the type oracle.
-                    return new ExpressionInfo(thisExpr, null, rootClassType.getSuperclass(), false, false, false);
+                    return new ExpressionInfo(path, thisExpr, null, classToSearch, false, false, false);
                 }
                 
                 // like books.service.AccountType.ACCOUNTS_RECEIVABLE or abc.def.Foo.bar
@@ -3072,34 +3054,37 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                 	String className = staticReference.group(1);
                 	String property = staticReference.group(2);
                 	//System.out.println("Static reference: "+className+" property "+property);
-                	JClassType staticType = getType(className);  
-                	JField field = staticType.getField(property);
-            	    JEnumType enum1 = staticType.isEnum();
-                	if(field != null && field.isStatic()) {
-						return new ExpressionInfo(path, field.getType(), field.isFinal() || enum1!=null);
-                	}
-                	if(enum1 != null && property.equals("values()")) {
-                		return new ExpressionInfo(path, types.getArrayType(enum1), true);
-                	}
-                	return findAccessors(new ExpressionInfo(className, staticType, true), property, matchAsync, true);
+					try {
+						JClassType staticType = types.getType(className);
+	                	JField field = staticType.getField(property);
+	            	    JEnumType enum1 = staticType.isEnum();
+	                	if(field != null && field.isStatic()) {
+							return new ExpressionInfo(path, path, field.getType(), field.isFinal() || enum1!=null);
+	                	}
+	                	if(enum1 != null && property.equals("values()")) {
+	                		return new ExpressionInfo(path, path, types.getArrayType(enum1), true);
+	                	}
+	                	return findAccessors(new ExpressionInfo(path, className, staticType, true), property, matchAsync, true);
+					} catch (NotFoundException e) {
+					}  
                 }
                 
                 for (;;) {
-                    ExpressionInfo accessors = findAccessors(new ExpressionInfo(thisExpr, classToSearch, true), path, matchAsync, false);
+                    ExpressionInfo accessors = findAccessors(new ExpressionInfo(path, thisExpr, classToSearch, true), path, matchAsync, false);
                     if (accessors != null) {
-                    	//System.out.println("Found in "+classToSearch+" "+thisExpr+" for "+path);
                         return accessors;
-                    } else {
-                        classToSearch = classToSearch.getEnclosingType();
+                    } else if(classToSearch instanceof GeneratedInnerClassInfo){
+                        classToSearch = classToSearch.getFieldType(PARENT_VIEW_FIELD_NAME, true);
                         if (classToSearch == null) {
-                        	//System.out.println("Looking in "+classToSearch+" "+thisExpr+" for "+path+" failed");
                             return null;
                         }
-                        if(myClass.isStatic() || subviewClass) {
-                            thisExpr = thisExpr+".my"+classToSearch.getSimpleSourceName();
+                        if(parentViewClass != null) {
+                            thisExpr = thisExpr+"."+PARENT_VIEW_FIELD_NAME;
                         } else {
-                            thisExpr = classToSearch.getQualifiedSourceName() + ".this";
+                            thisExpr = classToSearch.getSimpleSourceName() + ".this";
                         }
+                    } else {
+                    	return null;
                     }
                 }
             }
@@ -3136,65 +3121,65 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 					logger.log(TreeLogger.ERROR, "Can't evaluate "+rightPath+" in "+path+" match async = "+matchAsync, null);
 					throw new UnableToCompleteException();
 				}
-				JType targetOperandType;
-				JType resultType;
-				JType java_lang_String = getType("java.lang.String");
+				GeneratorTypeInfo targetOperandType;
+				GeneratorTypeInfo resultType;
+				GeneratorTypeInfo java_lang_String = RuntimeClassWrapper.STRING;
 				if ("&&".equals(oper) || "||".equals(oper)){
-					targetOperandType = JPrimitiveType.BOOLEAN;
-					resultType = JPrimitiveType.BOOLEAN;
-				} else if("+".equals(oper) && (right.getType().equals(java_lang_String) || left.getType().equals(java_lang_String))) {
+					targetOperandType = PrimitiveTypeInfo.BOOLEAN;
+					resultType = PrimitiveTypeInfo.BOOLEAN;
+				} else if("+".equals(oper) && (right.getType().getParameterizedQualifiedSourceName().equals("java.lang.String") || left.getType().getParameterizedQualifiedSourceName().equals("java.lang.String"))) {
 					targetOperandType = java_lang_String;
 					resultType = java_lang_String;
 				} else {
-					targetOperandType = left.type;
+					targetOperandType = left.getType();
 					if(arithmeticOper)
-						resultType = left.type;
+						resultType = left.getType();
 					else // all other operations are boolean
-						resultType = JPrimitiveType.BOOLEAN;
+						resultType = PrimitiveTypeInfo.BOOLEAN;
 				}
 				
 				// Is it an asynchronous calculation?
-				if(left.asyncGetter != null || right.asyncGetter != null) {
+				if(left.hasAsynchronousGetter() || right.hasAsynchronousGetter()) {
 					return handleAsyncBinaryOperator(left, oper, right, targetOperandType, resultType);
 				}
 				
 				String convertRight = right.conversionExpr(targetOperandType);
 				if(convertRight == null) {
-					logger.log(TreeLogger.ERROR, "Can't convert "+right.getType()+" "+right.getter+" to "+targetOperandType, null);
+					logger.log(TreeLogger.ERROR, "Can't convert "+right.getType()+" "+right+" to "+targetOperandType, null);
 					throw new UnableToCompleteException();
 				}
 				String convertLeft = left.conversionExpr(targetOperandType);
 				if(convertLeft == null) {
-					logger.log(TreeLogger.ERROR, "Can't convert "+left.getter+" to "+targetOperandType, null);
+					logger.log(TreeLogger.ERROR, "Can't convert "+left+" to "+targetOperandType, null);
 					throw new UnableToCompleteException();
 				}
-				return new ExpressionInfo("(" + convertLeft + oper + convertRight + ")", resultType, left.isConstant() && right.isConstant());
+				return new ExpressionInfo(path, "(" + convertLeft + oper + convertRight + ")", resultType, left.isConstant() && right.isConstant());
 			}
 
 			private ExpressionInfo handleAsyncBinaryOperator(ExpressionInfo left, String oper, ExpressionInfo right,
-				JType targetOperandType, JType resultType) throws UnableToCompleteException {
+				GeneratorTypeInfo targetOperandType, GeneratorTypeInfo resultType) throws UnableToCompleteException {
 				String getterName = "getCalculation"+calculations.size();
-				String leftTypeName = left.type.getQualifiedSourceName();
-				String classLeftTypeName = getBoxedClassName(left.type);
-				String rightTypeName = right.type.getQualifiedSourceName();
-				String classRightTypeName = getBoxedClassName(right.type);
+				String leftTypeName = left.getType().getParameterizedQualifiedSourceName();
+				String classLeftTypeName = getBoxedClassName(left.getType());
+				String rightTypeName = right.getType().getParameterizedQualifiedSourceName();
+				String classRightTypeName = getBoxedClassName(right.getType());
 				final String resultClassTypeName = getBoxedClassName(resultType);
-				String convertRight = converter("right", right.getType(), targetOperandType);
+				String convertRight = ExpressionInfo.converter("right", right.getType(), targetOperandType);
 				if(convertRight == null) {
-					logger.log(TreeLogger.ERROR, "Can't convert "+right.getType()+" "+right.getter+" to "+targetOperandType, null);
+					logger.log(TreeLogger.ERROR, "Can't convert "+right.getType()+" "+right+" to "+targetOperandType, null);
 					throw new UnableToCompleteException();
 				}
-				String convertLeft = converter("left", left.getType(), targetOperandType);
+				String convertLeft = ExpressionInfo.converter("left", left.getType(), targetOperandType);
 				if(convertLeft == null) {
-					logger.log(TreeLogger.ERROR, "Can't convert "+left.getType()+" "+left.getter+" to "+targetOperandType, null);
+					logger.log(TreeLogger.ERROR, "Can't convert "+left.getType()+" "+left+" to "+targetOperandType, null);
 					throw new UnableToCompleteException();
 				}
-				if(left.asyncGetter != null) {
-					if(right.asyncGetter != null) {
+				if(left.hasAsynchronousGetter()) {
+					if(right.hasAsynchronousGetter()) {
 						calculations.add("    public void "+getterName+"(AsyncCallback<"+resultClassTypeName+"> callback) {\n"+
-				             "        "+callAsyncGetter(left.asyncGetter, "new AsyncCallbackProxy<"+classLeftTypeName+","+resultClassTypeName+">(callback) {\n"+
+				             "        "+left.callAsyncGetter("new AsyncCallbackProxy<"+classLeftTypeName+","+resultClassTypeName+">(callback) {\n"+
 				             "            public void onSuccess(final "+classLeftTypeName+" left) {\n"+
-				             "                "+callAsyncGetter(right.asyncGetter, "new AsyncCallbackProxy<"+classRightTypeName+","+resultClassTypeName+">(callback) {\n"+
+				             "                "+right.callAsyncGetter("new AsyncCallbackProxy<"+classRightTypeName+","+resultClassTypeName+">(callback) {\n"+
 					         "                public void onSuccess(final "+classRightTypeName+" right) {\n"+
 					         "                    returnSuccess("+convertLeft+oper+convertRight+");\n"+
 					         "                }\n"+
@@ -3204,7 +3189,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				             "    }\n");
 					} else {
 						calculations.add("    public void "+getterName+"(AsyncCallback<"+resultClassTypeName+"> callback) {\n"+
-				             "        "+callAsyncGetter(left.asyncGetter, "new AsyncCallbackProxy<"+classLeftTypeName+","+resultClassTypeName+">(callback) {\n"+
+				             "        "+left.callAsyncGetter("new AsyncCallbackProxy<"+classLeftTypeName+","+resultClassTypeName+">(callback) {\n"+
 				             "            public void onSuccess(final "+classLeftTypeName+" left) {\n"+
 					         "                final "+rightTypeName+" right = "+right.getterExpr()+";\n"+
 					         "                returnSuccess("+convertLeft+oper+convertRight+");\n"+
@@ -3216,7 +3201,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 					// right.asyncGetter must != null
 					calculations.add("    public void "+getterName+"(AsyncCallback<"+resultClassTypeName+"> callback) {\n"+
 				         "            final "+leftTypeName+" left = "+left.getterExpr()+";\n"+
-				         "            "+callAsyncGetter(right.asyncGetter, "new AsyncCallbackProxy<"+classRightTypeName+","+resultClassTypeName+">(callback) {\n"+
+				         "            "+right.callAsyncGetter("new AsyncCallbackProxy<"+classRightTypeName+","+resultClassTypeName+">(callback) {\n"+
 				         "            public void onSuccess(final "+classRightTypeName+" right) {\n"+
 				         "                returnSuccess("+convertLeft+oper+convertRight+");\n"+
 				         "            }\n"+
@@ -3224,40 +3209,20 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 				         "    }\n");
 					
 				}
-				return new ExpressionInfo(getterName, null, resultType, true, false, false);
+				return new ExpressionInfo(left+oper+right, getterName, null, resultType, true, false, false);
 			}
 
 			private String getBoxedClassName(final JType type) {
 				return type.isPrimitive()!=null?type.isPrimitive().getQualifiedBoxedSourceName():type.getQualifiedSourceName();
 			}
+			private String getBoxedClassName(final GeneratorTypeInfo type) {
+				if(type instanceof JTypeWrapper)
+					return getBoxedClassName(((JTypeWrapper)type).getJType());
+				if(type instanceof PrimitiveTypeInfo)
+					return ((PrimitiveTypeInfo)type).getBoxedTypeName();
+				return type.getParameterizedQualifiedSourceName();
+			}
 
-        }
-
-        /**
-         * Return true if the given class, or one of its superclasses, implements the given
-         * interface.
-         * 
-         * Part of the reason for this method is that the isAssignableTo and isAssignableFrom
-         * methods on JClassType don't check for interfaces, only superclasses.
-         */
-        protected boolean implementsInterface(JClassType cls, JClassType iface) {
-            if (cls == iface) {
-                return true;
-            }
-            // System.out.println("implementsInterface("+cls+", "+iface+")");
-            JClassType[] interfaces = cls.getImplementedInterfaces();
-            for (int i = 0; i < interfaces.length; i++) {
-                // System.out.println("implementsInterface("+cls+", "+iface+")
-                // -- "+interfaces[i]+" == "+iface+"?");
-                if (interfaces[i].equals(iface))
-                    return true;
-                if (interfaces[i].isAssignableTo(iface))
-                    return true;
-            }
-            JClassType superclass = cls.getSuperclass();
-            if (superclass == null)
-                return false;
-            return implementsInterface(superclass, iface);
         }
 
         public String identifier(String id) {
@@ -3276,534 +3241,13 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 			return substring.replaceAll("([\'\"\\\\])", "\\\\$1").replace("\n", "\\n").replace("\r", "\\r");
 		}
 
-		public JType getAsyncReturnType(JMethod method) throws UnableToCompleteException {
-        	
-        	JParameter[] parameters = method.getParameters();
-			int parameterCount = parameters.length;
-			if(parameterCount > 0) {
-        		JParameterizedType parameterized = parameters[parameterCount-1].getType().isParameterized();
-				if(parameterized != null) {
-        			if(parameterized.getQualifiedSourceName().equals(AsyncCallback.class.getName())) {
-        				return parameterized.getTypeArgs()[0];
-        			}
-        		}
-        	}
-        	
-        	JType type = types.getJavaLangObject();
-        	
-        	String[][] returnType = method.getMetaData("gwt.asyncReturnType");
-        	if(returnType.length > 0 && returnType[0].length > 0) {
-        		String typeName = returnType[0][0];
-        		try {
-					return getType(typeName);
-				} catch (UnableToCompleteException caught) {
-					logger.log(TreeLogger.ERROR, "gwt.asyncReturnType specified invalid type name "+typeName, null);
-					throw new UnableToCompleteException();
-				}
-        	}
-        	
-        	// If it's an async interface, lookup the type from the main interface
-        	JClassType enclosingType = method.getEnclosingType();
-        	//System.out.println("Looking for async return type for "+method+", enclosing type is "+enclosingType);
-        	if(enclosingType.getName().endsWith("Async") && enclosingType.isInterface() != null) {
-        		try {
-        			final String qualifiedSourceName = enclosingType.getQualifiedSourceName();
-					JClassType iface = getType(qualifiedSourceName.substring(0, qualifiedSourceName.length()-5));
-					JType[] syncParameters = new JType[parameterCount-1];
-					for (int i = 0; i < syncParameters.length; i++) {
-						syncParameters[i] = parameters[i].getType();
-					}
-        			JMethod syncMethod = findMethod(iface, method.getName(), syncParameters);
-        			if(syncMethod != null) {
-        				type = syncMethod.getReturnType();
-        			} else {
-                    	System.out.println("Couldn't find synchronous version of async method "+method+", enclosing type is "+enclosingType+" synchronous interface is "+iface);
-        				
-        			}
-        		} catch(Throwable caught) {
-        			// Darn
-                	System.out.println("Failed to get async return type for "+method+", enclosing type is "+enclosingType);
-                	caught.printStackTrace();
-        		}
-        	}
-        	
-        	return type;
+		protected boolean isConstants(GeneratorTypeInfo inType) throws UnableToCompleteException {
+			return inType.implementsInterface(commonTypes.constants)
+			    || inType.implementsInterface(commonTypes.dictionaryConstants);
 		}
-
-		/**
-         * Try to find a method on the given class with the given name and the right number of
-         * parameters.
-         * 
-         * @param inType
-         *                Class to search for methods; superclasses are not automatically searched
-		 * @param name
-         *                Name of the method to search for
-		 * @param parameterCount
-         *                Number of parameters we want
-		 * @param matchAsync If true, an async method with parameterCount + 1 will be matched
-		 * @param staticCall TODO
-         * @return A JMethod if a match is found, or null
-         * @throws UnableToCompleteException 
-         */
-        public JMethod findMethod(JClassType inType, String name, int parameterCount, boolean matchAsync, boolean staticCall) throws UnableToCompleteException {
-            JMethod[] overloads = getAllMethods(inType, staticCall);
-            //System.out.println("Looking for "+name+" with "+parameterCount+" parameters matchAsync = "+matchAsync+" in "+inType);
-            for (int i = 0; i < overloads.length; i++) {
-                JMethod candidate = overloads[i];
-                if(!candidate.getName().equals(name))
-                	continue;
-                //if(name.equals("setAdjustmentAccount")) System.out.println("Looking for "+name+" with "+parameterCount+" parameters matchAsync = "+matchAsync+", found "+candidate);
-                
-                if (candidate.getParameters().length == parameterCount) {
-                    return candidate;
-                }
-                if(matchAsync
-                	&& candidate.getParameters().length == parameterCount+1
-                	&& candidate.getParameters()[parameterCount].getType().getQualifiedSourceName().equals(AsyncCallback.class.getName())) {
-                	return candidate;
-                }
-            }
-            return null;
-        }
-
-        public JMethod findMethod(JClassType inType, String name, JType[] paramTypes) {
-        	for( ; inType != null; inType = inType.getSuperclass()) {
-        		JMethod method = inType.findMethod(name, paramTypes);
-        		//System.out.println("Looking for "+name+" on "+inType+": "+method);
-        		if(method != null)
-        			return method;
-        	}
-        	return null;
-        }
-        
-        Map<String,JMethod[]> methodsListCache = new HashMap<String,JMethod[]>();
-        /**
-         * Return all methods of a class, including superclasses.
-         * @param staticMethods TODO
-         */
-        public JMethod[] getAllMethods(JClassType inType, boolean staticMethods) {
-        	JMethod[] cachedOverridableMethods = methodsListCache.get(inType.toString());        	
-            if (cachedOverridableMethods == null) {
-                Map<String,JMethod> methodsBySignature = new TreeMap<String,JMethod>();
-                List<JMethod> results = new ArrayList<JMethod>();
-                for(JClassType curCls = inType; curCls != null; curCls = curCls.getSuperclass()) {
-                	final JClassType[] implementedInterfaces = curCls.getImplementedInterfaces();
-                	for (int i = -1; i < implementedInterfaces.length; i++) {
-						JClassType interfaceType = i==-1?curCls:implementedInterfaces[i];
-	                    JMethod[] methods = interfaceType.getMethods();
-	                	for (int j = 0; j < methods.length; j++) {
-	        				JMethod method = methods[j];
-	        				final String key = method.toString();
-	        				//if(interfaceType.isInterface() != null)
-	        				//	System.out.println(key);
-	        				if(method.isStatic() != staticMethods)
-	        					continue;
-	        				if(!methodsBySignature.containsKey(key)) {
-	        					methodsBySignature.put(key, method);
-	        					results.add(method);
-	        				}
-	        			}
-					}
-                }
-                int size = results.size();
-                cachedOverridableMethods = results.toArray(new JMethod[size]);
-                methodsListCache.put(inType.toString(), cachedOverridableMethods);
-              }
-              return cachedOverridableMethods;
-        }
-        public void flushMethodsCache(JClassType inType) {
-            methodsListCache.remove(inType.toString());
-        }
-        
-		protected String converter(final String inExpr, final JType inType, final JType outType)
-                        throws UnableToCompleteException {
-            JPrimitiveType primitiveType;
-            JClassType classType;
-            JArrayType arrayType;
-            JEnumType enumType;
-            String attributeValueExpr = null;
-            final JClassType java_lang_String = getType("java.lang.String");
-			final JClassType java_lang_Object = types.getJavaLangObject();
-            if (inType.equals(outType)) {
-                attributeValueExpr = inExpr;
-            } else if((enumType = outType.isEnum()) != null && inType.equals(java_lang_String)) {
-            	attributeValueExpr = enumType.getQualifiedSourceName()+".valueOf("+inExpr+")";
-            } else if ((classType = outType.isClassOrInterface()) != null 
-                && inType.isClassOrInterface() != null) {
-                JClassType inClass = inType.isClassOrInterface().getErasedType();
-                classType = classType.getErasedType();
-				if (classType.isAssignableFrom(inClass) || inExpr.equals("null")) {
-                    // No cast needed
-                    attributeValueExpr = inExpr;
-                } else if (classType.isAssignableTo(inClass)) {
-                    // Downcast
-                    attributeValueExpr = "((" + classType.getQualifiedSourceName() + ") " + inExpr + ")";
-                } else if(inType.equals(java_lang_String) &&
-                	(classType.equals(getType("java.lang.Long"))
-                		|| classType.equals(getType("java.lang.Double"))
-                		|| classType.equals(getType("java.lang.Float"))
-                		|| classType.equals(getType("java.lang.Integer")))) {
-                	// TODO Generalize this to more types than just Long; Long was what I needed but others may want something else
-                	attributeValueExpr = "("+inExpr+".length()==0?null:new "+ classType.getQualifiedSourceName() +"("+inExpr+"))";
-                } else if(outType.equals(java_lang_String)) {
-                	attributeValueExpr = "("+inExpr+"==null?\"\":String.valueOf("+inExpr+"))";
-                } else {
-                    logger.log(TreeLogger.ERROR, "Not assignable in either direction: "+inType+" and "+classType+" for "+inExpr, null);
-                }
-            } else if((arrayType = outType.isArray()) != null) {
-            	arrayType = (JArrayType) arrayType.getErasedType();
-            	if(inType.equals(java_lang_String) && arrayType.getComponentType().equals(java_lang_String)) {
-            		if(inExpr.startsWith("\"")) {
-            			String[] strings = inExpr.substring(1, inExpr.length()-2).split("\\s*,?\\s*");
-            			if(strings.length == 1 && strings[0].equals("")) return "new String[] {}";
-            			for (int i = 0; i < strings.length; i++) {
-							String string = strings[i];
-							strings[i] = "\"" + string + "\"";
-						}
-            			return "new String[] {"+joinWithCommas(0, strings)+"}";
-            		} else {
-            			return inExpr+".split(\"\\\\s*,\\\\s*\")";
-            		}
-            	} else if(inType.equals(java_lang_Object)) {
-                    // Downcast
-                    attributeValueExpr = "((" + arrayType.getComponentType().getErasedType().getQualifiedSourceName() + "[]) " + inExpr + ")";
-            	} else if(inType.isArray() != null && (((JClassType)arrayType.getComponentType().getErasedType()).isAssignableFrom((JClassType)inType.isArray().getComponentType().getErasedType())) 
-            			|| inExpr.equals("null") 
-            			|| arrayType.getComponentType().getErasedType().equals(types.getJavaLangObject())) {
-            		attributeValueExpr = inExpr;
-            	} else if((inType.isArray() != null && (((JClassType)arrayType.getComponentType().getErasedType()).isAssignableTo((JClassType)inType.isArray().getComponentType().getErasedType())))) {
-                    // Downcast
-                    attributeValueExpr = "((" + arrayType.getComponentType().getErasedType().getQualifiedSourceName() + "[]) " + inExpr + ")";
-                } else {
-                	logger.log(TreeLogger.ERROR, "Can't convert from "+inType+" to array type "+outType+" metaclass "+outType.getClass()+" erased type "+outType.getErasedType()+" element erased type "+arrayType.getComponentType().getErasedType(), null);
-                	return null;
-                }
-            } else if ((primitiveType = outType.isPrimitive()) != null) {
-				if (primitiveType == JPrimitiveType.BOOLEAN) {
-                    if (inType.equals(getType("java.lang.Boolean"))) {
-                        attributeValueExpr = inExpr + ".booleanValue()";
-                    } else if (inType.equals(java_lang_String)) {
-                        attributeValueExpr = "Boolean.parseBoolean(" + inExpr + ")";
-                    } else if("null".equals(inExpr) || "false".equals(inExpr) || "".equals(inExpr)) {
-                    	attributeValueExpr = "false";
-                    } else if("true".equals(inExpr)) {
-                    	attributeValueExpr = "true";
-                    } else if (inType.equals(java_lang_Object)) {
-                        attributeValueExpr = "(" + inExpr + " != null && (!(" + inExpr
-                        + " instanceof Boolean) || ((Boolean)" + inExpr + ").booleanValue()))";
-                    } else if (inType.isClassOrInterface() != null) {
-                        attributeValueExpr = "(" + inExpr + " != null)";
-                    }
-                } else {
-					if (primitiveType == JPrimitiveType.INT) {
-						if (inType.equals(JPrimitiveType.LONG) || inType.equals(JPrimitiveType.DOUBLE) || inType.equals(JPrimitiveType.FLOAT)) {
-							attributeValueExpr = "((int)"+inExpr+")";
-						} else if (inType.equals(getType("java.lang.Integer"))) {
-					        attributeValueExpr = inExpr + ".intValue()";					        
-					    } else if (inType.equals(java_lang_Object)) {
-					        attributeValueExpr = "((Integer)" + inExpr + ").intValue()";
-					    } else if (inType.equals(java_lang_String)) {
-					        attributeValueExpr = "Integer.parseInt(" + inExpr + ")";
-					    }
-					} else if (primitiveType == JPrimitiveType.LONG) {
-						if (inType.equals(JPrimitiveType.INT) || inType.equals(JPrimitiveType.DOUBLE) || inType.equals(JPrimitiveType.FLOAT)) {
-							attributeValueExpr = "((long)"+inExpr+")";
-						} else if (inType.equals(getType("java.lang.Long"))) {
-					        attributeValueExpr = inExpr + ".longValue()";
-					    } else if (inType.equals(java_lang_Object)) {
-					        attributeValueExpr = "((Long)" + inExpr + ").longValue()";
-					    } else if (inType.equals(java_lang_String)) {
-					        attributeValueExpr = "Long.parseLong(" + inExpr + ")";
-					    }
-					} else if (primitiveType == JPrimitiveType.DOUBLE) {
-						if (inType.equals(JPrimitiveType.INT) || inType.equals(JPrimitiveType.LONG) || inType.equals(JPrimitiveType.FLOAT)) {
-							attributeValueExpr = "((double)"+inExpr+")";
-						} else if (inType.equals(getType("java.lang.Double"))) {
-					        attributeValueExpr = inExpr + ".doubleValue()";
-					    } else if (inType.equals(java_lang_Object)) {
-					        attributeValueExpr = "((Double)" + inExpr + ").doubleValue()";
-					    } else if (inType.equals(java_lang_String)) {
-					        attributeValueExpr = "Double.parseDouble(" + inExpr + ")";
-					    }
-					} else if (primitiveType == JPrimitiveType.FLOAT) {
-						if (inType.equals(JPrimitiveType.INT) || inType.equals(JPrimitiveType.LONG) || inType.equals(JPrimitiveType.DOUBLE)) {
-							attributeValueExpr = "((float)"+inExpr+")";
-						} else if (inType.equals(getType("java.lang.Float"))) {
-					        attributeValueExpr = inExpr + ".floatValue()";
-					    } else if (inType.equals(java_lang_Object)) {
-					        attributeValueExpr = "((Float)" + inExpr + ").floatValue()";
-					    } else if (inType.equals(java_lang_String)) {
-					        attributeValueExpr = "Float.parseFloat(" + inExpr + ")";
-					    }
-					} else {
-						logger.log(TreeLogger.ERROR, "Primitive output type not handled yet: "+outType, null);
-						return null;
-					}
-				}
-            } else if((primitiveType = inType.isPrimitive()) != null && outType.equals(java_lang_String)) {
-            	attributeValueExpr = "String.valueOf("+inExpr+")";
-            }
-            return attributeValueExpr;
-        }
-
-		public String callAsyncGetter(String asyncGetter, String callback) {
-			if(asyncGetter.endsWith(",")) {
-				return asyncGetter + " " + callback +")";
-			} else {
-				return asyncGetter + "(" + callback + ")";
-			}
-		}
-		
-		protected boolean isConstants(JClassType inType) throws UnableToCompleteException {
-            return implementsInterface(inType, getType(Constants.class.getName()))
-                || implementsInterface(inType, getType(DictionaryConstants.class.getName()));
-        }
-
-        /**
-		 * Provide access to a non-async value in transition in order
-		 * to perform some kind of transformation on it.
-		 * @author dobes
-		 *
-		 */
-		class OperatorInfo {
-			public String onGetExpr(String expr) throws UnableToCompleteException {
-				return expr;
-			}
-			public String onSetExpr(String expr) throws UnableToCompleteException {
-				return expr;
-			}
-			
-		}
-        class ExpressionInfo {
-        	final private String getter;
-            final private String setter;
-            final private String asyncGetter;
-            final private String asyncSetter;
-            final private boolean constant;
-            final private JType type;
-            private ArrayList<OperatorInfo> operators;
-            
-            public ExpressionInfo(String getter, String setter, JType type, boolean asyncGetter, boolean asyncSetter, boolean constant) {
-                super();
-                if(asyncGetter) {
-                	this.asyncGetter = getter;
-                	this.getter = null;
-                }
-                else {
-                	this.getter = getter;
-                	this.asyncGetter = null;
-                }
-                if(asyncSetter) {
-                	this.asyncSetter = setter;
-                	this.setter = null;
-                }
-                else {
-                	this.setter = setter;
-                	this.asyncSetter = null;
-                }
-                this.type = type;
-                this.constant = constant;
-            }
-
-            public boolean hasSynchronousSetter() {
-                return setter != null;
-            }
-
-            public boolean hasAsyncGetter() {
-                return asyncGetter != null;
-            }
-
-            public boolean hasSynchronousGetter() {
-                return getter != null;
-            }
-
-            public String setterString() {
-                if(asyncSetter != null) return asyncSetter;
-                if(setter != null) return setter;
-                return toString();
-            }
-
-            public boolean hasSetter() {
-				return setter != null || asyncSetter != null;
-			}
-
-			public boolean hasGetter() {
-				return getter != null || asyncGetter != null;
-			}
-
-			public ExpressionInfo(String getter, String setter, JType type) {
-				this(getter, setter, type, false, false, false);
-			}
-
-            public ExpressionInfo(String expr, JType type, boolean constant) {
-				this(expr, null, type, false, false, constant);
-			}
-
-            public ExpressionInfo(ExpressionInfo x, OperatorInfo operator) {
-            	this.getter = x.getter;
-            	this.setter = x.setter;
-            	this.asyncGetter = x.asyncGetter;
-            	this.asyncSetter = x.asyncSetter;
-            	this.constant = false;
-            	this.type = x.type;
-            	addOperator(operator);
-			}
-
-			String applyGetOperators(String expr) throws UnableToCompleteException {
-				if(operators == null) return expr;
-            	for (Iterator<OperatorInfo> i = operators.iterator(); i.hasNext();) {
-					OperatorInfo oper = i.next();
-					expr = oper.onGetExpr(expr);
-				}
-            	return expr;
-            }
-            String applySetOperators(String expr) throws UnableToCompleteException {
-				if(operators == null) return expr;
-            	for (Iterator<OperatorInfo> i = operators.iterator(); i.hasNext();) {
-					OperatorInfo oper = i.next();
-					expr = oper.onSetExpr(expr);
-				}
-            	return expr;
-            }
-			protected String copyStatement(ExpressionInfo src) throws UnableToCompleteException {
-                String converted = src.conversionExpr(type);
-                if(converted == null) {
-                    logger.log(TreeLogger.ERROR, "Unable to convert "+src.type.getQualifiedSourceName()+" to "+type.getQualifiedSourceName()+" for "+setter+" = "+(src.getter!=null?src.getter:src.asyncGetter), null);
-                    throw new UnableToCompleteException();
-                }
-                return callSetter(setter, applySetOperators(converted)).toString();
-            }
-
-            protected String conversionExpr(JType targetType) throws UnableToCompleteException {
-            	if(getter == null) {
-            		logger.log(TreeLogger.ERROR, "This expression is not async - use asyncCopyStatement() for async support!", new Error());
-            		throw new UnableToCompleteException();
-            	}
-                String converted = converter(getter, type, targetType);
-				if(converted == null)
-					return null;
-				String postOp = applyGetOperators(converted);
-				if(postOp == null) {
-					logger.log(TreeLogger.ERROR, "Converted type successfully, but applying operators returned null!", null);
-				}
-				return postOp;
-            }
-            
-            public String getterExpr() throws UnableToCompleteException {
-                if(getter == null) throw new NullPointerException("No synchronous getter for this expression.");
-                return applyGetOperators(getter);
-            }
-            
-            /**
-             * Asynchronous copy (load) from one expression to another.
-             * 
-             * @param src Source value to read from
-             * @param callback Expression string for the callback to invoke on completion
-             * @param maySkipCallback If true, and both this and src are not asynchronous, doesn't call the callback
-             * @return A statement to be put into the source which does the copy
-             */
-            protected String asyncCopyStatement(ExpressionInfo src, String callback, boolean maySkipCallback) throws UnableToCompleteException {
-            	if(setter != null) {
-            		if(src.getter != null) {
-            			if(maySkipCallback)
-            				return copyStatement(src);
-            			else
-            				return copyStatement(src)+callback+".onSuccess();";
-            		} else if(src.asyncGetter != null) {
-            			String converted = converter(src.applyGetOperators(converter("result", types.getJavaLangObject(), src.type)), src.type, type);
-            			if(converted == null) {
-            				logger.log(TreeLogger.ERROR, "Can't convert "+src.type+" to "+type+" for copy from "+src.asyncGetter+" to "+setter, null);
-            				throw new UnableToCompleteException();
-            			}
-                    	return callAsyncGetter(src.asyncGetter, "(new AsyncCallbackProxy<"+src.getType().getParameterizedQualifiedSourceName()+", Void>("+callback+") {" +
-            			"public void onSuccess("+src.getType().getParameterizedQualifiedSourceName()+" result) { " +
-            				"try { " +
-                				callSetter(stripThis(setter), applySetOperators(converted)) +
-        						"returnSuccess(null); " +
-    						"} catch(Throwable caught) { " +
-        						"super.onFailure(caught); " +
-    						"}" +
-    					"}" +
-        			"})")+";";
-            		} else throw new NullPointerException("No getter!");
-            	} else if(asyncSetter != null) {
-            		if(src.getter != null) {
-            			String converted = converter(src.getter, src.type, type);
-            			if(converted == null) {
-            				logger.log(TreeLogger.ERROR, "Can't convert "+src.type+" to "+type+" for copy from "+src.getter+" to "+asyncSetter, null);
-            				throw new UnableToCompleteException();
-            			}
-                    	return callSetter(asyncSetter, converted, callback).toString();
-            		} else if(src.asyncGetter != null) {
-            			String converted = converter(src.applyGetOperators(converter("result", types.getJavaLangObject(), src.type)), src.type, type);
-            			if(converted == null) {
-            				logger.log(TreeLogger.ERROR, "Can't convert "+src.type+" to "+type+" for copy from "+src.asyncGetter+" to "+asyncSetter, null);
-            				throw new UnableToCompleteException();
-            			}
-                    	return callAsyncGetter(src.asyncGetter, "new AsyncCallbackProxy<"+src.getType().getParameterizedQualifiedSourceName()+", Void>("+callback+") {" +
-                    			"public void onSuccess("+src.getType().getParameterizedQualifiedSourceName()+" result) {" +
-                    				callSetter(asyncSetter, applySetOperators(converted)+", takeCallback()") +
-                    			" returnSuccess(null); }}")+";";
-            		} else throw new NullPointerException("No getter!");
-            	} else throw new NullPointerException("No setter!");
-            }
-
-			private String stripThis(String setter) {
-				if(setter.startsWith("this."))
-					return setter.substring(5);
-				return setter;
-			}
-
-			public String getGetter() {
-				return getter;
-			}
-
-			public String getSetter() {
-				return setter;
-			}
-
-			public String getAsyncGetter() {
-				return asyncGetter;
-			}
-
-			public String getAsyncSetter() {
-				return asyncSetter;
-			}
-
-			public boolean isConstant() {
-				return constant;
-			}
-
-			public JType getType() {
-				return type;
-			}
-
-			@Override
-			public String toString() {
-				return getter!=null?getter:asyncGetter!=null?asyncGetter:setter!=null?setter:asyncSetter!=null?asyncSetter:type.toString();
-			}
-			public void addOperator(OperatorInfo info) {
-				if(operators == null) operators = new ArrayList<OperatorInfo>();
-				operators.add(info);
-			}
-        }
 
     }
-	public static StringBuffer callSetter(String setter, String value) throws UnableToCompleteException {
-		StringBuffer sb = new StringBuffer(setter);
-		if(!(setter.endsWith("(") || setter.endsWith(",")))
-			sb.append('(');
-		return sb.append(value).append(");");
-	}
-	public static StringBuffer callSetter(String setter, String value, String callback) throws UnableToCompleteException {
-		StringBuffer sb = new StringBuffer(setter);
-		if(!(setter.endsWith("(") || setter.endsWith(",")))
-			sb.append('(');
-		return sb.append(value).append(", ").append(callback).append(");");
-	}
-
-
-    @Override
+	@Override
 	protected GeneratorInstance createGeneratorInstance() {
         return new GeneratorInstance();
     }

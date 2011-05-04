@@ -5,10 +5,10 @@
 	<inherits name="com.allen_sauer.gwt.log.gwt-log-DEBUG" />
 	<inherits name="com.datejs.DateJs" />
 	
+	<inherits name="com.google.gwt.debugpanel.Common" />
+	
     <source path='util'/>
     
-    <define-linker name="xsubs" class="com.habitsoft.kiyaa.linker.IFrameLinkerWithCrossDomainSupport"/>
-
     <generate-with
         class="com.habitsoft.kiyaa.rebind.ClonerGenerator">
      <when-type-assignable

@@ -11,6 +11,18 @@ import com.habitsoft.kiyaa.util.AsyncCallbackProxy;
  * replacement for calling methods using reflection.
  */
 public abstract class Action {
+	private final class DeferredActionCommand implements Command {
+		private final AsyncCallback<Void> callback;
+
+		private DeferredActionCommand(AsyncCallback<Void> callback) {
+			this.callback = callback;
+		}
+
+		public void execute() {
+			perform(callback);
+		}
+	}
+
 	String label;
 	
 	public Action() {
@@ -52,11 +64,7 @@ public abstract class Action {
 	 * Uses DeferredCommand.addCommand().
 	 */
 	public void performDeferred(final AsyncCallback<Void> callback) {
-		DeferredCommand.addCommand(new Command() {
-			public void execute() {
-				perform(callback);
-			}
-		});
+		DeferredCommand.addCommand(new DeferredActionCommand(callback));
 	}
 	public String getLabel() {
 		return label;

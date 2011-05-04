@@ -12,8 +12,8 @@
 	    </filesystem>
 	     -->
 	    <filesystem name="lib-folder">
-	      <ivy pattern="${ivy.settings.dir}/local-ivy-repo/[module]-[artifact]-[revision].[ext]" />
-	      <artifact pattern="${ivy.settings.dir}/local-ivy-repo/[artifact]-[revision].[ext]" />
+	      <ivy pattern="${ivy.settings.dir}/lib/[module]-[artifact]-[revision].[ext]" />
+	      <artifact pattern="${ivy.settings.dir}/lib/[artifact]-[revision].[ext]" />
 	    </filesystem>
     	<resolver ref="local"/>
 	    <ibiblio name="maven-central" m2compatible="true" checksums=""/>
