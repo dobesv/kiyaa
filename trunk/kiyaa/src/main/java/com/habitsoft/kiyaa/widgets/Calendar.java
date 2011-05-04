@@ -2,6 +2,7 @@ package com.habitsoft.kiyaa.widgets;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.GregorianCalendar;
 
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.core.client.GWT;
@@ -21,15 +22,11 @@ import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.HasCloseHandlers;
-import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.i18n.client.constants.DateTimeConstants;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.ChangeListener;
-import com.google.gwt.user.client.ui.ChangeListenerCollection;
 import com.google.gwt.user.client.ui.ComplexPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.habitsoft.kiyaa.util.HoverStyleHandler;
@@ -332,6 +329,7 @@ public class Calendar extends ComplexPanel implements HasCloseHandlers<Calendar>
 	
 
 	public void gotoPrevMonth() {
+		endOfNextMonth(-1);
 		if(month <= 1) {
 			year--;
 			month = 12;
@@ -343,6 +341,7 @@ public class Calendar extends ComplexPanel implements HasCloseHandlers<Calendar>
 	
 
 	public void gotoNextMonth() {
+		endOfNextMonth(1);
 		if(month == 12) {
 			month = 1;
 			year++;
@@ -350,6 +349,70 @@ public class Calendar extends ComplexPanel implements HasCloseHandlers<Calendar>
 			month++;
 		}
 		dateChanged();
+	}
+	
+	private boolean isLastDayOfLongStartMonth;
+	private boolean isSpecialCaseForFebruary;
+	
+	/**
+	 * A little helper function created to resolve the issue when the user is on the last
+	 * day of a month with 31 days and jumps forward/backward a month to a month with 
+	 * 30 days in it. 
+	 */
+	private void endOfNextMonth(int dir){
+		int[] shortMonths = {4,6,9,11};//months with 30 days
+		int[] longMonths = {1,3,5,7,8,10,12};//months with 31 days
+		int nextMonth = month + dir;
+		switch(nextMonth){
+			case 0: nextMonth = 12; break;
+			case 13: nextMonth = 1; break;
+			default: break;
+		}
+		if(nextMonth == 2 && isSpecialCaseForFebruary){//month = 2 is February (28/29 days)
+			dayOfMonth = lastDayOfFeb(year);
+		}else if(nextMonth == 2 && isLastDayOfLongStartMonth){
+			dayOfMonth = lastDayOfFeb(year);
+		} else {
+			if(dayOfMonth == 31){
+				for(int shortMonth : shortMonths){
+					if(nextMonth == shortMonth){
+						dayOfMonth = 30;
+						break;
+					}
+				}
+			} else if (isLastDayOfLongStartMonth ){
+				for(int longMonth : longMonths){
+					if(nextMonth == longMonth){
+						dayOfMonth = 31;
+						break;
+					}
+				}
+			} 
+		}
+	}
+	
+	private int lastDayOfFeb(int year){
+		if(isLeapYear(year))
+			return 29;
+		else
+			return 28;
+	}
+	
+	/**
+	 * I had to write this little function becasue whenever I tried to use the GregorianCalendar.isLeapYear(int)
+	 * the application would not load... very strange bug.
+	 * @param year
+	 * @return
+	 */
+	private boolean isLeapYear(int year){
+		 if (year % 400 == 0)
+		      return true;
+		 else if (year % 100 == 0)
+		     return false;
+		 else if (year % 4 == 0) 
+		     return true;
+		 else
+			 return false;
 	}
 	
 	public void gotoToday() {
@@ -363,7 +426,8 @@ public class Calendar extends ComplexPanel implements HasCloseHandlers<Calendar>
 	private Date createDate() {
 		return new Date(year-1900, month-1, dayOfMonth);
 	}
-
+	
+	
 	/**
 	 * Set the date given.
 	 * 
@@ -377,6 +441,17 @@ public class Calendar extends ComplexPanel implements HasCloseHandlers<Calendar>
 		int newYear = selectedDate.getYear()+1900;
 		int newMonth = selectedDate.getMonth()+1;
 		int newDayOfMonth = selectedDate.getDate();
+		
+		//two booleans used to help navigate the last day of the month, month-to-month across various months
+		if(newDayOfMonth == 31)
+			isLastDayOfLongStartMonth = true;
+		else 
+			isLastDayOfLongStartMonth = false;
+		
+		if(newDayOfMonth == 29 || newDayOfMonth == 30)
+			isSpecialCaseForFebruary = true;
+		else
+			isSpecialCaseForFebruary = false;
 		
 		if(newYear != this.year || newMonth != this.month || newDayOfMonth != this.dayOfMonth) {
 			this.year = newYear;
@@ -395,6 +470,7 @@ public class Calendar extends ComplexPanel implements HasCloseHandlers<Calendar>
 		int thisMonth = today.getMonth();
 		int thisDay = today.getDate();
 		//setVisible(table, false);
+		
 		try {
 			if(year < minYear) {
 				year = minYear;

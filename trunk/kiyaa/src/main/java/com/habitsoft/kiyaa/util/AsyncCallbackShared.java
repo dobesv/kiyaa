@@ -120,4 +120,15 @@ public class AsyncCallbackShared<T> implements AsyncCallback<T>, AsyncCallbackEx
 			}
 		}
 	}
+	
+	@Override
+	public boolean isOkayToWaitForCurrentAction() {
+		if(done || callbacks.isEmpty())
+			return false;
+		for(AsyncCallback<T> callback : callbacks) {
+			if(!(callback instanceof AsyncCallbackExtensions && ((AsyncCallbackExtensions) callback).isOkayToWaitForCurrentAction()))
+				return false;
+		}
+		return true; // Didn't find any nay-sayers
+	}
 }

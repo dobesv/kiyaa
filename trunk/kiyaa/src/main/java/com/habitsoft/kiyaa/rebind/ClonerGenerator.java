@@ -1,12 +1,9 @@
 package com.habitsoft.kiyaa.rebind;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
-
-import org.apache.naming.java.javaURLContextFactory;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -16,7 +13,6 @@ import com.google.gwt.core.ext.typeinfo.JField;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JType;
-import com.habitsoft.kiyaa.util.Cloner;
 
 public class ClonerGenerator extends BaseGenerator {
 
@@ -34,7 +30,6 @@ public class ClonerGenerator extends BaseGenerator {
 		protected void generateClassBody() throws UnableToCompleteException {
 			// Find the type to clone
 			JClassType[] implementedInterfaces = baseType.getImplementedInterfaces();
-			JClassType desiredInterface = getType(Cloner.class.getName());
 			for(JClassType iface : implementedInterfaces) {
 				JParameterizedType parameterizedType = iface.isParameterized();
 				if(parameterizedType == null)

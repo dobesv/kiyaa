@@ -767,7 +767,7 @@ public class TableView<T> extends BaseCollectionView<T> implements SourcesTableE
     }
     public void setContextMenuModels(Value<Object[]> models) {
         createContextMenu();
-        contextMenu.setModels(models);
+        contextMenu.setModelsValue(models);
     }
     public void addContextMenuColumn(ViewFactory<ModelView<Object>> viewFactory) {
         createContextMenu();

@@ -21,14 +21,19 @@ public interface StackTraceServiceAsync {
 	 * Return a new strack trace, replacing stack information where missing, if available.
 	 * 
 	 * Afterwards, the stack trace will have been improved as best we could.
-	 * 
-	 * @param moduleName Return value of GWT.getModuleName() on the client side
 	 * @param strongName Return value of GWT.getPermutationStrongName() on the client side
 	 * @param obfuscatedTrace Obfuscated stack trace, returned by getStackTrace() on the client side
+	 * 
 	 * @return A new array with some or all stack trace elements replaced
 	 */
-	void deobfuscateStackTrace(String moduleName, String strongName,
-			StackTraceElement[] obfuscatedTrace,
+	void deobfuscateStackTrace(String strongName, StackTraceElement[] obfuscatedTrace,
 			AsyncCallback<StackTraceElement[]> callback);
 
+	/**
+	 * Log the exception and also return the de-obfuscated stack trace.  This is useful
+	 * for displaying the stack trace client-side.
+	 */
+	void logAndDeobfuscate(String moduleName, String strongName, String loggerName,
+			String exceptionClass, String message,
+			StackTraceElement[] obfuscatedTrace, AsyncCallback<StackTraceElement[]> callback);
 }

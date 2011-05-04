@@ -5,6 +5,15 @@ import java.math.RoundingMode;
 
 public class MathUtil {
 
+	final static BigDecimal GLOBAL_BIGDECIMAL_SIZE_LIMIT = new BigDecimal(10000000000000000L);
+	final static int GLOBAL_BIGDECIMAL_SCALE_LIMIT = 10;
+
+    public static boolean validBigDecimal(BigDecimal result) {
+		if (result.scale() > GLOBAL_BIGDECIMAL_SCALE_LIMIT || result.abs().compareTo(GLOBAL_BIGDECIMAL_SIZE_LIMIT) > 0) {
+			return false;
+		} else return true;		
+    }
+    
     /**
      * Apply rounding such that:
      * 

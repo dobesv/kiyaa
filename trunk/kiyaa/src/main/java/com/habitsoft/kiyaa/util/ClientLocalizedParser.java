@@ -99,6 +99,8 @@ public class ClientLocalizedParser implements LocalizedParser {
     }
 
     public Date parseDate(String dateString) throws DateParseException {
+    	dateString = validateDateString(dateString);
+    	
         try {
             return dateFormat.parse(dateString);
         } catch(Exception badDate1) {
@@ -110,7 +112,26 @@ public class ClientLocalizedParser implements LocalizedParser {
         }
     }
 
-    public double parseDecimal(String val) throws NumberFormatException {
+    protected String validateDateString(String dateString) throws DateParseException {
+    	// manually prohibit some confusing cases of the date parser libraries
+		try {
+			int singleNum = Integer.valueOf(dateString);
+			// prohibit zero
+			if(singleNum == 0)
+				throw new DateParseException("validation: Cannot parse date that is repeat of zeroes");
+			// prohibit invalid day of the month of the current month
+			if(singleNum > 31)
+				throw new DateParseException("validation: Cannot parse day of the month that is greater than 31");
+		} catch (NumberFormatException e) {
+			//if its not a single number, do nothing
+		}
+		
+		// try to insert space where appropriate to fix common error: "mar8 2011"
+		dateString = dateString.replaceAll("^([a-zA-Z]+?)([0-9]+?)([a-zA-Z]*)", "$1 $2");
+		return dateString;
+	}
+
+	public double parseDecimal(String val) throws NumberFormatException {
         return NumberFormat.getDecimalFormat().parse(val);
     }
 

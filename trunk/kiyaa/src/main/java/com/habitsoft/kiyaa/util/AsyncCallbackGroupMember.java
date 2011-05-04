@@ -36,5 +36,10 @@ public class AsyncCallbackGroupMember<T> implements AsyncCallback<T>, AsyncCallb
 	public void resetTimeout(Integer expectedTimeNeeded) {
 		group.resetTimeout(expectedTimeNeeded);
 	}
+	
+	@Override
+	public boolean isOkayToWaitForCurrentAction() {
+		return group.isOkayToWaitForCurrentAction();
+	}
 
 }

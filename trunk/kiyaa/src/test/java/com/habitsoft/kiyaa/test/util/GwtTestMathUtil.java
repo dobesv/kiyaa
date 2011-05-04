@@ -1,5 +1,7 @@
 package com.habitsoft.kiyaa.test.util;
 
+import java.math.BigDecimal;
+
 import junit.framework.TestCase;
 
 import com.habitsoft.kiyaa.util.MathUtil;
@@ -20,6 +22,13 @@ public class GwtTestMathUtil extends TestCase {
         assertEquals(-45L, MathUtil.roundToFixedPoint(-4.45, 1));
         assertEquals(-446L, MathUtil.roundToFixedPoint(-4.455, 2));
         assertEquals(446L, MathUtil.roundToFixedPoint(4.455, 2));
+        
+        assertEquals(-3L, MathUtil.roundBigDecimalToLong(BigDecimal.valueOf(-349, 2)));
+        assertEquals(40L, MathUtil.roundBigDecimalToLong(BigDecimal.valueOf(40, 0)));
+        assertEquals(45L, MathUtil.roundBigDecimalToLong(BigDecimal.valueOf(445, 1)));
+        assertEquals(-45L, MathUtil.roundBigDecimalToLong(BigDecimal.valueOf(-445, 1)));
+        assertEquals(-446L, MathUtil.roundBigDecimalToLong(BigDecimal.valueOf(-4455, 1)));
+        assertEquals(446L, MathUtil.roundBigDecimalToLong(BigDecimal.valueOf(4455, 1)));
     }
     
     public void testLongToDouble() {

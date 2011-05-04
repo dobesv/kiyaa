@@ -190,10 +190,19 @@ public class AsyncCallbackGroup implements AsyncCallbackExtensions {
 		return pending > 0;
 	}
 
+	@Override
 	public void resetTimeout(Integer expectedTimeNeeded) {
 		// TODO Should we really let just one group member set the timeout or should we be doing something smarter here to keep the timeouts rolling? 
 		if(callback instanceof AsyncCallbackExtensions)
 			((AsyncCallbackExtensions)callback).resetTimeout(expectedTimeNeeded);
+	}
+	
+	@Override
+	public boolean isOkayToWaitForCurrentAction() {
+		if(callback instanceof AsyncCallbackExtensions)
+			return ((AsyncCallbackExtensions) callback).isOkayToWaitForCurrentAction();
+		else
+			return false;
 	}
 	
 }

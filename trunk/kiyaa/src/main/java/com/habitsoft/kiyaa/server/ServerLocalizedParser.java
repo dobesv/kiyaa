@@ -40,8 +40,8 @@ public class ServerLocalizedParser implements LocalizedParser {
     	final Currency currency = Currency.getInstance(currencyCode);
         final int decimalPlaces = getDecimalPlaces(currency);
         final NumberFormat numberFormat = getNumberFormat(currency, international, showGroupings);
-        numberFormat.setMaximumFractionDigits(amount.scale());
-        return numberFormat.format(amount.scaleByPowerOfTen(-decimalPlaces).doubleValue());
+        numberFormat.setMaximumFractionDigits(amount.scale()+decimalPlaces);
+        return numberFormat.format(amount.scaleByPowerOfTen(-decimalPlaces));
 	}
 
 	protected int getDecimalPlaces(final Currency currency) {
