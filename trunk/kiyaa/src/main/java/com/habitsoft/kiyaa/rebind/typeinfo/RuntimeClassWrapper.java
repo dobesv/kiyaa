@@ -97,7 +97,7 @@ public class RuntimeClassWrapper implements GeneratorTypeInfo {
 			loadMethods();
 		}
 		
-		return GeneratorMethodInfo.checkForMethod(staticMethods, name, true, desiredReturnType, parameterTypes);
+		return GeneratorMethodInfo.checkForMethod(staticMethods, name, true, true, desiredReturnType, parameterTypes);
 	}
 
 	
@@ -106,23 +106,23 @@ public class RuntimeClassWrapper implements GeneratorTypeInfo {
 		if(methods == null) {
 			loadMethods();
 		}
-		return GeneratorMethodInfo.checkForMethod(methods, name, matchAbstract, desiredReturnType, parameterTypes);
+		return GeneratorMethodInfo.checkForMethod(methods, name, matchAbstract, true, desiredReturnType, parameterTypes);
 	}
 
 	@Override
-	public GeneratorMethodInfo findMethodMatching(String name, GeneratorTypeInfo returnType, GeneratorTypeInfo... parameterTypes) {
+	public GeneratorMethodInfo findMethodMatching(String name, boolean allowCastable, GeneratorTypeInfo returnType, GeneratorTypeInfo... parameterTypes) {
 		if(methods == null) {
 			loadMethods();
 		}
-		return GeneratorMethodInfo.findMethod(methods, name, returnType, parameterTypes);
+		return GeneratorMethodInfo.findMethod(methods, name, allowCastable, returnType, parameterTypes);
 	}
 	
 	@Override
-	public GeneratorMethodInfo findStaticMethodMatching(String name, GeneratorTypeInfo returnType, GeneratorTypeInfo... parameterTypes) {
+	public GeneratorMethodInfo findStaticMethodMatching(String name, boolean allowCastable, GeneratorTypeInfo returnType, GeneratorTypeInfo... parameterTypes) {
 		if(staticMethods == null) {
 			loadMethods();
 		}
-		return GeneratorMethodInfo.findMethod(staticMethods, name, returnType, parameterTypes);
+		return GeneratorMethodInfo.findMethod(staticMethods, name, allowCastable, returnType, parameterTypes);
 	}
 	
 	/**

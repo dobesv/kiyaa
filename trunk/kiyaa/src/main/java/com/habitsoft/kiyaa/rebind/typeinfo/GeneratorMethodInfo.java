@@ -41,12 +41,13 @@ public class GeneratorMethodInfo {
 	 * Verify that this method matches the given return type and parameter types.
 	 * 
 	 * Note that null parameter types or return types are treated as a wildcard and not checked.
-	 * 
+	 * @param allowCastable TODO
 	 * @param returnType Expected return type of the method
 	 * @param parameterTypes Passed parameter types of the method
+	 * 
 	 * @return true if the return type and parameter types match the given expectations
 	 */
-	public boolean matchesSignature(GeneratorTypeInfo returnType, GeneratorTypeInfo[] parameterTypes) {
+	public boolean matchesSignature(boolean allowCastable, GeneratorTypeInfo returnType, GeneratorTypeInfo[] parameterTypes) {
 		if(returnType != null && !ExpressionInfo.directlyAssignable(returnType, null, this.returnType))
 			return false;
 		if(parameterTypes.length != this.parameterTypes.length)
@@ -54,20 +55,20 @@ public class GeneratorMethodInfo {
 		for(int i=0; i < parameterTypes.length; i++) {
 			if(parameterTypes[i] != null && !
 					(ExpressionInfo.directlyAssignable(this.parameterTypes[i], null, parameterTypes[i])
-					 || ExpressionInfo.castable(this.parameterTypes[i], null, parameterTypes[i])))
+					 || (allowCastable && ExpressionInfo.castable(this.parameterTypes[i], null, parameterTypes[i]))))
 				return false;
 		}
 		return true;
 	}
 	public static boolean checkForMethod(HashMap<String, ArrayList<GeneratorMethodInfo>> methods, String methodName,
-			boolean matchAbstract, GeneratorTypeInfo desiredReturnType, GeneratorTypeInfo[] desiredParameterTypes) {
+			boolean matchAbstract, boolean allowCastable, GeneratorTypeInfo desiredReturnType, GeneratorTypeInfo[] desiredParameterTypes) {
 		ArrayList<GeneratorMethodInfo> overloads = methods.get(methodName);
 		if(overloads == null)
 			return false;
 		for(GeneratorMethodInfo method : overloads) {
 			if(!matchAbstract && method.isAbstract())
 				continue;
-			if(method.matchesSignature(desiredReturnType, desiredParameterTypes))
+			if(method.matchesSignature(allowCastable, desiredReturnType, desiredParameterTypes))
 				return true;
 		}
 		return false;
@@ -81,12 +82,12 @@ public class GeneratorMethodInfo {
 		return false;
 	}
 	public static GeneratorMethodInfo findMethod(HashMap<String, ArrayList<GeneratorMethodInfo>> methods, String methodName,
-			GeneratorTypeInfo desiredReturnType, GeneratorTypeInfo[] desiredParameterTypes) {
+			boolean allowCastable, GeneratorTypeInfo desiredReturnType, GeneratorTypeInfo[] desiredParameterTypes) {
 		ArrayList<GeneratorMethodInfo> overloads = methods.get(methodName);
 		if(overloads == null)
 			return null;
 		for(GeneratorMethodInfo method : overloads) {
-			if(method.matchesSignature(desiredReturnType, desiredParameterTypes))
+			if(method.matchesSignature(allowCastable, desiredReturnType, desiredParameterTypes))
 				return method;
 		}
 		return null;

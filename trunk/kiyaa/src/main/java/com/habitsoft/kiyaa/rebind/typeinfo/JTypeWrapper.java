@@ -79,12 +79,12 @@ public class JTypeWrapper implements GeneratorTypeInfo {
 	}
 	
 	@Override
-	public GeneratorMethodInfo findMethodMatching(String name, GeneratorTypeInfo returnType, GeneratorTypeInfo... parameterTypes) {
+	public GeneratorMethodInfo findMethodMatching(String name, boolean allowCastable, GeneratorTypeInfo returnType, GeneratorTypeInfo... parameterTypes) {
 		return null;
 	}
 
 	@Override
-	public GeneratorMethodInfo findStaticMethodMatching(String name, GeneratorTypeInfo returnType, GeneratorTypeInfo... parameterTypes) {
+	public GeneratorMethodInfo findStaticMethodMatching(String name, boolean allowCastable, GeneratorTypeInfo returnType, GeneratorTypeInfo... parameterTypes) {
 		return null;
 	}
 

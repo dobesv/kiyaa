@@ -80,10 +80,9 @@ public class DictionaryConstantsGenerator extends BaseGenerator {
                     sw.println("private native com.google.gwt.core.client.JavaScriptObject _"+method.getName()+"() /*-{");
                     sw.indent();
                     sw.println("var dict = $wnd[\""+escape(dictionaryName)+"\"];");
+                    sw.println("if(dict == undefined) return null;");
                     sw.println("var value = dict[\""+escape(key)+"\"];");
-                    if(defaultValueExpr != null) {
-                        sw.println("if(dict == undefined || dict[\""+escape(key)+"\"] == undefined) return "+defaultValueExpr+";");
-                    }
+                    sw.println("if(value == undefined) return null;");
                     sw.println("return value;");
                     sw.outdent();
                     sw.println("}-*/;");
@@ -91,7 +90,9 @@ public class DictionaryConstantsGenerator extends BaseGenerator {
                     sw.indent();
                     sw.println("try {");
                     sw.indent();
-                    sw.println("return ("+returnType.getQualifiedSourceName()+") createStreamReader(_"+method.getName()+"()).readObject();");
+                    sw.println("if(_"+method.getName()+"() == null) return null;");
+                    String accessExpr = escape("$wnd[\""+escape(dictionaryName)+"\"][\""+escape(key)+"\"]");       
+                    sw.println("return ("+returnType.getQualifiedSourceName()+") createStreamReader(\""+accessExpr+"\").readObject();");
                     sw.outdent();
                     sw.println("} catch(com.google.gwt.user.client.rpc.SerializationException e) {");
                     sw.indentln("throw new Error(e);");
@@ -127,10 +128,10 @@ public class DictionaryConstantsGenerator extends BaseGenerator {
     		    TypeSerializerCreator typeSerializerCreator = new TypeSerializerCreator(tempLogger, serializableTypeOracle, serializableTypeOracle, (GeneratorContextExt) context, serializerClassName, serializerSimpleName);
                 typeSerializerCreator.realize(tempLogger);
                 sw.println("com.google.gwt.user.client.rpc.impl.Serializer serializer = new " + serializerClassName + "();");
-                sw.println("public com.habitsoft.kiyaa.util.DictionaryConstantsSerializationStreamReader createStreamReader(com.google.gwt.core.client.JavaScriptObject encoded)");
+                sw.println("public com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader createStreamReader(String encoded)");
                 sw.println("throws com.google.gwt.user.client.rpc.SerializationException {");
                 sw.indent();
-                sw.println("com.habitsoft.kiyaa.util.DictionaryConstantsSerializationStreamReader reader = new com.habitsoft.kiyaa.util.DictionaryConstantsSerializationStreamReader(serializer);");
+                sw.println("com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader reader = new com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader(serializer);");
                 sw.println("reader.prepareToRead(encoded);");
                 sw.println("return reader;");
                 sw.outdent();

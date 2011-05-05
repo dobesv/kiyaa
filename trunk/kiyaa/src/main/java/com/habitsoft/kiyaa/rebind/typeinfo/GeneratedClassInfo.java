@@ -168,24 +168,24 @@ public class GeneratedClassInfo implements GeneratorTypeInfo {
 
 	@Override
 	public boolean hasMethodMatching(String name, boolean matchAbstract, GeneratorTypeInfo returnType, GeneratorTypeInfo... parameterTypes) {
-		return GeneratorMethodInfo.checkForMethod(methods, name, matchAbstract, returnType, parameterTypes)
+		return GeneratorMethodInfo.checkForMethod(methods, name, matchAbstract, true, returnType, parameterTypes)
 		|| superclass.hasMethodMatching(name, matchAbstract, returnType, parameterTypes);
 	}
 	
 	@Override
-	public GeneratorMethodInfo findMethodMatching(String name, GeneratorTypeInfo returnType, GeneratorTypeInfo... parameterTypes) {
-		GeneratorMethodInfo method = GeneratorMethodInfo.findMethod(methods, name, returnType, parameterTypes);
+	public GeneratorMethodInfo findMethodMatching(String name, boolean allowCastable, GeneratorTypeInfo returnType, GeneratorTypeInfo... parameterTypes) {
+		GeneratorMethodInfo method = GeneratorMethodInfo.findMethod(methods, name, allowCastable, returnType, parameterTypes);
 		if(method != null)
 			return method;
-		return superclass.findMethodMatching(name, returnType, parameterTypes);
+		return superclass.findMethodMatching(name, true, returnType, parameterTypes);
 	}
 
 	@Override
-	public GeneratorMethodInfo findStaticMethodMatching(String name, GeneratorTypeInfo returnType, GeneratorTypeInfo... parameterTypes) {
-		GeneratorMethodInfo method = GeneratorMethodInfo.findMethod(methods, name, returnType, parameterTypes);
+	public GeneratorMethodInfo findStaticMethodMatching(String name, boolean allowCastable, GeneratorTypeInfo returnType, GeneratorTypeInfo... parameterTypes) {
+		GeneratorMethodInfo method = GeneratorMethodInfo.findMethod(methods, name, allowCastable, returnType, parameterTypes);
 		if(method != null)
 			return method;
-		return superclass.findStaticMethodMatching(name, returnType, parameterTypes);
+		return superclass.findStaticMethodMatching(name, false, returnType, parameterTypes);
 	}
 
 	@Override

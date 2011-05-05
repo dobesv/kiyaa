@@ -86,15 +86,17 @@ public interface GeneratorTypeInfo {
 	 * be a match).
 	 * 
 	 * Static methods are not returned by this method.
+	 * @param allowCastable TODO
 	 */
-	public GeneratorMethodInfo findMethodMatching(String name, GeneratorTypeInfo returnType, GeneratorTypeInfo ... parameterTypes);
+	public GeneratorMethodInfo findMethodMatching(String name, boolean allowCastable, GeneratorTypeInfo returnType, GeneratorTypeInfo ... parameterTypes);
 
 	/**
 	 * Search for a method matching the given return type and parameter types.  A null parameter type
 	 * or return type will be ignored for purposes of the search (although the number of parameters must still
 	 * be a match).
+	 * @param allowCastable If true, parameter types that are not directly assignable but which could be downcast will be matched
 	 */
-	public GeneratorMethodInfo findStaticMethodMatching(String name, GeneratorTypeInfo returnType, GeneratorTypeInfo ... parameterTypes);
+	public GeneratorMethodInfo findStaticMethodMatching(String name, boolean allowCastable, GeneratorTypeInfo returnType, GeneratorTypeInfo ... parameterTypes);
 	
 	/**
 	 * @return true if this is a primitive type like int, long, void, char, short, float, double, etc..

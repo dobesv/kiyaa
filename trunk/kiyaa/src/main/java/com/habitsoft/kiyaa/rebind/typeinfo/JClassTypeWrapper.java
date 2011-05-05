@@ -142,15 +142,15 @@ public class JClassTypeWrapper extends JTypeWrapper implements GeneratorTypeInfo
 			loadMethods();
 		}
 		
-		return GeneratorMethodInfo.checkForMethod(staticMethods, name, true, desiredReturnType, parameterTypes);
+		return GeneratorMethodInfo.checkForMethod(staticMethods, name, true, true, desiredReturnType, parameterTypes);
 	}
 
 	@Override
-	public GeneratorMethodInfo findStaticMethodMatching(String name, GeneratorTypeInfo desiredReturnType, GeneratorTypeInfo... parameterTypes) {
+	public GeneratorMethodInfo findStaticMethodMatching(String name, boolean allowCastable, GeneratorTypeInfo desiredReturnType, GeneratorTypeInfo... parameterTypes) {
 		if(staticMethods == null) {
 			loadMethods();
 		}
-		return GeneratorMethodInfo.findMethod(staticMethods, name, desiredReturnType, parameterTypes);
+		return GeneratorMethodInfo.findMethod(staticMethods, name, allowCastable, desiredReturnType, parameterTypes);
 	}
 	
 
@@ -159,15 +159,15 @@ public class JClassTypeWrapper extends JTypeWrapper implements GeneratorTypeInfo
 		if(methods == null) {
 			loadMethods();
 		}
-		return GeneratorMethodInfo.checkForMethod(methods, name, matchAbstract, desiredReturnType, parameterTypes);
+		return GeneratorMethodInfo.checkForMethod(methods, name, matchAbstract, true, desiredReturnType, parameterTypes);
 	}
 
 	@Override
-	public GeneratorMethodInfo findMethodMatching(String name, GeneratorTypeInfo desiredReturnType, GeneratorTypeInfo... parameterTypes) {
+	public GeneratorMethodInfo findMethodMatching(String name, boolean allowCastable, GeneratorTypeInfo desiredReturnType, GeneratorTypeInfo... parameterTypes) {
 		if(methods == null) {
 			loadMethods();
 		}
-		return GeneratorMethodInfo.findMethod(methods, name, desiredReturnType, parameterTypes);
+		return GeneratorMethodInfo.findMethod(methods, name, allowCastable, desiredReturnType, parameterTypes);
 	}
 	
 
