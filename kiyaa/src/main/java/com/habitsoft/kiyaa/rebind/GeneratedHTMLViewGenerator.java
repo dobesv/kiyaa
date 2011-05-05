@@ -2383,7 +2383,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                     final String asyncCallbackClassName = AsyncCallback.class.getName();
                     for(;;) {
                     	// Look for a synchronous action method with the right number of parameters
-                    	actionMethod = searchType.findMethodMatching(methodName, PrimitiveTypeInfo.VOID, new GeneratorTypeInfo[args.length]);
+                    	actionMethod = searchType.findMethodMatching(methodName, true, PrimitiveTypeInfo.VOID, new GeneratorTypeInfo[args.length]);
                     	if(actionMethod != null) {
                     		asyncMethod = false;
                     		break;
@@ -2392,7 +2392,7 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
                     	// Look for the method with one extra parameter which is the async callback
                     	GeneratorTypeInfo[] asyncParamTypes = new GeneratorTypeInfo[args.length+1];
                     	asyncParamTypes[args.length] = commonTypes.asyncCallback;
-						actionMethod = searchType.findMethodMatching(methodName, PrimitiveTypeInfo.VOID, asyncParamTypes );
+						actionMethod = searchType.findMethodMatching(methodName, true, PrimitiveTypeInfo.VOID, asyncParamTypes );
                     	if(actionMethod != null) {
                     		asyncMethod = true;
                     		break;
@@ -2546,9 +2546,9 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 							candidates.add("get"+capGetterMethodName);
 		                    candidates.add("is"+capGetterMethodName);
 		                    for(String candidate : candidates) {
-		                    	getterMethod = objectType.findMethodMatching(candidate, null, argTypes);
+		                    	getterMethod = objectType.findMethodMatching(candidate, true, null, argTypes);
 		                    	if(getterMethod == null)
-		                    		getterMethod = objectType.findMethodMatching(candidate, null, syncArgTypesWildcard);
+		                    		getterMethod = objectType.findMethodMatching(candidate, true, null, syncArgTypesWildcard);
 		                    	if(getterMethod != null) {
 		                    		asyncMethod = false;
 		                    		type = getterMethod.getReturnType();
@@ -2556,9 +2556,9 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 		                    	}
 		                    	
 		                    	if(matchAsync) {
-		                    		getterMethod = objectType.findMethodMatching(candidate, null, asyncArgTypes);
+		                    		getterMethod = objectType.findMethodMatching(candidate, true, null, asyncArgTypes);
 		                    		if(getterMethod == null)
-		                    			getterMethod = objectType.findMethodMatching(candidate, null, asyncArgTypesWildcard);
+		                    			getterMethod = objectType.findMethodMatching(candidate, true, null, asyncArgTypesWildcard);
 			                    	if(getterMethod != null) {
 			                    		asyncMethod = true;
 			                    		type = getterMethod.getAsyncReturnType();
@@ -2603,25 +2603,25 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 	                    String setterMethodName = getterMethod.getName().replaceFirst("^(is|get)", "set");
 	                    GeneratorTypeInfo[] setterArgTypes = Arrays.copyOf(argTypes, argTypes.length+1);
 	                    setterArgTypes[argTypes.length] = type;
-	                    GeneratorMethodInfo setterMethod = objectType.findMethodMatching(setterMethodName, null, setterArgTypes);
+	                    GeneratorMethodInfo setterMethod = objectType.findMethodMatching(setterMethodName, true, null, setterArgTypes);
 	                    
 	                    // If searching for something matching the types we got doesn't work, try it a wildcard for the type
 	                    if(setterMethod == null) {
 	                    	setterArgTypes = new GeneratorTypeInfo[argTypes.length+1];
 	                    	setterArgTypes[argTypes.length] = type;
-	                    	setterMethod = objectType.findMethodMatching(setterMethodName, null, setterArgTypes);
+	                    	setterMethod = objectType.findMethodMatching(setterMethodName, true, null, setterArgTypes);
 	                    }
 	                    
 	                    if(setterMethod == null) {
 	                    	setterArgTypes = Arrays.copyOf(argTypes, argTypes.length+2);
 	                    	setterArgTypes[argTypes.length] = type;
 	                    	setterArgTypes[argTypes.length+1] = commonTypes.asyncCallback;
-	                        setterMethod = objectType.findMethodMatching(setterMethodName, PrimitiveTypeInfo.VOID, setterArgTypes);
+	                        setterMethod = objectType.findMethodMatching(setterMethodName, true, PrimitiveTypeInfo.VOID, setterArgTypes);
 	                        if(setterMethod == null) {
 	                        	setterArgTypes = new GeneratorTypeInfo[argTypes.length+2];
 	                        	setterArgTypes[argTypes.length] = type;
 	                        	setterArgTypes[argTypes.length+1] = commonTypes.asyncCallback;
-	                            setterMethod = objectType.findMethodMatching(setterMethodName, PrimitiveTypeInfo.VOID, setterArgTypes);
+	                            setterMethod = objectType.findMethodMatching(setterMethodName, true, PrimitiveTypeInfo.VOID, setterArgTypes);
 	                        }
 	                        if(setterMethod != null)
 	                        	asyncSetter = true;
@@ -2652,16 +2652,16 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 	                    name = identifier(name);
 	                    String getterName = "get" + capitalize(name);
 	                    String setterName = "set" + capitalize(name);
-	                    GeneratorMethodInfo getterMethod = inType.findMethodMatching(getterName, null);
+	                    GeneratorMethodInfo getterMethod = inType.findMethodMatching(getterName, true, null);
 	                    if(getterMethod == null && matchAsync) { // Check for async version, if allowed in this context
-	                    	getterMethod = inType.findMethodMatching(getterName, PrimitiveTypeInfo.VOID, commonTypes.asyncCallback);
+	                    	getterMethod = inType.findMethodMatching(getterName, true, PrimitiveTypeInfo.VOID, commonTypes.asyncCallback);
 	                    	asyncGetter = getterMethod != null;
 	                    }
 	                    if (getterMethod == null) {
 	                        getterName = "is" + capitalize(name);
-	                        getterMethod = inType.findMethodMatching(getterName, null);
+	                        getterMethod = inType.findMethodMatching(getterName, true, null);
 	                        if(getterMethod == null && matchAsync) { // Check for async version, if allowed in this context
-	                        	getterMethod = inType.findMethodMatching(getterName, PrimitiveTypeInfo.VOID, commonTypes.asyncCallback);
+	                        	getterMethod = inType.findMethodMatching(getterName, true, PrimitiveTypeInfo.VOID, commonTypes.asyncCallback);
 	                        	asyncGetter = getterMethod != null;
 	                        }
 	                    }
@@ -2692,9 +2692,9 @@ public class GeneratedHTMLViewGenerator extends BaseGenerator {
 		                    // Only look for the setter if this is the last (or only) part of the chain.  i.e. for an expression
 		                    // a.b.c we would only look for a setter for c, not a or b.
 		                    if(lastOrOnlyPartOfTheExpression) {
-		                    	setterMethod = inType.findMethodMatching(setterName, null, (GeneratorTypeInfo)null);
+		                    	setterMethod = inType.findMethodMatching(setterName, true, null, (GeneratorTypeInfo)null);
 		                    	if(setterMethod == null) {
-		                        	setterMethod = inType.findMethodMatching(setterName, PrimitiveTypeInfo.VOID, (GeneratorTypeInfo)null, commonTypes.asyncCallback);
+		                        	setterMethod = inType.findMethodMatching(setterName, true, PrimitiveTypeInfo.VOID, (GeneratorTypeInfo)null, commonTypes.asyncCallback);
 		                        	asyncSetter = setterMethod != null;
 		                    	}
 		                    	if(setterMethod != null) {

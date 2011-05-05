@@ -474,7 +474,7 @@ public class ExpressionInfo {
 	 * @return true if valueOf can be used to convert
 	 */
 	public static GeneratorMethodInfo findValueOf(GeneratorTypeInfo outType, GeneratorTypeInfo inType) {
-		return outType.findStaticMethodMatching("valueOf", outType, inType);
+		return outType.findStaticMethodMatching("valueOf", false, outType, inType);
 	}
 
 	/**

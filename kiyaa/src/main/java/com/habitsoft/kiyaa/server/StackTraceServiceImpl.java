@@ -182,29 +182,51 @@ public class StackTraceServiceImpl extends RemoteServiceServlet implements Stack
 		String basename = strongName+".symbolMap";
 		
 		// Try war/WEB-INF/deploy/*/symbolMaps/<strongName>
-		File deployDir = new File("war/WEB-INF/deploy");
-		for(File moduleDir : deployDir.listFiles()) {
-			if(!moduleDir.isDirectory())
-				continue;
-			File symbolMapFile = new File(new File(deployDir, "symbolMaps"), basename);
-			if(symbolMapFile.canRead()) {
-				try {
-					return new FileInputStream(symbolMapFile);
-				} catch (FileNotFoundException e) {
-					// ??
+		File currentDir;
+		try {
+			currentDir = new File(".").getAbsoluteFile().getCanonicalFile();
+		} catch (IOException e1) {
+			throw new Error(e1);
+		}
+		File deployDir;
+		if("war".equals(currentDir.getName()))
+			deployDir = new File("WEB-INF/deploy");
+		else if("WEB-INF".equals(currentDir.getName()))
+			deployDir = new File("deploy");
+		else // if(new File("war").isDirectory())
+			deployDir = new File("war/WEB-INF/deploy");
+		File[] moduleDirs = deployDir.listFiles();
+		if(moduleDirs != null && moduleDirs.length > 0) {
+			for(File moduleDir : moduleDirs) {
+				if(!moduleDir.isDirectory())
+					continue;
+				File symbolMapFile = new File(new File(moduleDir, "symbolMaps"), basename);
+				if(symbolMapFile.canRead()) {
+					try {
+						return new FileInputStream(symbolMapFile);
+					} catch (FileNotFoundException e) {
+						// ??
+					}
+				}
+			}
+		}
+
+		// If we're injected by Guice we might not have a Servlet config; if we do, try and use that to
+		// find the deploy files.
+		if(getServletConfig() != null) {
+			// Try WEB-INF/deploy/<module>/symbolMaps in our servlet context
+			ServletContext servletContext = getServletContext();
+			@SuppressWarnings("unchecked")
+			Set<String> resourcePaths = servletContext.getResourcePaths("/WEB-INF/deploy/");
+			if(resourcePaths != null) {
+				for(String moduleDeployPath : resourcePaths) {
+					String resourcePath = moduleDeployPath+"symbolMaps/"+basename;
+					InputStream webInfFile = servletContext.getResourceAsStream(resourcePath);
+					if(webInfFile != null) return webInfFile;
 				}
 			}
 		}
 		
-		// Try WEB-INF/deploy/<module>/symbolMaps in our servlet context
-		ServletContext servletContext = getServletContext();
-		@SuppressWarnings("unchecked")
-		Set<String> resourcePaths = servletContext.getResourcePaths("/WEB-INF/deploy/");
-		for(String moduleDeployPath : resourcePaths) {
-			String resourcePath = moduleDeployPath+"symbolMaps/"+basename;
-			InputStream webInfFile = servletContext.getResourceAsStream(resourcePath);
-			if(webInfFile != null) return webInfFile;
-		}
 		// Oh well, give up
 		return null;
 	}
