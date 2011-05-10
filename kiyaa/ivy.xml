@@ -27,6 +27,8 @@
 		
 		<dependency org="junit" name="junit" rev="3.8.1" conf="test->default;sources"/>
 		
+	    <dependency org="xerces" name="xercesImpl" rev="2.9.1"/>
+	
 		<dependency name="gwt-debug-panel" rev="1.0"/>
 		
 	</dependencies>
